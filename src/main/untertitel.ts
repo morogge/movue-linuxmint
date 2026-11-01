@@ -75,7 +75,7 @@ export async function ladeUntertitel(url: string): Promise<string | null> {
   const antwort = await fetch(adresse, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(15_000) });
   if (!antwort.ok) return null;
   const text = await antwort.text();
-  if (/^﻿?WEBVTT/.test(text)) return text;
+  if (/^\uFEFF?WEBVTT/.test(text)) return text;
   if (/<(?:\w+:)?tt\b/.test(text)) return ttmlZuVtt(text);
   return null;
 }

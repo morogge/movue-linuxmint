@@ -71,7 +71,7 @@ test('Suche findet Sendungen über alle Sender und filtert nach Sender', async (
 
   await win.getByRole('button', { name: 'ZDF', exact: true }).click();
   await expect(win.getByText('1 Treffer')).toBeVisible();
-  await expect(win.getByRole('heading', { name: 'Terra X: Die Ostsee' })).toBeVisible();
+  await expect(win.getByRole('button', { name: /Terra X: Die Ostsee/ })).toBeVisible();
 
   await win.getByRole('button', { name: 'Alle Sender' }).click();
   await win.getByLabel('Suche in allen Mediatheken').focus();

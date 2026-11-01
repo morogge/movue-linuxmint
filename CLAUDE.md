@@ -38,4 +38,4 @@ Wenn in der Arbeitsumgebung kein npm-Register erreichbar ist: Code schreiben, pu
 6. **Sprache:** Oberfläche, Hilfe und Changelog auf Deutsch, du-Form. Code, Bezeichner und Commit-Betreff auf Englisch oder Deutsch, aber einheitlich je Datei.
 7. **Sicherheit:** Kein `nodeIntegration`, keine Remote-Inhalte im Hauptfenster außer Videos und Bildern der Sender; externe Links öffnen im Standardbrowser.
 8. **Daten der Sender:** Filmliste höchstens stündlich abrufen, Diff statt Komplettliste; Sender-Schnittstellen sind optional, ein Ausfall darf nie die App blockieren.
-9. **Releases:** Version in `package.json` erhöhen, Changelog-Abschnitt datieren, Tag `vX.Y.Z` pushen – die Action „Release“ baut die Pakete.
+9. **Releases:** Version in `package.json` erhöhen, Changelog-Abschnitt datieren, dann die Action „Release“ starten (`gh api -X POST repos/morogge/movue-linuxmint/actions/workflows/release.yml/dispatches -f ref=main`) – sie setzt den Tag `vX.Y.Z` und baut die Pakete.

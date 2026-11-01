@@ -48,6 +48,18 @@ test('Kachel öffnet die Detailseite mit weiteren Folgen, Alt+← führt zurück
   await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 2 })).toBeVisible();
 });
 
+test('Player öffnet sich und meldet nicht abspielbare Videos verständlich', async () => {
+  await win.getByRole('button', { name: /Tatort: Der Fall Münster/ }).first().click();
+  await win.getByRole('button', { name: /Abspielen/ }).first().click();
+  await expect(win.getByRole('heading', { name: 'Tatort: Der Fall Münster', level: 1 })).toBeVisible();
+  await expect(win.getByRole('button', { name: 'Vollbild' })).toBeAttached();
+  // Die Testliste zeigt auf nicht existierende Videos → verständliche Meldung statt schwarzem Bild
+  await expect(win.getByRole('alert')).toContainText('lässt sich nicht abspielen', { timeout: 20_000 });
+  await expect(win.getByRole('heading', { name: 'Als Nächstes' })).toBeVisible();
+  await win.screenshot({ path: 'test-results/screens/player.png' });
+  await win.getByRole('button', { name: 'Start', exact: true }).click();
+});
+
 test('Sender-Seite zeigt nur Sendungen dieser Mediathek', async () => {
   await win.getByRole('button', { name: 'ZDF Mediathek' }).click();
   await expect(win.getByRole('heading', { name: 'ZDF Mediathek', level: 1 })).toBeVisible();
@@ -92,8 +104,8 @@ test('F1 öffnet die Hilfe zum aktuellen Bildschirm, Esc schließt sie', async (
 test('Tastenkürzel-Seite zeigt die Tabelle aus der App', async () => {
   await win.getByRole('button', { name: 'Hilfe (F1)' }).click();
   await win.getByRole('button', { name: 'Tastenkürzel' }).click();
-  const table = win.getByRole('table');
-  await expect(table.getByRole('cell', { name: 'Ins Suchfeld springen' })).toBeVisible();
+  await expect(win.getByRole('cell', { name: 'Ins Suchfeld springen' })).toBeVisible();
+  await expect(win.getByRole('cell', { name: 'Abspielen / Pause' })).toBeVisible();
   await win.getByRole('button', { name: 'Hilfe schließen (Esc)' }).click();
 });
 

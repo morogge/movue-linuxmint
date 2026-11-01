@@ -4,6 +4,19 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.6.0 – 2026-11-01
+
+### Neu
+
+- **Eigener Player**: Sendungen laufen jetzt direkt in Movue – mit Zeitleiste, Lautstärke, 10 Sekunden vor/zurück, Vollbild und Bild-in-Bild
+- **Untertitel** der Sender (ZDF, 3sat, ARD), ein- und ausschaltbar
+- **Qualität** wählbar (Niedrig, Standard, HD), Movue merkt sich die Wahl
+- **Als Nächstes**: die folgenden Folgen neben dem Video; am Ende startet die nächste Folge nach zehn Sekunden (abschaltbar)
+- **Mini-Player**: Verlässt du den Player während der Wiedergabe, läuft das Video unten rechts weiter
+- **Weiterschauen**: Movue merkt sich, wo du aufgehört hast – auf der Startseite und mit „Weiterschauen ab …“ auf der Detailseite
+- Tastenkürzel im Player: Leertaste, ← →, ↑ ↓, M, F, C, N
+- Neue Hilfeseite „Player“
+
 ## 0.5.1 – 2026-11-01
 
 ### Verbessert

@@ -10,16 +10,9 @@ import { SENDER_FARBE } from '../senderFarben';
 const SEITE = 50;
 
 
-/** Direkt abspielbare Videodatei (MP4); HLS-Streams spielt erst der eigene Player */
-function videoDatei(film: Film): string | null {
-  const url = film.urlHd || film.url;
-  return /^https?:\/\/.+\.mp4(\?|$)/i.test(url) ? url : null;
-}
-
-function Treffer({ film, onOeffne }: { film: Film; onOeffne: (f: Film) => void }) {
+function Treffer({ film, onOeffne, onAbspielen }: { film: Film; onOeffne: (f: Film) => void; onAbspielen: (f: Film) => void }) {
   const [seite, setSeite] = useState<'bereit' | 'pruefe' | 'suche'>('bereit');
   const unterSender = film.sender !== film.gruppe && film.sender !== '3Sat' && film.sender !== 'ARTE.DE';
-  const video = videoDatei(film);
 
   const seiteOeffnen = async () => {
     setSeite('pruefe');
@@ -62,11 +55,9 @@ function Treffer({ film, onOeffne }: { film: Film; onOeffne: (f: Film) => void }
         {film.urlHd && <span className="tag">HD</span>}
         {film.geo && <span className="tag" title={`Nur abrufbar in: ${film.geo}`}>{film.geo.replace(/-/g, ' · ')}</span>}
         <span className="treffer-aktionen">
-          {video && (
-            <a className="extern" href={video} target="_blank" rel="noreferrer">
-              Video öffnen <Icon name="external" size={14} />
-            </a>
-          )}
+          <button type="button" className="extern" onClick={() => onAbspielen(film)}>
+            <Icon name="play" size={14} /> Abspielen
+          </button>
           <button type="button" className="extern" onClick={() => void seiteOeffnen()} disabled={seite === 'pruefe'}>
             {seite === 'pruefe' ? 'Prüfe Seite …' : 'Beim Sender ansehen'} <Icon name="external" size={14} />
           </button>
@@ -88,6 +79,7 @@ interface Props {
   genre: GenreId | null;
   onGenre: (g: GenreId | null) => void;
   onOeffne: (f: Film) => void;
+  onAbspielen: (f: Film) => void;
 }
 
 type Darstellung = 'kacheln' | 'liste';
@@ -101,7 +93,7 @@ function leseDarstellung(): Darstellung {
   }
 }
 
-export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne }: Props) {
+export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAbspielen }: Props) {
   const [darstellung, setDarstellungState] = useState<Darstellung>(leseDarstellung);
   const setDarstellung = (d: Darstellung) => {
     setDarstellungState(d);
@@ -222,7 +214,7 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne }: Pr
           ) : (
             <ul className="trefferliste">
               {ergebnis.treffer.map((f) => (
-                <Treffer key={f.id} film={f} onOeffne={onOeffne} />
+                <Treffer key={f.id} film={f} onOeffne={onOeffne} onAbspielen={onAbspielen} />
               ))}
             </ul>
           )}

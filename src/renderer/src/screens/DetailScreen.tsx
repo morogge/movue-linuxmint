@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
 import { genreName } from '@shared/genres';
+import { formatZeit } from '@shared/player';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Icon } from '../components/Icon';
 
@@ -20,9 +21,11 @@ interface Props {
   filmId: number;
   onOeffne: (f: Film) => void;
   onZurueck: () => void;
+  onAbspielen: (f: Film) => void;
 }
 
-export function DetailScreen({ filmId, onOeffne, onZurueck }: Props) {
+export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen }: Props) {
+  const [position, setPosition] = useState<number | null>(null);
   const [film, setFilm] = useState<Film | null>(null);
   const [folgen, setFolgen] = useState<Film[]>([]);
   const [staffel, setStaffel] = useState<number | null>(null);
@@ -34,6 +37,8 @@ export function DetailScreen({ filmId, onOeffne, onZurueck }: Props) {
       if (!aktiv) return;
       setFilm(f);
       setFolgen(fo);
+      setPosition(null);
+      if (f) void window.movue.player.fortschritt(f.url).then((p) => aktiv && setPosition(p && p.position >= 30 && p.position < p.dauer * 0.95 ? p.position : null));
       setStaffel(f ? staffelVon(f.titel) : null);
       setSeite('bereit');
     });
@@ -105,9 +110,12 @@ export function DetailScreen({ filmId, onOeffne, onZurueck }: Props) {
             {film.dauer > 0 && ` · ${formatDauer(film.dauer)}`}
           </p>
           <div className="hero-actions">
+            <button type="button" className="primary" onClick={() => onAbspielen(film)}>
+              <Icon name="play" size={16} /> {position !== null ? `Weiterschauen ab ${formatZeit(position)}` : 'Abspielen'}
+            </button>
             {video && (
-              <a className="primary" href={video} target="_blank" rel="noreferrer">
-                Video öffnen
+              <a className="text-button" href={video} target="_blank" rel="noreferrer" title="Videodatei im Browser oder Videoprogramm öffnen">
+                Extern öffnen
               </a>
             )}
             <button type="button" className="secondary" onClick={() => void seiteOeffnen()} disabled={seite === 'pruefe'}>

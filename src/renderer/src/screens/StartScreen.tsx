@@ -5,6 +5,7 @@ import { genreName, type GenreId } from '@shared/genres';
 import { GRUPPEN, type SenderGruppe } from '@shared/sender';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Reihe } from '../components/Reihe';
+import { Weiterschauen } from '../components/Weiterschauen';
 
 /** Reihen auf der Startseite und den Sender-Seiten, in dieser Reihenfolge */
 export const START_REIHEN: GenreId[] = [
@@ -30,9 +31,10 @@ interface Props {
   gruppe?: SenderGruppe | null;
   onOeffne: (f: Film) => void;
   onGenre: (g: GenreId) => void;
+  onAbspielen: (f: Film) => void;
 }
 
-function Hero({ film, onOeffne }: { film: Film; onOeffne: (f: Film) => void }) {
+function Hero({ film, onOeffne, onAbspielen }: { film: Film; onOeffne: (f: Film) => void; onAbspielen: (f: Film) => void }) {
   return (
     <section className="hero-film" aria-label="Empfehlung">
       <FilmBild film={film} gross />
@@ -48,7 +50,10 @@ function Hero({ film, onOeffne }: { film: Film; onOeffne: (f: Film) => void }) {
         <h1>{film.titel}</h1>
         {film.beschreibung && <p>{film.beschreibung}</p>}
         <div className="hero-actions">
-          <button type="button" className="primary" onClick={() => onOeffne(film)}>
+          <button type="button" className="primary" onClick={() => onAbspielen(film)}>
+            Abspielen
+          </button>
+          <button type="button" className="secondary" onClick={() => onOeffne(film)}>
             Details
           </button>
           <span className="hero-info">
@@ -61,7 +66,7 @@ function Hero({ film, onOeffne }: { film: Film; onOeffne: (f: Film) => void }) {
   );
 }
 
-export function StartScreen({ zustand, gruppe = null, onOeffne, onGenre }: Props) {
+export function StartScreen({ zustand, gruppe = null, onOeffne, onGenre, onAbspielen }: Props) {
   const [hero, setHero] = useState<Film | null>(null);
 
   // Die Empfehlung oben: der neueste Spielfilm (oder sonst die neueste Doku) mit Beschreibung
@@ -96,7 +101,8 @@ export function StartScreen({ zustand, gruppe = null, onOeffne, onGenre }: Props
           <span className="anzahl">{formatZahl(zustand.anzahl)} Sendungen in allen Mediatheken</span>
         </div>
       )}
-      {hero && <Hero film={hero} onOeffne={onOeffne} />}
+      {hero && <Hero film={hero} onOeffne={onOeffne} onAbspielen={onAbspielen} />}
+      {!gruppe && <Weiterschauen stand={zustand.stand} onAbspielen={onAbspielen} />}
       {START_REIHEN.map((g) => (
         <Reihe key={`${gruppe ?? 'alle'}-${g}`} genre={g} gruppe={gruppe} stand={zustand.stand} onOeffne={onOeffne} onAlle={onGenre} onGeladen={reiheGeladen} />
       ))}

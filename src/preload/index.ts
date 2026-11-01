@@ -34,6 +34,15 @@ const api = {
     seiteOeffnen: (film: { website: string; gruppe: string; titel: string }): Promise<'seite' | 'suche' | null> =>
       ipcRenderer.invoke('film:seite-oeffnen', film)
   },
+  player: {
+    /** Untertitel als WebVTT-Text (null = keine) */
+    untertitel: (url: string): Promise<string | null> => ipcRenderer.invoke('untertitel:laden', url),
+    fortschrittSetzen: (url: string, position: number, dauer: number): Promise<void> =>
+      ipcRenderer.invoke('fortschritt:setzen', url, position, dauer),
+    fortschritt: (url: string): Promise<{ position: number; dauer: number } | null> => ipcRenderer.invoke('fortschritt:holen', url),
+    vergessen: (url: string): Promise<void> => ipcRenderer.invoke('fortschritt:vergessen', url),
+    weiterschauen: (): Promise<{ film: Film; position: number; dauer: number }[]> => ipcRenderer.invoke('index:weiterschauen')
+  },
   bild: {
     /** Vorschaubild zur Sendungsseite (null = keins gefunden) */
     url: (website: string): Promise<string | null> => ipcRenderer.invoke('bild:url', website)

@@ -13,7 +13,17 @@ const PATHS = {
   download: 'M12 3v12M7 10l5 5 5-5M5 21h14',
   liste: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   links: 'M15 18l-6-6 6-6',
-  rechts: 'M9 18l6-6-6-6'
+  rechts: 'M9 18l6-6-6-6',
+  play: 'M7 4v16l13-8z',
+  pause: 'M7 4h3v16H7zM14 4h3v16h-3z',
+  zurueck10: 'M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5',
+  vor10: 'M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5',
+  laut: 'M11 5L6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14',
+  stumm: 'M11 5L6 9H2v6h4l5 4zM23 9l-6 6M17 9l6 6',
+  untertitel: 'M2 5h20v14H2zM7 13h4M13 13h4M7 16h10',
+  autoplay: 'M5 4v16l9-8zM16 5h3v14h-3',
+  pip: 'M2 4h20v16H2zM12 12h7v5h-7z',
+  vollbildAus: 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5'
 } as const;
 
 export type IconName = keyof typeof PATHS;

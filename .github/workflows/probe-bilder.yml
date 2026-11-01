@@ -1,0 +1,53 @@
+name: Probe Bilder
+on:
+  push:
+    branches: ['probe/**']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - run: curl -sSL -o akt.xz https://liste.mediathekview.de/Filmliste-akt.xz && xz -dc akt.xz > akt.json
+      - name: Auswerten
+        run: |
+          python3 - <<'PY'
+          import json, random, subprocess, re, time, html
+          GR={'ARD':'ARD','BR':'ARD','HR':'ARD','MDR':'ARD','NDR':'ARD','ONE':'ARD','RBB':'ARD','SR':'ARD','SWR':'ARD','WDR':'ARD','ZDF':'ZDF','ZDFinfo':'ZDF','ZDFneo':'ZDF','3Sat':'3sat','ARTE.DE':'Arte'}
+          pairs=json.load(open('akt.json',encoding='utf-8'),object_pairs_hook=lambda p:p)
+          last=''; data=[]; now=time.time()
+          for k,r in pairs:
+              if k!='X': continue
+              s=r[0] or last; last=s
+              g=GR.get(s)
+              try: age=(now-int(r[16]))/86400
+              except: age=9999
+              if g and r[9] and age<120: data.append((g,s,r))
+          random.seed(7)
+          UA='Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'
+          def get(url, t=25):
+              p=subprocess.run(['curl','-s','-L','--compressed','--max-time',str(t),'-A',UA,'-H','Accept-Language: de-DE,de;q=0.9','-w','\n__STATUS__%{http_code} %{time_total}',url],capture_output=True)
+              out=p.stdout.decode('utf-8','replace'); body,_,st=out.rpartition('\n__STATUS__'); return st.strip(), body
+          def head(url):
+              p=subprocess.run(['curl','-s','-o','/dev/null','-L','--max-time','20','-A',UA,'-w','%{http_code} %{content_type} %{size_download}',url],capture_output=True,text=True); return p.stdout
+          for g in ['ARD','ZDF','3sat','Arte']:
+              teil=[d for d in data if d[0]==g]
+              print('=====',g,len(teil))
+              ok=0
+              for _,s,r in random.sample(teil,10):
+                  st,body=get(r[9])
+                  m=re.search(r'<meta[^>]+property=["\']og:image["\'][^>]*content=["\']([^"\']+)',body) or re.search(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]*property=["\']og:image',body)
+                  img=html.unescape(m.group(1)) if m else None
+                  h=head(img) if img else ''
+                  if img and h.startswith('200'): ok+=1
+                  print(f'  {s:8s} seite {st} | og:image {img[:120] if img else None} | bild {h} | {len(body)} B | {r[2][:40]}')
+              print('  -> mit Bild:',ok,'/10')
+          # ARD-API probieren
+          print('===== ARD API')
+          teil=[d for d in data if d[0]=='ARD' and '/video/' in d[2][9]]
+          for _,s,r in random.sample(teil,5):
+              vid=r[9].rstrip('/').split('/')[-1]
+              for api in [f'https://api.ardmediathek.de/page-gateway/pages/ard/item/{vid}?devicetype=pc&embedded=true', f'https://api.ardmediathek.de/page-gateway/pages/ard/item/{vid}?devicetype=pc']:
+                  st,body=get(api)
+                  imgs=re.findall(r'"src"\s*:\s*"(https://api\.ardmediathek\.de/image-service/[^"]+)"',body)
+                  print(f'  {st} {api[:110]} | bilder: {imgs[:1]} | {len(body)} B')
+          PY

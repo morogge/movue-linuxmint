@@ -21,6 +21,11 @@ const api = {
       return () => ipcRenderer.removeListener('index:zustand', listener);
     }
   },
+  film: {
+    /** Öffnet die Sendungsseite im Browser – oder die Suche beim Sender, wenn die Seite nicht mehr existiert. */
+    seiteOeffnen: (film: { website: string; gruppe: string; titel: string }): Promise<'seite' | 'suche' | null> =>
+      ipcRenderer.invoke('film:seite-oeffnen', film)
+  },
   update: {
     zustand: (): Promise<UpdateZustand> => ipcRenderer.invoke('update:zustand'),
     installieren: (): Promise<void> => ipcRenderer.invoke('update:installieren'),

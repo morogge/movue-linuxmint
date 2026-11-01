@@ -8,8 +8,23 @@ import { SENDER_FARBE } from '../senderFarben';
 const SEITE = 50;
 
 
+/** Direkt abspielbare Videodatei (MP4); HLS-Streams spielt erst der eigene Player */
+function videoDatei(film: Film): string | null {
+  const url = film.urlHd || film.url;
+  return /^https?:\/\/.+\.mp4(\?|$)/i.test(url) ? url : null;
+}
+
 function Treffer({ film }: { film: Film }) {
+  const [seite, setSeite] = useState<'bereit' | 'pruefe' | 'suche'>('bereit');
   const unterSender = film.sender !== film.gruppe && film.sender !== '3Sat' && film.sender !== 'ARTE.DE';
+  const video = videoDatei(film);
+
+  const seiteOeffnen = async () => {
+    setSeite('pruefe');
+    const art = await window.movue.film.seiteOeffnen({ website: film.website, gruppe: film.gruppe, titel: film.titel });
+    setSeite(art === 'suche' ? 'suche' : 'bereit');
+  };
+
   return (
     <li className="treffer">
       <div className="treffer-kopf">
@@ -28,12 +43,22 @@ function Treffer({ film }: { film: Film }) {
         {film.urlUntertitel && <span className="tag">UT</span>}
         {film.urlHd && <span className="tag">HD</span>}
         {film.geo && <span className="tag" title={`Nur abrufbar in: ${film.geo}`}>{film.geo.replace(/-/g, ' · ')}</span>}
-        {film.website && (
-          <a className="extern" href={film.website} target="_blank" rel="noreferrer">
-            Beim Sender ansehen <Icon name="external" size={14} />
-          </a>
-        )}
+        <span className="treffer-aktionen">
+          {video && (
+            <a className="extern" href={video} target="_blank" rel="noreferrer">
+              Video öffnen <Icon name="external" size={14} />
+            </a>
+          )}
+          <button type="button" className="extern" onClick={() => void seiteOeffnen()} disabled={seite === 'pruefe'}>
+            {seite === 'pruefe' ? 'Prüfe Seite …' : 'Beim Sender ansehen'} <Icon name="external" size={14} />
+          </button>
+        </span>
       </div>
+      {seite === 'suche' && (
+        <p className="treffer-hinweis" role="status">
+          Die Seite dieser Sendung gibt es beim Sender nicht mehr. Movue hat stattdessen die Suche der Mediathek geöffnet.
+        </p>
+      )}
     </li>
   );
 }

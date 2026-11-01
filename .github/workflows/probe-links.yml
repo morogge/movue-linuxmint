@@ -1,0 +1,66 @@
+name: Probe Links
+on:
+  push:
+    branches: ['probe/**']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - run: curl -sSL -o akt.xz https://liste.mediathekview.de/Filmliste-akt.xz && xz -dc akt.xz > akt.json
+      - name: Auswerten
+        run: |
+          python3 - <<'PY'
+          import json, collections, random, subprocess, time, re
+          from urllib.parse import urlparse
+          GR={'ARD':'ARD','ARD-alpha':'ARD','BR':'ARD','HR':'ARD','MDR':'ARD','NDR':'ARD','ONE':'ARD','RBB':'ARD','Radio Bremen TV':'ARD','rbtv':'ARD','RBTV':'ARD','SR':'ARD','SWR':'ARD','tagesschau24':'ARD','WDR':'ARD','ZDF':'ZDF','ZDFinfo':'ZDF','ZDFneo':'ZDF','ZDF-tivi':'ZDF','3Sat':'3sat','ARTE.DE':'Arte'}
+          pairs=json.load(open('akt.json',encoding='utf-8'),object_pairs_hook=lambda p:p)
+          rows=[v for k,v in pairs if k=='X']
+          last=''; data=[]
+          for r in rows:
+              s=r[0] or last; last=s
+              g=GR.get(s)
+              if g: data.append((g,s,r))
+          now=time.time()
+          def alter(r):
+              try: return (now-int(r[16]))/86400/365
+              except: return -1
+          print('Einträge:',len(data))
+          # Website-Muster je Sender (Domain + erste Pfadsegmente)
+          muster=collections.Counter()
+          for g,s,r in data:
+              u=urlparse(r[9]); seg=u.path.strip('/').split('/')[:1]
+              muster[(s,u.netloc,'/'.join(seg))]+=1
+          print('== Website-Muster (Top 40)')
+          for (s,h,p),n in muster.most_common(40): print(f'{n:7d} {s:15s} {h} /{p}')
+          leer=sum(1 for g,s,r in data if not r[9]); print('ohne Website:',leer)
+          # Altersverteilung
+          ages=collections.Counter()
+          for g,s,r in data:
+              a=alter(r); ages[(g,'<1J' if a<1 else '1-3J' if a<3 else '>3J')]+=1
+          print('== Alter', sorted(ages.items()))
+          random.seed(1)
+          def status(url):
+              if not url: return ('-', '')
+              try:
+                  out=subprocess.run(['curl','-s','-o','/dev/null','-L','--max-time','20','-A','Mozilla/5.0 (X11; Linux x86_64) Movue-Probe','-w','%{http_code} %{url_effective}',url],capture_output=True,text=True,timeout=30).stdout
+                  c,_,eff=out.partition(' '); return (c,eff)
+              except Exception as e: return ('ERR',str(e))
+          print('== Stichprobe Website / Video')
+          res=collections.Counter(); bsp=collections.defaultdict(list)
+          for g in ['ARD','ZDF','3sat','Arte']:
+              teil=[d for d in data if d[0]==g]
+              for alt in ['<1J','1-3J','>3J']:
+                  cand=[d for d in teil if ('<1J' if alter(d[2])<1 else '1-3J' if alter(d[2])<3 else '>3J')==alt]
+                  for g2,s,r in random.sample(cand,min(8,len(cand))):
+                      wc,weff=status(r[9]); vc,_=status(r[8])
+                      umgeleitet = weff.rstrip('/')!=r[9].rstrip('/')
+                      key=(g,alt,'web',wc,'umgeleitet' if umgeleitet else 'direkt'); res[key]+=1
+                      res[(g,alt,'video',vc)]+=1
+                      if wc!='200' or umgeleitet or vc!='200':
+                          if len(bsp[g])<10: bsp[g].append(f'{s} | {alter(r):.1f}J | web {wc} {r[9]} -> {weff} | video {vc} {r[8][:90]} | {r[2][:50]}')
+          for k,n in sorted(res.items()): print(n,k)
+          for g,l in bsp.items():
+              print('== Beispiele',g)
+              for x in l: print('  ',x)
+          PY

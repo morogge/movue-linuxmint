@@ -1,7 +1,8 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
-import type { IndexZustand, SuchAnfrage, SuchErgebnis } from '../shared/film';
+import type { Film, IndexZustand, SuchAnfrage, SuchErgebnis } from '../shared/film';
 import type { UpdateZustand } from '../shared/update';
-import type { GenreAnzahl } from '../shared/genres';
+import type { GenreAnzahl, GenreId } from '../shared/genres';
+import type { SenderGruppe } from '../shared/sender';
 
 export interface AppInfo {
   version: string;
@@ -16,6 +17,11 @@ const api = {
     zustand: (): Promise<IndexZustand> => ipcRenderer.invoke('index:zustand'),
     suche: (anfrage: SuchAnfrage): Promise<SuchErgebnis> => ipcRenderer.invoke('index:suche', anfrage),
     genres: (): Promise<GenreAnzahl[]> => ipcRenderer.invoke('index:genres'),
+    /** Neueste Sendungen eines Genres, je Reihe eine – für die Reihen auf Start- und Sender-Seiten */
+    reihe: (a: { genre: GenreId; gruppe?: SenderGruppe | null; limit?: number }): Promise<Film[]> =>
+      ipcRenderer.invoke('index:reihe', a),
+    film: (id: number): Promise<Film | null> => ipcRenderer.invoke('index:film', id),
+    folgen: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:folgen', id),
     /** Meldet jede Zustandsänderung; gibt eine Funktion zum Abmelden zurück. */
     beiAenderung: (callback: (z: IndexZustand) => void): (() => void) => {
       const listener = (_e: IpcRendererEvent, z: IndexZustand) => callback(z);
@@ -27,6 +33,10 @@ const api = {
     /** Öffnet die Sendungsseite im Browser – oder die Suche beim Sender, wenn die Seite nicht mehr existiert. */
     seiteOeffnen: (film: { website: string; gruppe: string; titel: string }): Promise<'seite' | 'suche' | null> =>
       ipcRenderer.invoke('film:seite-oeffnen', film)
+  },
+  bild: {
+    /** Vorschaubild zur Sendungsseite (null = keins gefunden) */
+    url: (website: string): Promise<string | null> => ipcRenderer.invoke('bild:url', website)
   },
   update: {
     zustand: (): Promise<UpdateZustand> => ipcRenderer.invoke('update:zustand'),

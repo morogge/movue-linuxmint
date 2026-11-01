@@ -15,7 +15,7 @@ function videoDatei(film: Film): string | null {
   return /^https?:\/\/.+\.mp4(\?|$)/i.test(url) ? url : null;
 }
 
-function Treffer({ film }: { film: Film }) {
+function Treffer({ film, onOeffne }: { film: Film; onOeffne: (f: Film) => void }) {
   const [seite, setSeite] = useState<'bereit' | 'pruefe' | 'suche'>('bereit');
   const unterSender = film.sender !== film.gruppe && film.sender !== '3Sat' && film.sender !== 'ARTE.DE';
   const video = videoDatei(film);
@@ -44,7 +44,11 @@ function Treffer({ film }: { film: Film }) {
             </span>
           ))}
       </div>
-      <h3 className="treffer-titel">{film.titel}</h3>
+      <h3 className="treffer-titel">
+        <button type="button" className="treffer-link" onClick={() => onOeffne(film)}>
+          {film.titel}
+        </button>
+      </h3>
       {film.beschreibung && <p className="treffer-text">{film.beschreibung}</p>}
       <div className="treffer-fuss">
         <span>{formatDatum(film.datum)}</span>
@@ -77,9 +81,10 @@ interface Props {
   zustand: IndexZustand;
   genre: GenreId | null;
   onGenre: (g: GenreId | null) => void;
+  onOeffne: (f: Film) => void;
 }
 
-export function SearchScreen({ suchtext, zustand, genre, onGenre }: Props) {
+export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne }: Props) {
   const [gruppe, setGruppe] = useState<SenderGruppe | null>(null);
   const [sortierung, setSortierung] = useState<Sortierung>('relevanz');
   const [ergebnis, setErgebnis] = useState<SuchErgebnis>({ treffer: [], gesamt: 0 });
@@ -174,7 +179,7 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre }: Props) {
           </p>
           <ul className="trefferliste">
             {ergebnis.treffer.map((f) => (
-              <Treffer key={f.id} film={f} />
+              <Treffer key={f.id} film={f} onOeffne={onOeffne} />
             ))}
           </ul>
           {ergebnis.treffer.length < ergebnis.gesamt && (

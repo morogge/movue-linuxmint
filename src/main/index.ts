@@ -4,14 +4,17 @@ import type { IndexZustand, SuchAnfrage } from '@shared/film';
 import type { UpdateZustand } from '@shared/update';
 import { IndexDienst } from './index/dienst';
 import { UpdateDienst } from './update';
+import { BildDienst } from './bilder';
 import { seitenZiel } from './links';
 import { istGruppe } from '@shared/sender';
+import { istGenre } from '@shared/genres';
 
 // Für Tests: eigenes Datenverzeichnis statt ~/.config/Movue
 if (process.env['MOVUE_DATEN']) app.setPath('userData', process.env['MOVUE_DATEN']);
 
 let index: IndexDienst | null = null;
 let update: UpdateDienst | null = null;
+let bilder: BildDienst | null = null;
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -77,6 +80,23 @@ ipcMain.handle('index:suche', (_event, anfrage: SuchAnfrage) => {
 
 ipcMain.handle('index:genres', () => index?.genres() ?? []);
 
+ipcMain.handle('index:reihe', (_event, a: { genre?: unknown; gruppe?: unknown; limit?: unknown }) => {
+  if (!index || !istGenre(a?.genre)) return [];
+  return index.reihe({
+    genre: a.genre,
+    gruppe: istGruppe(a.gruppe) ? a.gruppe : null,
+    limit: typeof a.limit === 'number' ? a.limit : undefined
+  });
+});
+
+ipcMain.handle('index:film', (_event, id: unknown) => (index && typeof id === 'number' ? index.film(id) : null));
+
+ipcMain.handle('index:folgen', (_event, id: unknown) => (index && typeof id === 'number' ? index.folgen(id) : []));
+
+ipcMain.handle('bild:url', (_event, website: unknown) =>
+  bilder && typeof website === 'string' ? bilder.url(website) : null
+);
+
 ipcMain.handle('film:seite-oeffnen', async (_event, film: { website?: unknown; gruppe?: unknown; titel?: unknown }) => {
   if (typeof film?.website !== 'string' || typeof film.titel !== 'string' || !istGruppe(film.gruppe)) return null;
   const ziel = await seitenZiel({ website: film.website, gruppe: film.gruppe, titel: film.titel });
@@ -92,6 +112,11 @@ app.whenReady().then(() => {
   const userAgent = `Movue/${app.getVersion()} (+https://github.com/morogge/movue-linuxmint)`;
   index = new IndexDienst(join(app.getPath('userData'), 'index.db'), userAgent, sendeZustand);
   update = new UpdateDienst(sendeUpdate);
+  // Für Tests: keine Abrufe bei den Sendern
+  bilder = new BildDienst(
+    join(app.getPath('userData'), 'bilder.db'),
+    process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined
+  );
   createWindow();
   index.start();
   update.start();
@@ -104,6 +129,7 @@ app.whenReady().then(() => {
 app.on('before-quit', () => {
   index?.stop();
   update?.stop();
+  bilder?.schliessen();
 });
 
 app.on('window-all-closed', () => {

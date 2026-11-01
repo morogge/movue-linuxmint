@@ -5,7 +5,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   anzahl,
   baueFtsAbfrage,
+  filmNachId,
+  folgen,
   genreAnzahlen,
+  istVariante,
+  reihe,
   leseMeta,
   oeffneDb,
   schliesseAufbau,
@@ -174,5 +178,33 @@ describe('Neuaufbau bei neuer Programmversion', () => {
     const jetzt = Date.UTC(2026, 10, 1, 12);
     expect(naechsteAktion({ vorhanden: true, schemaAktuell: false, vollGeladen: jetzt, diffGeladen: jetzt }, jetzt)).toBe('voll');
     expect(naechsteAktion({ vorhanden: true, schemaAktuell: true, vollGeladen: jetzt, diffGeladen: jetzt }, jetzt)).toBeNull();
+  });
+});
+
+describe('Startseite und Detailseite', () => {
+  const jetzt = Date.UTC(2026, 10, 1, 12);
+
+  it('erkennt Varianten', () => {
+    expect(istVariante('Tatort: Gier (Audiodeskription)')).toBe(true);
+    expect(istVariante('Die goldene Gans (Gebärdensprache)')).toBe(true);
+    expect(istVariante('Xenius (Originalversion mit Untertitel)')).toBe(true);
+    expect(istVariante('Tatort: Gier')).toBe(false);
+  });
+
+  it('zeigt in einer Reihe je Thema nur die neueste Folge', () => {
+    const krimi = reihe(db, { genre: 'krimi', jetzt });
+    expect(krimi.map((f) => f.titel)).toEqual(['Tatort: Der Fall Münster']);
+  });
+
+  it('lässt kurze Clips weg und filtert nach Sender', () => {
+    expect(reihe(db, { genre: 'krimi', jetzt, minDauer: 2 * 3600 })).toEqual([]);
+    expect(reihe(db, { genre: 'krimi', gruppe: 'ZDF', jetzt })).toEqual([]);
+  });
+
+  it('liefert eine Sendung und ihre weiteren Folgen', () => {
+    const erste = suche(db, { text: 'münster' }).treffer[0];
+    expect(filmNachId(db, erste.id)?.titel).toBe('Tatort: Der Fall Münster');
+    expect(folgen(db, erste).map((f) => f.titel)).toEqual(['Tatort: Der Fall Münster', 'Tatort: Zweiter Fall']);
+    expect(folgen(db, { gruppe: 'ZDF', thema: 'Filme' })).toEqual([]);
   });
 });

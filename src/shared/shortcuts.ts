@@ -3,7 +3,7 @@
  * Die Hilfeseite „Tastenkürzel“ wird aus dieser Liste erzeugt – neue Kürzel nur hier eintragen.
  */
 
-export type ShortcutId = 'help' | 'search' | 'fullscreen' | 'close';
+export type ShortcutId = 'help' | 'search' | 'back' | 'fullscreen' | 'close';
 
 export interface Shortcut {
   id: ShortcutId;
@@ -20,6 +20,7 @@ export interface Shortcut {
 export const SHORTCUTS: readonly Shortcut[] = [
   { id: 'help', keys: ['F1'], key: 'F1', description: 'Hilfe zum aktuellen Bildschirm öffnen' },
   { id: 'search', keys: ['Strg', 'K'], key: 'k', ctrl: true, description: 'Ins Suchfeld springen' },
+  { id: 'back', keys: ['Alt', '←'], key: 'ArrowLeft', alt: true, description: 'Zurück zur vorigen Seite' },
   { id: 'fullscreen', keys: ['F11'], key: 'F11', description: 'Vollbild ein- oder ausschalten' },
   { id: 'close', keys: ['Esc'], key: 'Escape', description: 'Hilfe schließen bzw. Suchfeld leeren' }
 ];

@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { matchShortcut } from '@shared/shortcuts';
+import type { Film } from '@shared/film';
+import type { GenreId } from '@shared/genres';
+import { CHANGELOG_PAGE_ID } from '@shared/help';
 import { SCREENS, type ScreenId } from '@shared/screens';
+import type { SenderGruppe } from '@shared/sender';
+import { matchShortcut } from '@shared/shortcuts';
+import { zeigeWasIstNeu } from '@shared/update';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
-import { StartScreen } from './screens/StartScreen';
-import { SearchScreen } from './screens/SearchScreen';
-import { GenresScreen } from './screens/GenresScreen';
-import type { GenreId } from '@shared/genres';
+import { UpdateBanner, useUpdateZustand } from './components/UpdateBanner';
 import { HelpView } from './help/HelpView';
 import { useIndexZustand } from './hooks/useIndexZustand';
-import { UpdateBanner, useUpdateZustand } from './components/UpdateBanner';
-import { CHANGELOG_PAGE_ID } from '@shared/help';
-import { zeigeWasIstNeu } from '@shared/update';
+import { DetailScreen } from './screens/DetailScreen';
+import { GenresScreen } from './screens/GenresScreen';
+import { SearchScreen } from './screens/SearchScreen';
+import { StartScreen } from './screens/StartScreen';
 
 const ZULETZT_GESEHEN = 'movue.zuletztGeseheneVersion';
 
@@ -31,8 +34,16 @@ function schreibeSpeicher(key: string, wert: string): void {
   }
 }
 
+/** Wo der Nutzer gerade ist – mit allem, was die Ansicht braucht */
+export interface Ansicht {
+  screen: ScreenId;
+  gruppe?: SenderGruppe;
+  filmId?: number;
+}
+
 export function App() {
-  const [screen, setScreen] = useState<ScreenId>('start');
+  const [ansicht, setAnsicht] = useState<Ansicht>({ screen: 'start' });
+  const [verlauf, setVerlauf] = useState<Ansicht[]>([]);
   const [helpPage, setHelpPage] = useState<string | null>(null);
   const [suchtext, setSuchtext] = useState('');
   const [genre, setGenre] = useState<GenreId | null>(null);
@@ -48,13 +59,43 @@ export function App() {
     });
   }, []);
 
-  const openHelp = useCallback(() => setHelpPage(SCREENS[screen].help), [screen]);
+  const gehe = useCallback(
+    (neu: Ansicht) => {
+      setVerlauf((v) => [...v.slice(-30), ansicht]);
+      setAnsicht(neu);
+      window.scrollTo({ top: 0 });
+    },
+    [ansicht]
+  );
+
+  const zurueck = useCallback(() => {
+    setVerlauf((v) => {
+      if (v.length === 0) return v;
+      setAnsicht(v[v.length - 1]);
+      return v.slice(0, -1);
+    });
+  }, []);
+
+  const oeffneFilm = useCallback((f: Film) => gehe({ screen: 'detail', filmId: f.id }), [gehe]);
+  const zeigeGenre = useCallback(
+    (g: GenreId) => {
+      setGenre(g);
+      setSuchtext('');
+      gehe({ screen: 'suche' });
+    },
+    [gehe]
+  );
+
+  const openHelp = useCallback(() => setHelpPage(SCREENS[ansicht.screen].help), [ansicht.screen]);
   const closeHelp = useCallback(() => setHelpPage(null), []);
 
-  const sucheAendern = useCallback((text: string) => {
-    setSuchtext(text);
-    if (text.trim()) setScreen('suche');
-  }, []);
+  const sucheAendern = useCallback(
+    (text: string) => {
+      setSuchtext(text);
+      if (text.trim() && ansicht.screen !== 'suche') gehe({ screen: 'suche' });
+    },
+    [ansicht.screen, gehe]
+  );
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -67,6 +108,7 @@ export function App() {
         suchfeld.current?.focus();
         suchfeld.current?.select();
       }
+      if (action === 'back') zurueck();
       if (action === 'fullscreen') void window.movue?.toggleFullscreen();
       if (action === 'close') {
         if (helpPage) closeHelp();
@@ -75,25 +117,24 @@ export function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [openHelp, closeHelp, helpPage]);
+  }, [openHelp, closeHelp, helpPage, zurueck]);
 
   return (
     <div className="app">
-      <Sidebar current={screen} onNavigate={setScreen} zustand={zustand} update={update} />
+      <Sidebar ansicht={ansicht} onNavigate={gehe} zustand={zustand} update={update} />
       <main className="main">
         <UpdateBanner zustand={update} />
         <TopBar ref={suchfeld} suchtext={suchtext} onSuche={sucheAendern} onHelp={openHelp} />
-        {screen === 'start' && <StartScreen zustand={zustand} onHelp={openHelp} onSuche={() => suchfeld.current?.focus()} />}
-        {screen === 'suche' && <SearchScreen suchtext={suchtext} zustand={zustand} genre={genre} onGenre={setGenre} />}
-        {screen === 'genres' && (
-          <GenresScreen
-            zustand={zustand}
-            onWaehle={(g) => {
-              setGenre(g);
-              setSuchtext('');
-              setScreen('suche');
-            }}
-          />
+        {ansicht.screen === 'start' && <StartScreen zustand={zustand} onOeffne={oeffneFilm} onGenre={zeigeGenre} />}
+        {ansicht.screen === 'sender' && ansicht.gruppe && (
+          <StartScreen zustand={zustand} gruppe={ansicht.gruppe} onOeffne={oeffneFilm} onGenre={zeigeGenre} />
+        )}
+        {ansicht.screen === 'suche' && (
+          <SearchScreen suchtext={suchtext} zustand={zustand} genre={genre} onGenre={setGenre} onOeffne={oeffneFilm} />
+        )}
+        {ansicht.screen === 'genres' && <GenresScreen zustand={zustand} onWaehle={zeigeGenre} />}
+        {ansicht.screen === 'detail' && ansicht.filmId !== undefined && (
+          <DetailScreen filmId={ansicht.filmId} onOeffne={oeffneFilm} onZurueck={zurueck} />
         )}
       </main>
       {helpPage && <HelpView page={helpPage} onSelect={setHelpPage} onClose={closeHelp} />}

@@ -43,7 +43,7 @@ export interface Ansicht {
 
 export function App() {
   const [ansicht, setAnsicht] = useState<Ansicht>({ screen: 'start' });
-  const [verlauf, setVerlauf] = useState<Ansicht[]>([]);
+  const [, setVerlauf] = useState<Ansicht[]>([]);
   const [helpPage, setHelpPage] = useState<string | null>(null);
   const [suchtext, setSuchtext] = useState('');
   const [genre, setGenre] = useState<GenreId | null>(null);

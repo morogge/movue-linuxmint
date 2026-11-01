@@ -31,13 +31,19 @@ jobs:
             tag="v$(node -p "require('./package.json').version")"
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          case "$tag" in v0.*|*-*) echo "prerelease=true" >> "$GITHUB_OUTPUT";; *) echo "prerelease=false" >> "$GITHUB_OUTPUT";; esac
+          # Nur Versionen mit Bindestrich (z. B. v1.0.0-beta.1) sind Vorabversionen – die App aktualisiert nur auf reguläre
+          case "$tag" in *-*) echo "prerelease=true" >> "$GITHUB_OUTPUT";; *) echo "prerelease=false" >> "$GITHUB_OUTPUT";; esac
 
       - name: Abhängigkeiten installieren
         run: npm ci
 
       - name: .deb und AppImage bauen
         run: npm run dist
+
+      - name: Update-Beschreibung prüfen
+        run: |
+          test -f dist/latest-linux.yml
+          cat dist/latest-linux.yml
 
       - name: Release anlegen
         uses: softprops/action-gh-release@v2
@@ -47,6 +53,8 @@ jobs:
           name: Movue ${{ steps.version.outputs.tag }}
           prerelease: ${{ steps.version.outputs.prerelease }}
           generate_release_notes: true
+          # latest-linux.yml sagt der App, welche Version die neueste ist (automatische Updates)
           files: |
             dist/*.deb
             dist/*.AppImage
+            dist/latest-linux.yml

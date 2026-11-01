@@ -9,7 +9,8 @@ const PATHS = {
   fullscreen: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
   close: 'M6 6l12 12M18 6L6 18',
   search: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-3.5-3.5',
-  external: 'M14 4h6v6M20 4l-9 9M19 14v6H4V5h6'
+  external: 'M14 4h6v6M20 4l-9 9M19 14v6H4V5h6',
+  download: 'M12 3v12M7 10l5 5 5-5M5 21h14'
 } as const;
 
 export type IconName = keyof typeof PATHS;

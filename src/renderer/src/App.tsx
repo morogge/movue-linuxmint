@@ -7,6 +7,27 @@ import { StartScreen } from './screens/StartScreen';
 import { SearchScreen } from './screens/SearchScreen';
 import { HelpView } from './help/HelpView';
 import { useIndexZustand } from './hooks/useIndexZustand';
+import { UpdateBanner, useUpdateZustand } from './components/UpdateBanner';
+import { CHANGELOG_PAGE_ID } from '@shared/help';
+import { zeigeWasIstNeu } from '@shared/update';
+
+const ZULETZT_GESEHEN = 'movue.zuletztGeseheneVersion';
+
+function leseSpeicher(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function schreibeSpeicher(key: string, wert: string): void {
+  try {
+    window.localStorage.setItem(key, wert);
+  } catch {
+    // Ohne Speicher erscheint „Was ist neu“ eben nicht automatisch
+  }
+}
 
 export function App() {
   const [screen, setScreen] = useState<ScreenId>('start');
@@ -14,6 +35,15 @@ export function App() {
   const [suchtext, setSuchtext] = useState('');
   const suchfeld = useRef<HTMLInputElement>(null);
   const zustand = useIndexZustand();
+  const update = useUpdateZustand();
+
+  // Nach einem Update einmal „Was ist neu“ zeigen
+  useEffect(() => {
+    void window.movue?.getInfo().then(({ version }) => {
+      if (zeigeWasIstNeu(leseSpeicher(ZULETZT_GESEHEN), version)) setHelpPage(CHANGELOG_PAGE_ID);
+      schreibeSpeicher(ZULETZT_GESEHEN, version);
+    });
+  }, []);
 
   const openHelp = useCallback(() => setHelpPage(SCREENS[screen].help), [screen]);
   const closeHelp = useCallback(() => setHelpPage(null), []);
@@ -46,8 +76,9 @@ export function App() {
 
   return (
     <div className="app">
-      <Sidebar current={screen} onNavigate={setScreen} zustand={zustand} />
+      <Sidebar current={screen} onNavigate={setScreen} zustand={zustand} update={update} />
       <main className="main">
+        <UpdateBanner zustand={update} />
         <TopBar ref={suchfeld} suchtext={suchtext} onSuche={sucheAendern} onHelp={openHelp} />
         {screen === 'start' && <StartScreen zustand={zustand} onHelp={openHelp} onSuche={() => suchfeld.current?.focus()} />}
         {screen === 'suche' && <SearchScreen suchtext={suchtext} zustand={zustand} />}

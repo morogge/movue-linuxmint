@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { IndexZustand } from '@shared/film';
 import { formatStand, formatZahl } from '@shared/format';
 import type { ScreenId } from '@shared/screens';
+import type { UpdateZustand } from '@shared/update';
 import { Icon, type IconName } from './Icon';
 
 interface NavItem {
@@ -50,11 +51,13 @@ function IndexStatus({ zustand }: { zustand: IndexZustand }) {
 export function Sidebar({
   current,
   onNavigate,
-  zustand
+  zustand,
+  update
 }: {
   current: ScreenId;
   onNavigate: (id: ScreenId) => void;
   zustand: IndexZustand;
+  update: UpdateZustand;
 }) {
   const [version, setVersion] = useState<string>('');
 
@@ -92,7 +95,12 @@ export function Sidebar({
       </ul>
       <div className="sidebar-foot">
         <IndexStatus zustand={zustand} />
-        {version && <span className="version">Version {version}</span>}
+        {version && (
+          <span className="version">
+            Version {version}
+            {update.phase === 'laedt' && ` · Update ${update.version} wird geladen (${update.prozent} %)`}
+          </span>
+        )}
       </div>
     </nav>
   );

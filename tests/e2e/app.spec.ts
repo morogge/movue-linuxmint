@@ -16,7 +16,8 @@ test.beforeAll(async () => {
     env: {
       ...process.env,
       MOVUE_DATEN: daten,
-      MOVUE_FILMLISTE_VOLL: join(__dirname, '../fixtures/filmliste-mini.json')
+      MOVUE_FILMLISTE_VOLL: join(__dirname, '../fixtures/filmliste-mini.json'),
+      MOVUE_UPDATE_SIMULIEREN: '9.9.9'
     }
   });
   win = await app.firstWindow();
@@ -70,4 +71,13 @@ test('Tastenkürzel-Seite zeigt die Tabelle aus der App', async () => {
   const table = win.getByRole('table');
   await expect(table.getByRole('cell', { name: 'Ins Suchfeld springen' })).toBeVisible();
   await win.getByRole('button', { name: 'Hilfe schließen (Esc)' }).click();
+});
+
+test('Hinweis auf eine heruntergeladene neue Version', async () => {
+  const hinweis = win.getByRole('region', { name: 'Neue Version' });
+  await expect(hinweis).toContainText('Movue 9.9.9 ist da.');
+  await expect(hinweis.getByRole('button', { name: 'Jetzt neu starten' })).toBeVisible();
+  await win.screenshot({ path: 'test-results/screens/update-hinweis.png' });
+  await hinweis.getByRole('button', { name: 'Später' }).click();
+  await expect(hinweis).toBeHidden();
 });

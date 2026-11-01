@@ -4,6 +4,22 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.5.0 – 2026-11-01
+
+### Neu
+
+- **Neue Startseite**: oben eine Empfehlung, darunter Reihen mit den neuesten Sendungen je Genre – über alle Mediatheken hinweg, je Sendereihe nur die neueste Folge
+- **Vorschaubilder** für Sendungen, geholt von den Seiten der Sender und zwischengespeichert
+- **Detailseite** für jede Sendung mit Beschreibung, Genres und allen weiteren Folgen der Reihe, bei Serien nach Staffel sortiert
+- **Sender-Seiten** für ARD, ZDF, 3sat und Arte in der Seitenleiste
+- **Zurück**-Knopf und **Alt + ←**
+- In der Suche öffnet ein Klick auf den Titel die Detailseite
+- Neue Hilfeseite „Stöbern“
+
+### Hinweis
+
+- Nach dem Update baut Movue das Sendungsverzeichnis einmal neu auf.
+
 ## 0.4.0 – 2026-11-01
 
 ### Neu

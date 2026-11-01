@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import type { IndexZustand } from '@shared/film';
 import { formatStand, formatZahl } from '@shared/format';
 import type { ScreenId } from '@shared/screens';
+import { GRUPPEN } from '@shared/sender';
+import type { Ansicht } from '../App';
+import { SENDER_FARBE } from '../senderFarben';
 import type { UpdateZustand } from '@shared/update';
 import { Icon, type IconName } from './Icon';
 
@@ -49,13 +52,13 @@ function IndexStatus({ zustand }: { zustand: IndexZustand }) {
 }
 
 export function Sidebar({
-  current,
+  ansicht,
   onNavigate,
   zustand,
   update
 }: {
-  current: ScreenId;
-  onNavigate: (id: ScreenId) => void;
+  ansicht: Ansicht;
+  onNavigate: (a: Ansicht) => void;
   zustand: IndexZustand;
   update: UpdateZustand;
 }) {
@@ -81,11 +84,11 @@ export function Sidebar({
           <li key={item.label}>
             <button
               type="button"
-              className={item.id === current ? 'nav-item active' : 'nav-item'}
+              className={item.id === ansicht.screen ? 'nav-item active' : 'nav-item'}
               disabled={item.id === null}
-              aria-current={item.id === current ? 'page' : undefined}
+              aria-current={item.id === ansicht.screen ? 'page' : undefined}
               title={item.id === null ? 'Folgt in einer späteren Version' : undefined}
-              onClick={() => item.id && onNavigate(item.id)}
+              onClick={() => item.id && onNavigate({ screen: item.id })}
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>
@@ -93,6 +96,27 @@ export function Sidebar({
           </li>
         ))}
       </ul>
+      <div className="nav-gruppe">
+        <span className="nav-ueberschrift">Sender</span>
+        <ul className="nav">
+          {GRUPPEN.map((g) => {
+            const aktiv = ansicht.screen === 'sender' && ansicht.gruppe === g.id;
+            return (
+              <li key={g.id}>
+                <button
+                  type="button"
+                  className={aktiv ? 'nav-item active' : 'nav-item'}
+                  aria-current={aktiv ? 'page' : undefined}
+                  onClick={() => onNavigate({ screen: 'sender', gruppe: g.id })}
+                >
+                  <span className="dot" style={{ background: SENDER_FARBE[g.id] }} />
+                  <span>{g.name}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
       <div className="sidebar-foot">
         <IndexStatus zustand={zustand} />
         {version && (

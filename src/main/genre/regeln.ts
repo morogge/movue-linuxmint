@@ -105,7 +105,7 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'spätschicht', 'satire gipfel', 'satiregipfel', 'die carolin kebekus show', 'freitag nacht news', 'neo magazin',
     'browser ballett', 'mann, sieber', 'die bierbichler', 'olafs klub', 'quatsch', 'comedystreet',
     'kabarettfestival', 'schreinerei', 'mittermeier', 'pispers', 'priol', 'tegtmeier', 'loriot', 'otto!',
-    'brettl-spitzen', 'world wide wohnzimmer', 'quer!', 'happy hour', 'pufpaff', 'schlachthof', 'pratersterne', 'vereinsheim schwabing', 'asül', 'schleichfernsehen', 'tafelrunde', 'noch nicht schicht', 'pelzig', 'karlsplatz', 'bosetti', 'till reiners', 'was gibt es neues', '3satfestival',
+    'brettl-spitzen', 'world wide wohnzimmer', 'happy hour', 'pufpaff', 'schlachthof', 'pratersterne', 'vereinsheim schwabing', 'asül', 'schleichfernsehen', 'tafelrunde', 'noch nicht schicht', 'pelzig', 'karlsplatz', 'bosetti', 'till reiners', 'was gibt es neues', '3satfestival',
     'walulis', 'nockherberg'
   ],
   unterhaltung: [
@@ -209,7 +209,8 @@ const THEMA_EXAKT: Record<string, GenreId[]> = {
   'filme im zdf': ['film'],
   serien: ['serie'],
   serie: ['serie'],
-  dave: ['serie']
+  dave: ['serie'],
+  quer: ['comedy']
 };
 
 /** Sender, deren Programm ein Genre vorgibt */

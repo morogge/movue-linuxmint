@@ -1,7 +1,20 @@
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import type { IndexZustand, SuchAnfrage, SuchErgebnis } from '@shared/film';
 import type { ListenArt } from '../filmliste/quelle';
-import { anzahl, genreAnzahlen, leseMeta, oeffneDb, SCHEMA_VERSION, suche, type Db } from './datenbank';
+import {
+  anzahl,
+  filmNachId,
+  folgen,
+  genreAnzahlen,
+  leseMeta,
+  oeffneDb,
+  reihe,
+  SCHEMA_VERSION,
+  suche,
+  type Db,
+  type ReihenAnfrage
+} from './datenbank';
+import type { Film } from '@shared/film';
 import type { GenreAnzahl } from '@shared/genres';
 import type { IndexerAuftrag, IndexerNachricht } from './indexer.worker';
 import { naechsteAktion } from './plan';
@@ -47,6 +60,20 @@ export class IndexDienst {
     if (!this.db) return [];
     this.genreCache ??= genreAnzahlen(this.db);
     return this.genreCache;
+  }
+
+  reihe(anfrage: ReihenAnfrage): Film[] {
+    return this.db ? reihe(this.db, anfrage) : [];
+  }
+
+  film(id: number): Film | null {
+    return this.db ? filmNachId(this.db, id) : null;
+  }
+
+  folgen(id: number): Film[] {
+    if (!this.db) return [];
+    const f = filmNachId(this.db, id);
+    return f ? folgen(this.db, f) : [];
   }
 
   suche(anfrage: SuchAnfrage): SuchErgebnis {

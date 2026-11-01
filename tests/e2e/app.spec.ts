@@ -17,7 +17,8 @@ test.beforeAll(async () => {
       ...process.env,
       MOVUE_DATEN: daten,
       MOVUE_FILMLISTE_VOLL: join(__dirname, '../fixtures/filmliste-mini.json'),
-      MOVUE_UPDATE_SIMULIEREN: '9.9.9'
+      MOVUE_UPDATE_SIMULIEREN: '9.9.9',
+      MOVUE_BILDER_AUS: '1'
     }
   });
   win = await app.firstWindow();
@@ -30,11 +31,28 @@ test.afterAll(async () => {
 });
 
 test('Startseite erscheint und das Sendungsverzeichnis wird geladen', async () => {
-  await expect(win.getByRole('heading', { name: 'Willkommen bei Movue' })).toBeVisible();
   await expect(win.getByText(/Version \d+\.\d+\.\d+/)).toBeVisible();
   await expect(win.getByRole('status')).toContainText('6 Sendungen', { timeout: 30_000 });
   await expect(win.getByRole('status')).toContainText('Stand 01.11.');
+  await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 2 })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/start.png' });
+});
+
+test('Kachel öffnet die Detailseite mit weiteren Folgen, Alt+← führt zurück', async () => {
+  await win.getByRole('button', { name: /Tatort: Der Fall Münster/ }).first().click();
+  await expect(win.getByRole('heading', { name: 'Tatort: Der Fall Münster', level: 1 })).toBeVisible();
+  await expect(win.getByRole('heading', { name: 'Weitere Folgen von „Tatort“' })).toBeVisible();
+  await expect(win.getByRole('button', { name: /Tatort: Zweiter Fall/ })).toBeVisible();
+  await win.screenshot({ path: 'test-results/screens/detail.png' });
+  await win.keyboard.press('Alt+ArrowLeft');
+  await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 2 })).toBeVisible();
+});
+
+test('Sender-Seite zeigt nur Sendungen dieser Mediathek', async () => {
+  await win.getByRole('button', { name: 'ZDF Mediathek' }).click();
+  await expect(win.getByRole('heading', { name: 'ZDF Mediathek', level: 1 })).toBeVisible();
+  await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 2 })).toHaveCount(0);
+  await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 
 test('Suche findet Sendungen über alle Sender und filtert nach Sender', async () => {

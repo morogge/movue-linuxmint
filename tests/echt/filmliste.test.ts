@@ -3,7 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { listenAdresse, oeffneListe } from '../../src/main/filmliste/quelle';
-import { anzahl, genreAnzahlen, oeffneDb, schliesseAufbau, suche } from '../../src/main/index/datenbank';
+import { anzahl, folgen, genreAnzahlen, oeffneDb, reihe, schliesseAufbau, suche } from '../../src/main/index/datenbank';
+import type { GenreId } from '../../src/shared/genres';
 import { importiere } from '../../src/main/index/import';
 import { GRUPPEN } from '../../src/shared/sender';
 
@@ -51,6 +52,18 @@ describe('Echte Filmliste', () => {
           2
         )
       );
+      // Startseite: alle Reihen wie in der App
+      const REIHEN: GenreId[] = ['film', 'krimi', 'doku', 'serie', 'wissen', 'geschichte', 'reise', 'kultur', 'comedy', 'unterhaltung', 'gesellschaft', 'ratgeber', 'kinder', 'sport'];
+      const r0 = Date.now();
+      const reihen = REIHEN.map((g) => ({ g, filme: reihe(lese, { genre: g }) }));
+      const reihenMs = Date.now() - r0;
+      console.log(`REIHEN ${reihenMs} ms für ${REIHEN.length} Reihen`);
+      for (const { g, filme } of reihen) console.log(`REIHE ${g} (${filme.length}): ` + filme.slice(0, 8).map((f) => `${f.sender}/${f.titel.slice(0, 35)}`).join(' | '));
+      const tatortFolgen = folgen(lese, tatort.treffer.find((f) => f.thema === 'Tatort') ?? tatort.treffer[0]);
+      console.log(`FOLGEN Tatort: ${tatortFolgen.length}`);
+      expect(reihenMs).toBeLessThan(3000);
+      for (const { filme } of reihen) expect(filme.length).toBeGreaterThan(5);
+
       // Genre-Bericht: Abdeckung, häufigste nicht zugeordnete Themen, Stichproben je Genre
       const genres = genreAnzahlen(lese);
       const ohne = genres.find((g) => g.id === 'sonstiges')!.anzahl;

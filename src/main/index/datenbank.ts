@@ -1,13 +1,13 @@
 import Database from 'better-sqlite3';
 import type { Film, Sortierung, SuchAnfrage, SuchErgebnis } from '@shared/film';
 import { GENRES, istGenre, type GenreAnzahl, type GenreId } from '@shared/genres';
-import { istGruppe } from '@shared/sender';
+import { istGruppe, type SenderGruppe } from '@shared/sender';
 import type { FilmEintrag } from '../filmliste/eintrag';
 
 export type Db = Database.Database;
 
 /** Erhöhen, wenn sich Tabellen oder abgeleitete Daten (z. B. Genre-Regeln) ändern – erzwingt einen Neuaufbau. */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS film (
@@ -25,8 +25,11 @@ CREATE TABLE IF NOT EXISTS film (
   url_hd TEXT NOT NULL,
   url_untertitel TEXT NOT NULL,
   geo TEXT NOT NULL,
-  neu INTEGER NOT NULL
+  neu INTEGER NOT NULL,
+  -- 1 = Fassung mit Audiodeskription, Gebärdensprache o. Ä.; beim Stöbern ausgeblendet
+  variante INTEGER NOT NULL DEFAULT 0
 );
+CREATE INDEX IF NOT EXISTS film_thema ON film(gruppe, thema, datum DESC);
 CREATE INDEX IF NOT EXISTS film_gruppe_datum ON film(gruppe, datum DESC);
 CREATE INDEX IF NOT EXISTS film_datum ON film(datum DESC);
 CREATE VIRTUAL TABLE IF NOT EXISTS film_fts USING fts5(
@@ -86,24 +89,32 @@ export function schliesseAufbau(db: Db): void {
   db.pragma('journal_mode = WAL');
 }
 
+/** Fassungen derselben Sendung, die beim Stöbern nicht doppelt erscheinen sollen */
+const VARIANTE = /\((?:[^)]*\b)?(audiodeskription|gebärdensprache|originalversion|originalfassung|klare sprache|hörfassung|mit untertitel)\b[^)]*\)/i;
+
+export function istVariante(titel: string): boolean {
+  return VARIANTE.test(titel) || /\s[-–]\s(audiodeskription|gebärdensprache|hörfassung)\s*$/i.test(titel);
+}
+
 export function schreiber(db: Db): (e: FilmEintrag) => void {
   const stmt = db.prepare(`
     INSERT INTO film (url, sender, gruppe, thema, titel, datum, dauer, beschreibung, website,
-                      url_klein, url_hd, url_untertitel, geo, neu)
+                      url_klein, url_hd, url_untertitel, geo, neu, variante)
     VALUES (@url, @sender, @gruppe, @thema, @titel, @datum, @dauer, @beschreibung, @website,
-            @urlKlein, @urlHd, @urlUntertitel, @geo, @neu)
+            @urlKlein, @urlHd, @urlUntertitel, @geo, @neu, @variante)
     ON CONFLICT(url) DO UPDATE SET
       sender = excluded.sender, gruppe = excluded.gruppe, thema = excluded.thema, titel = excluded.titel,
       datum = excluded.datum, dauer = excluded.dauer, beschreibung = excluded.beschreibung,
       website = excluded.website, url_klein = excluded.url_klein, url_hd = excluded.url_hd,
-      url_untertitel = excluded.url_untertitel, geo = excluded.geo, neu = excluded.neu
+      url_untertitel = excluded.url_untertitel, geo = excluded.geo, neu = excluded.neu,
+      variante = excluded.variante
     RETURNING id
   `);
   const loescheGenres = db.prepare('DELETE FROM film_genre WHERE film_id = ?');
   const genre = db.prepare('INSERT OR IGNORE INTO film_genre (genre, film_id, datum) VALUES (?, ?, ?)');
   return (e) => {
     const { genres, ...felder } = e;
-    const { id } = stmt.get({ ...felder, neu: e.neu ? 1 : 0 }) as { id: number };
+    const { id } = stmt.get({ ...felder, neu: e.neu ? 1 : 0, variante: istVariante(e.titel) ? 1 : 0 }) as { id: number };
     loescheGenres.run(id);
     for (const g of genres ?? ['sonstiges']) genre.run(g, id, e.datum);
   };
@@ -262,4 +273,88 @@ export function suche(db: Db, anfrage: SuchAnfrage): SuchErgebnis {
     treffer.map((t) => t.id)
   );
   return { treffer: treffer.map((t) => zuFilm(t, genres)), gesamt };
+}
+
+/** Eine Sendung nach id */
+export function filmNachId(db: Db, id: number): Film | null {
+  const z = db.prepare(`SELECT ${SPALTEN} FROM film f WHERE f.id = ?`).get(id) as FilmZeile | undefined;
+  return z ? zuFilm(z, genresFuer(db, [z.id])) : null;
+}
+
+/** Themen, die keine Reihe sind, sondern Sammelrubriken – dort gibt es keine „weiteren Folgen“ */
+const SAMMELTHEMEN = new Set(
+  ['filme', 'film', 'spielfilm', 'spielfilme', 'fernsehfilm', 'fernsehfilme', 'kino', 'beiträge', 'dokumentationen',
+    'dokus', 'serien', 'videos', 'sendungen', 'clips', 'br', 'sr', 'ard', 'zdf', '3sat', 'livestream']
+);
+
+/** Weitere Folgen derselben Reihe (gleicher Sender, gleiches Thema), neueste zuerst; ohne Varianten */
+export function folgen(db: Db, film: Pick<Film, 'gruppe' | 'thema'>, limit = 200): Film[] {
+  if (!film.thema || SAMMELTHEMEN.has(film.thema.trim().toLowerCase())) return [];
+  const zeilen = db
+    .prepare(
+      `SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.variante = 0
+       ORDER BY f.datum DESC LIMIT ?`
+    )
+    .all(film.gruppe, film.thema, limit) as FilmZeile[];
+  const genres = genresFuer(
+    db,
+    zeilen.map((z) => z.id)
+  );
+  return zeilen.map((z) => zuFilm(z, genres));
+}
+
+export interface ReihenAnfrage {
+  genre: GenreId;
+  gruppe?: SenderGruppe | null;
+  limit?: number;
+  /** Mindestlänge in Sekunden – blendet kurze Clips aus */
+  minDauer?: number;
+  jetzt?: number;
+}
+
+/** Normalisierter Titel zum Erkennen von Dubletten (ARD und ONE zeigen oft dieselbe Sendung) */
+function titelSchluessel(titel: string): string {
+  return titel.toLowerCase().replace(/\([^)]*\)/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+}
+
+/**
+ * Neueste Sendungen eines Genres für eine Reihe auf der Startseite: je Reihe (Thema) nur die neueste Folge,
+ * ohne Varianten und kurze Clips. Bei Spielfilmen zählt jeder Film einzeln.
+ */
+export function reihe(db: Db, anfrage: ReihenAnfrage): Film[] {
+  const limit = Math.min(Math.max(anfrage.limit ?? 18, 1), 60);
+  const jetzt = Math.floor((anfrage.jetzt ?? Date.now()) / 1000);
+  const gruppe = anfrage.gruppe && istGruppe(anfrage.gruppe) ? anfrage.gruppe : null;
+  const filter = gruppe ? 'AND f.gruppe = @gruppe' : '';
+  const sql = `
+    WITH k AS (
+      SELECT f.id, g.datum,
+             CASE WHEN @genre = 'film' THEN CAST(f.id AS TEXT) ELSE f.gruppe || '|' || f.thema END AS schluessel
+      FROM film_genre g JOIN film f ON f.id = g.film_id
+      WHERE g.genre = @genre AND g.datum >= @seit AND g.datum <= @bis
+        AND f.dauer >= @minDauer AND f.variante = 0 ${filter}
+    ), r AS (
+      SELECT id, datum, ROW_NUMBER() OVER (PARTITION BY schluessel ORDER BY datum DESC) AS rn FROM k
+    )
+    SELECT ${SPALTEN} FROM r JOIN film f ON f.id = r.id WHERE r.rn = 1 ORDER BY r.datum DESC LIMIT @mehr`;
+  const stmt = db.prepare(sql);
+  const p = { genre: anfrage.genre, gruppe, minDauer: anfrage.minDauer ?? 600, bis: jetzt + 86400, mehr: limit * 2 };
+
+  // Erst die letzten zwei Monate; reicht das nicht, ein Jahr zurück
+  let zeilen = stmt.all({ ...p, seit: jetzt - 60 * 86400 }) as FilmZeile[];
+  if (zeilen.length < limit) zeilen = stmt.all({ ...p, seit: jetzt - 400 * 86400 }) as FilmZeile[];
+
+  const gesehen = new Set<string>();
+  const eindeutig = zeilen.filter((z) => {
+    const k = titelSchluessel(z.titel);
+    if (gesehen.has(k)) return false;
+    gesehen.add(k);
+    return true;
+  });
+  const auswahl = eindeutig.slice(0, limit);
+  const genres = genresFuer(
+    db,
+    auswahl.map((z) => z.id)
+  );
+  return auswahl.map((z) => zuFilm(z, genres));
 }

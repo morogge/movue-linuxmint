@@ -1,0 +1,34 @@
+name: Lockfile aktualisieren
+
+# Erzeugt package-lock.json neu und committet es nach main.
+# Manuell starten (Actions → „Lockfile aktualisieren“ → Run workflow) oder per `gh workflow run lockfile.yml`.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Abhängigkeiten auflösen
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Lockfile committen
+        run: |
+          if git diff --quiet --exit-code -- package-lock.json && git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
+            echo "Lockfile unverändert."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "Lockfile aktualisieren"
+          git push

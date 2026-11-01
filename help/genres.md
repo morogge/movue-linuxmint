@@ -5,7 +5,7 @@ Unter **Genres** findest du alle Sendungen von ARD, ZDF, 3sat und Arte nach Them
 ## So stöberst du
 
 - Klicke in der Seitenleiste auf **Genres**. Jede Kachel zeigt ein Genre und wie viele Sendungen dazu gehören.
-- Ein Klick auf eine Kachel zeigt die neuesten Sendungen dieses Genres.
+- Ein Klick auf eine Kachel zeigt die neuesten Sendungen dieses Genres – als Kacheln mit Bild oder als Liste mit Beschreibung (Umschalter **Kacheln / Liste** oben).
 - Oben kannst du zusätzlich nach Sender filtern oder einen Suchbegriff eingeben – die Suche bleibt dann auf das Genre beschränkt.
 - Im Auswahlfeld **Genre** wechselst du das Genre oder wählst **Alle Genres**.
 

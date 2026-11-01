@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.5.1 – 2026-11-01
+
+### Verbessert
+
+- Reihen blättern jetzt mit **Pfeilen** am linken und rechten Rand statt mit Scrollbalken. Ein Pfeil erscheint nur, wenn es in diese Richtung weitergeht.
+- Jede **Sender-Seite** hat ihre eigene Empfehlung aus dem Programm dieses Senders.
+- Genre-Seiten und Suchergebnisse zeigen die Sendungen als **Kacheln mit Bild**. Die bisherige Liste gibt es weiter, jetzt ebenfalls mit Bild – umschaltbar über **Kacheln / Liste**.
+
 ## 0.5.0 – 2026-11-01
 
 ### Neu

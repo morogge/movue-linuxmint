@@ -5,13 +5,13 @@ Die Startseite zeigt dir, was es Neues in den Mediatheken gibt – geordnet nach
 ## Startseite
 
 - Oben steht eine **Empfehlung**: der neueste Spielfilm bzw. die neueste Doku mit Beschreibung.
-- Darunter folgen **Reihen** je Genre: Spielfilme, Krimis, Dokus, Serien, Wissen und mehr. Mit dem Mausrad oder einer Wischgeste scrollst du eine Reihe seitwärts.
+- Darunter folgen **Reihen** je Genre: Spielfilme, Krimis, Dokus, Serien, Wissen und mehr. Mit den **Pfeilen** am linken und rechten Rand blätterst du eine Reihe weiter; ein Pfeil erscheint nur, wenn es in diese Richtung noch etwas zu sehen gibt. Mit einem Touchpad kannst du auch seitwärts wischen.
 - Jede Reihe zeigt je Sendereihe nur die neueste Folge – so steht nicht zehnmal dieselbe Serie hintereinander. Kurze Clips unter zehn Minuten und doppelte Fassungen (z. B. mit Audiodeskription) blendet Movue hier aus; in der Suche findest du sie weiterhin.
 - **Alle anzeigen** öffnet das ganze Genre.
 
 ## Sender-Seiten
 
-Unter **Sender** in der Seitenleiste hat jede Mediathek ihre eigene Seite – mit denselben Reihen, aber nur mit Sendungen dieses Senders.
+Unter **Sender** in der Seitenleiste hat jede Mediathek ihre eigene Seite – mit eigener Empfehlung aus dem Programm dieses Senders und denselben Reihen, aber nur mit seinen Sendungen.
 
 ## Detailseite einer Sendung
 

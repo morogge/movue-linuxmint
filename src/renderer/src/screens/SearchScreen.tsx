@@ -4,6 +4,7 @@ import { formatDatum, formatDauer, formatZahl } from '@shared/format';
 import { GENRES, genreName, istGenre, type GenreId } from '@shared/genres';
 import { GRUPPEN, type SenderGruppe } from '@shared/sender';
 import { Icon } from '../components/Icon';
+import { FilmBild, Kachel } from '../components/Kachel';
 import { SENDER_FARBE } from '../senderFarben';
 
 const SEITE = 50;
@@ -28,6 +29,10 @@ function Treffer({ film, onOeffne }: { film: Film; onOeffne: (f: Film) => void }
 
   return (
     <li className="treffer">
+      <button type="button" className="treffer-bild" onClick={() => onOeffne(film)} tabIndex={-1} aria-hidden="true">
+        <FilmBild film={film} />
+      </button>
+      <div className="treffer-inhalt">
       <div className="treffer-kopf">
         <span className="sender-badge">
           <span className="dot" style={{ background: SENDER_FARBE[film.gruppe] }} />
@@ -72,6 +77,7 @@ function Treffer({ film, onOeffne }: { film: Film; onOeffne: (f: Film) => void }
           Die Seite dieser Sendung gibt es beim Sender nicht mehr. Movue hat stattdessen die Suche der Mediathek geöffnet.
         </p>
       )}
+      </div>
     </li>
   );
 }
@@ -84,7 +90,27 @@ interface Props {
   onOeffne: (f: Film) => void;
 }
 
+type Darstellung = 'kacheln' | 'liste';
+const DARSTELLUNG = 'movue.darstellung';
+
+function leseDarstellung(): Darstellung {
+  try {
+    return window.localStorage.getItem(DARSTELLUNG) === 'liste' ? 'liste' : 'kacheln';
+  } catch {
+    return 'kacheln';
+  }
+}
+
 export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne }: Props) {
+  const [darstellung, setDarstellungState] = useState<Darstellung>(leseDarstellung);
+  const setDarstellung = (d: Darstellung) => {
+    setDarstellungState(d);
+    try {
+      window.localStorage.setItem(DARSTELLUNG, d);
+    } catch {
+      // nur Komfort
+    }
+  };
   const [gruppe, setGruppe] = useState<SenderGruppe | null>(null);
   const [sortierung, setSortierung] = useState<Sortierung>('relevanz');
   const [ergebnis, setErgebnis] = useState<SuchErgebnis>({ treffer: [], gesamt: 0 });
@@ -145,6 +171,14 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne }: Pr
               </button>
             ))}
           </div>
+          <div className="chips" role="group" aria-label="Darstellung">
+            <button type="button" className={darstellung === 'kacheln' ? 'chip an' : 'chip'} aria-pressed={darstellung === 'kacheln'} onClick={() => setDarstellung('kacheln')}>
+              <Icon name="grid" size={16} /> Kacheln
+            </button>
+            <button type="button" className={darstellung === 'liste' ? 'chip an' : 'chip'} aria-pressed={darstellung === 'liste'} onClick={() => setDarstellung('liste')}>
+              <Icon name="liste" size={16} /> Liste
+            </button>
+          </div>
           <label className="sortierung">
             <span>Genre</span>
             <select value={genre ?? ''} onChange={(e) => onGenre(istGenre(e.target.value) ? e.target.value : null)}>
@@ -177,11 +211,21 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne }: Pr
           <p className="anzahl" aria-live="polite">
             {ergebnis.gesamt === 0 ? 'Keine Treffer.' : `${formatZahl(ergebnis.gesamt)} Treffer`}
           </p>
-          <ul className="trefferliste">
-            {ergebnis.treffer.map((f) => (
-              <Treffer key={f.id} film={f} onOeffne={onOeffne} />
-            ))}
-          </ul>
+          {darstellung === 'kacheln' ? (
+            <ul className="kachel-raster">
+              {ergebnis.treffer.map((f) => (
+                <li key={f.id}>
+                  <Kachel film={f} onOeffne={onOeffne} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ul className="trefferliste">
+              {ergebnis.treffer.map((f) => (
+                <Treffer key={f.id} film={f} onOeffne={onOeffne} />
+              ))}
+            </ul>
+          )}
           {ergebnis.treffer.length < ergebnis.gesamt && (
             <button type="button" className="mehr" onClick={() => void mehrLaden()} disabled={laedtMehr}>
               {laedtMehr ? 'Lade …' : 'Mehr anzeigen'}

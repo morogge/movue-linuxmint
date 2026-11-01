@@ -106,7 +106,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'browser ballett', 'mann, sieber', 'die bierbichler', 'olafs klub', 'quatsch', 'comedystreet',
     'kabarettfestival', 'schreinerei', 'mittermeier', 'pispers', 'priol', 'tegtmeier', 'loriot', 'otto!',
     'brettl-spitzen', 'world wide wohnzimmer', 'happy hour', 'pufpaff', 'schlachthof', 'pratersterne', 'vereinsheim schwabing', 'asül', 'schleichfernsehen', 'tafelrunde', 'noch nicht schicht', 'pelzig', 'karlsplatz', 'bosetti', 'till reiners', 'was gibt es neues', '3satfestival',
-    'walulis', 'nockherberg'
+    'walulis', 'nockherberg',
+    'quer mit'
   ],
   unterhaltung: [
     'show!', 'shows', 'quiz', 'gala', 'wer weiß denn sowas', 'gefragt – gejagt', 'gefragt gejagt', 'das quiz',

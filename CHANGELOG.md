@@ -4,6 +4,19 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.3.0 – 2026-11-01
+
+### Neu
+
+- Movue aktualisiert sich selbst: Neue Versionen werden im Hintergrund geladen, ein Hinweis bietet „Jetzt neu starten“ an
+- Beim .deb-Paket fragt Linux Mint zum Installieren einmal nach dem Passwort, das AppImage aktualisiert sich ohne Rückfrage
+- Nach einem Update zeigt Movue einmal „Was ist neu“
+- Neue Hilfeseite „Aktualisierungen“
+
+### Hinweis
+
+- Wer Version 0.2.0 oder älter nutzt, installiert 0.3.0 noch einmal von Hand. Ab dann kommen Updates automatisch.
+
 ## 0.2.0 – 2026-11-01
 
 ### Neu

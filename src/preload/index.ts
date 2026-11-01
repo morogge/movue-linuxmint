@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import type { IndexZustand, SuchAnfrage, SuchErgebnis } from '../shared/film';
+import type { UpdateZustand } from '../shared/update';
 
 export interface AppInfo {
   version: string;
@@ -18,6 +19,15 @@ const api = {
       const listener = (_e: IpcRendererEvent, z: IndexZustand) => callback(z);
       ipcRenderer.on('index:zustand', listener);
       return () => ipcRenderer.removeListener('index:zustand', listener);
+    }
+  },
+  update: {
+    zustand: (): Promise<UpdateZustand> => ipcRenderer.invoke('update:zustand'),
+    installieren: (): Promise<void> => ipcRenderer.invoke('update:installieren'),
+    beiAenderung: (callback: (z: UpdateZustand) => void): (() => void) => {
+      const listener = (_e: IpcRendererEvent, z: UpdateZustand) => callback(z);
+      ipcRenderer.on('update:zustand', listener);
+      return () => ipcRenderer.removeListener('update:zustand', listener);
     }
   }
 };

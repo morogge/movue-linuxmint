@@ -1,0 +1,57 @@
+name: Probe Filmliste
+on:
+  push:
+    branches: ['probe/**']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verweisdateien
+        run: |
+          for u in https://res.mediathekview.de/akt.xml https://res.mediathekview.de/diff.xml; do
+            echo "=== $u"; curl -sSL --max-time 30 "$u" | head -c 3000; echo; done
+          for u in https://liste.mediathekview.de/Filmliste-akt.xz https://liste.mediathekview.de/Filmliste-diff.xz https://liste.mediathekview.de/; do
+            echo "=== HEAD $u"; curl -sSIL --max-time 30 "$u" | grep -iE '^(HTTP|content-length|last-modified|content-type|location)'; done
+      - name: Listen laden
+        run: |
+          curl -sSL -o akt.xz https://liste.mediathekview.de/Filmliste-akt.xz
+          curl -sSL -o diff.xz https://liste.mediathekview.de/Filmliste-diff.xz
+          ls -la *.xz
+          xz -dc akt.xz > akt.json; xz -dc diff.xz > diff.json; ls -la *.json
+          echo "=== Kopf akt"; head -c 2500 akt.json; echo
+          echo "=== Zeilen akt: $(wc -l < akt.json)"
+          echo "=== Kopf diff"; head -c 1500 diff.json; echo
+      - name: Auswerten
+        run: |
+          python3 - <<'PY'
+          import json, collections
+          for name in ['akt.json','diff.json']:
+              pairs = json.load(open(name, encoding='utf-8'), object_pairs_hook=lambda p: p)
+              keys = collections.Counter(k for k,_ in pairs)
+              print('=====', name, 'Schlüssel:', dict(keys))
+              heads = [v for k,v in pairs if k != 'X']
+              for h in heads: print('KOPF', h)
+              rows = [v for k,v in pairs if k == 'X']
+              lens = collections.Counter(len(r) for r in rows)
+              print('Anzahl X:', len(rows), 'Feldanzahlen:', dict(lens))
+              sender = collections.Counter(); last=''
+              geo = collections.Counter(); emptythema=0
+              samples = {}
+              klein = []; hd = []
+              for r in rows:
+                  s = r[0] or last; last = s
+                  sender[s]+=1
+                  geo[r[18] if len(r)>18 else '?']+=1
+                  if not r[1]: emptythema+=1
+                  if s not in samples: samples[s]=r
+                  if r[12] and len(klein)<5: klein.append((r[8], r[12]))
+                  if r[14] and len(hd)<5: hd.append((r[8], r[14]))
+              print('Sender:', sender.most_common())
+              print('Geo:', geo.most_common(10))
+              print('Leeres Thema:', emptythema)
+              if name=='akt.json':
+                  for s in ['ARD','ZDF','3Sat','ARTE.DE','NDR','WDR','BR']:
+                      if s in samples: print('BEISPIEL', s, json.dumps(samples[s], ensure_ascii=False)[:900])
+                  print('KLEIN', klein); print('HD', hd)
+                  print('erste 3 Zeilen roh:', json.dumps(rows[:3], ensure_ascii=False)[:1500])
+          PY

@@ -4,6 +4,8 @@ import type { IndexZustand, SuchAnfrage } from '@shared/film';
 import type { UpdateZustand } from '@shared/update';
 import { IndexDienst } from './index/dienst';
 import { UpdateDienst } from './update';
+import { seitenZiel } from './links';
+import { istGruppe } from '@shared/sender';
 
 // Für Tests: eigenes Datenverzeichnis statt ~/.config/Movue
 if (process.env['MOVUE_DATEN']) app.setPath('userData', process.env['MOVUE_DATEN']);
@@ -71,6 +73,13 @@ ipcMain.handle('index:zustand', () => index?.aktuellerZustand() ?? { phase: 'lee
 ipcMain.handle('index:suche', (_event, anfrage: SuchAnfrage) => {
   if (!index || typeof anfrage?.text !== 'string') return { treffer: [], gesamt: 0 };
   return index.suche(anfrage);
+});
+
+ipcMain.handle('film:seite-oeffnen', async (_event, film: { website?: unknown; gruppe?: unknown; titel?: unknown }) => {
+  if (typeof film?.website !== 'string' || typeof film.titel !== 'string' || !istGruppe(film.gruppe)) return null;
+  const ziel = await seitenZiel({ website: film.website, gruppe: film.gruppe, titel: film.titel });
+  await shell.openExternal(ziel.url);
+  return ziel.art;
 });
 
 ipcMain.handle('update:zustand', () => update?.aktuellerZustand() ?? { phase: 'aus' });

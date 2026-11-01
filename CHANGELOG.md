@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.3.1 – 2026-11-01
+
+### Verbessert
+
+- „Beim Sender ansehen“ prüft vorher, ob es die Seite der Sendung noch gibt. Viele Sender haben ihre Seiten umgebaut oder entfernt. Fehlt die Seite, öffnet Movue stattdessen die Suche der Mediathek mit dem Titel der Sendung.
+- Adressen alter Portale (z. B. die klassische ARD-Mediathek oder die SR-Mediathek) führen direkt zur Suche beim Sender.
+- Neuer Knopf „Video öffnen“: spielt die Videodatei direkt ab – auch dann, wenn die Seite beim Sender fehlt.
+
 ## 0.3.0 – 2026-11-01
 
 ### Neu

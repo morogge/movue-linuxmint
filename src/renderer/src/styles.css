@@ -617,9 +617,26 @@ button {
   font-size: 11px;
 }
 
-.extern {
+.treffer-aktionen {
   margin-left: auto;
   display: inline-flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.treffer-hinweis {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.extern {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
   align-items: center;
   gap: 6px;
   color: var(--accent);

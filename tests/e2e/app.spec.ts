@@ -52,7 +52,7 @@ test('Player öffnet sich und meldet nicht abspielbare Videos verständlich', as
   await win.getByRole('button', { name: /Tatort: Der Fall Münster/ }).first().click();
   await win.getByRole('button', { name: /Abspielen/ }).first().click();
   await expect(win.getByRole('heading', { name: 'Tatort: Der Fall Münster', level: 1 })).toBeVisible();
-  await expect(win.getByRole('button', { name: 'Vollbild' })).toBeAttached();
+  await expect(win.locator('.player-steuerung').getByRole('button', { name: 'Vollbild' })).toBeAttached();
   // Die Testliste zeigt auf nicht existierende Videos → verständliche Meldung statt schwarzem Bild
   await expect(win.getByRole('alert')).toContainText('lässt sich nicht abspielen', { timeout: 20_000 });
   await expect(win.getByRole('heading', { name: 'Als Nächstes' })).toBeVisible();

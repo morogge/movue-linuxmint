@@ -35,4 +35,4 @@ Das Verzeichnis der Sendungen stammt aus der Filmliste des Projekts [MediathekVi
 
 ## Lizenz
 
-Noch nicht festgelegt.
+[MIT](LICENSE) – frei nutzbar, veränderbar und weitergebbar, auch in eigenen Projekten.

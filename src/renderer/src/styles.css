@@ -1166,3 +1166,89 @@ button {
 .treffer-link:hover {
   color: var(--accent);
 }
+
+/* Reihen: Pfeile statt Scrollbalken */
+.reihe-rahmen {
+  position: relative;
+}
+
+.reihe-liste {
+  scrollbar-width: none;
+}
+
+.reihe-liste::-webkit-scrollbar {
+  display: none;
+}
+
+.reihe-pfeil {
+  position: absolute;
+  top: 0;
+  /* Höhe der Bildfläche einer Kachel (256 px breit, 16:9) */
+  height: 144px;
+  width: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  color: var(--text);
+  cursor: pointer;
+  opacity: 0.92;
+}
+
+.reihe-pfeil.links {
+  left: 0;
+  border-radius: 10px 0 0 10px;
+  background: linear-gradient(to right, rgba(14, 15, 18, 0.95), rgba(14, 15, 18, 0));
+  justify-content: flex-start;
+  padding-left: 6px;
+}
+
+.reihe-pfeil.rechts {
+  right: 0;
+  border-radius: 0 10px 10px 0;
+  background: linear-gradient(to left, rgba(14, 15, 18, 0.95), rgba(14, 15, 18, 0));
+  justify-content: flex-end;
+  padding-right: 6px;
+}
+
+.reihe-pfeil:hover,
+.reihe-pfeil:focus-visible {
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* Suche/Genre: Kachelraster */
+.kachel-raster {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px 16px;
+}
+
+.chip svg {
+  flex: 0 0 auto;
+}
+
+/* Suche: Liste mit Bild */
+.treffer {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.treffer-bild {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.treffer-inhalt {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}

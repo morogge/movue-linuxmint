@@ -60,12 +60,18 @@ test('Suche findet Sendungen über alle Sender und filtert nach Sender', async (
   await win.keyboard.type('tatort');
   await expect(win.getByRole('heading', { name: 'Suche: „tatort“' })).toBeVisible();
   await expect(win.getByText('3 Treffer')).toBeVisible();
+  // Standard: Kacheln
+  await expect(win.getByRole('button', { name: /Tatort: Der Fall Münster/ })).toBeVisible();
+  await win.screenshot({ path: 'test-results/screens/suche-kacheln.png' });
+  // Liste mit Bild und Beschreibung
+  await win.getByRole('button', { name: 'Liste', exact: true }).click();
   await expect(win.getByRole('heading', { name: 'Tatort: Der Fall Münster' })).toBeVisible();
-  await win.screenshot({ path: 'test-results/screens/suche.png' });
+  await win.screenshot({ path: 'test-results/screens/suche-liste.png' });
+  await win.getByRole('button', { name: 'Kacheln', exact: true }).click();
 
   await win.getByRole('button', { name: 'ZDF', exact: true }).click();
   await expect(win.getByText('1 Treffer')).toBeVisible();
-  await expect(win.getByRole('heading', { name: 'Terra X: Die Ostsee' })).toBeVisible();
+  await expect(win.getByRole('button', { name: /Terra X: Die Ostsee/ })).toBeVisible();
 
   await win.getByRole('button', { name: 'Alle Sender' }).click();
   await win.getByLabel('Suche in allen Mediatheken').focus();

@@ -127,7 +127,7 @@ export function App() {
         <TopBar ref={suchfeld} suchtext={suchtext} onSuche={sucheAendern} onHelp={openHelp} />
         {ansicht.screen === 'start' && <StartScreen zustand={zustand} onOeffne={oeffneFilm} onGenre={zeigeGenre} />}
         {ansicht.screen === 'sender' && ansicht.gruppe && (
-          <StartScreen zustand={zustand} gruppe={ansicht.gruppe} onOeffne={oeffneFilm} onGenre={zeigeGenre} />
+          <StartScreen key={ansicht.gruppe} zustand={zustand} gruppe={ansicht.gruppe} onOeffne={oeffneFilm} onGenre={zeigeGenre} />
         )}
         {ansicht.screen === 'suche' && (
           <SearchScreen suchtext={suchtext} zustand={zustand} genre={genre} onGenre={setGenre} onOeffne={oeffneFilm} />

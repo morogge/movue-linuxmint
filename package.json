@@ -1,7 +1,7 @@
 {
   "name": "movue",
   "productName": "Movue",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Die Mediatheken von ARD, ZDF, 3sat und Arte in einer Desktop-App für Linux Mint",
   "homepage": "https://github.com/morogge/movue-linuxmint",
   "author": "morogge",

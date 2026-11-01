@@ -24,7 +24,16 @@ Zur ARD gehören auch die Sendungen der Landesrundfunkanstalten (BR, HR, MDR, ND
 
 Ohne Suchbegriff zeigt die Seite die neuesten Sendungen.
 
-## Was ein Treffer zeigt
+## Kacheln oder Liste
+
+Oben wählst du die Darstellung der Treffer:
+
+- **Kacheln**: ein Raster mit Vorschaubild, Titel, Reihe und Datum – gut zum Stöbern.
+- **Liste**: Bild links, dazu Beschreibung, Kennzeichen und die Knöpfe zum Öffnen – gut, wenn du Details vergleichen willst.
+
+Movue merkt sich deine Wahl. Ein Klick auf eine Kachel, ein Bild oder einen Titel öffnet die Detailseite.
+
+## Was ein Treffer in der Liste zeigt
 
 - Sender, Thema bzw. Reihe, Titel und Beschreibung
 - Datum und Länge

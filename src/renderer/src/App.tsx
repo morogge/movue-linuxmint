@@ -5,6 +5,8 @@ import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { StartScreen } from './screens/StartScreen';
 import { SearchScreen } from './screens/SearchScreen';
+import { GenresScreen } from './screens/GenresScreen';
+import type { GenreId } from '@shared/genres';
 import { HelpView } from './help/HelpView';
 import { useIndexZustand } from './hooks/useIndexZustand';
 import { UpdateBanner, useUpdateZustand } from './components/UpdateBanner';
@@ -33,6 +35,7 @@ export function App() {
   const [screen, setScreen] = useState<ScreenId>('start');
   const [helpPage, setHelpPage] = useState<string | null>(null);
   const [suchtext, setSuchtext] = useState('');
+  const [genre, setGenre] = useState<GenreId | null>(null);
   const suchfeld = useRef<HTMLInputElement>(null);
   const zustand = useIndexZustand();
   const update = useUpdateZustand();
@@ -81,7 +84,17 @@ export function App() {
         <UpdateBanner zustand={update} />
         <TopBar ref={suchfeld} suchtext={suchtext} onSuche={sucheAendern} onHelp={openHelp} />
         {screen === 'start' && <StartScreen zustand={zustand} onHelp={openHelp} onSuche={() => suchfeld.current?.focus()} />}
-        {screen === 'suche' && <SearchScreen suchtext={suchtext} zustand={zustand} />}
+        {screen === 'suche' && <SearchScreen suchtext={suchtext} zustand={zustand} genre={genre} onGenre={setGenre} />}
+        {screen === 'genres' && (
+          <GenresScreen
+            zustand={zustand}
+            onWaehle={(g) => {
+              setGenre(g);
+              setSuchtext('');
+              setScreen('suche');
+            }}
+          />
+        )}
       </main>
       {helpPage && <HelpView page={helpPage} onSelect={setHelpPage} onClose={closeHelp} />}
     </div>

@@ -75,6 +75,8 @@ ipcMain.handle('index:suche', (_event, anfrage: SuchAnfrage) => {
   return index.suche(anfrage);
 });
 
+ipcMain.handle('index:genres', () => index?.genres() ?? []);
+
 ipcMain.handle('film:seite-oeffnen', async (_event, film: { website?: unknown; gruppe?: unknown; titel?: unknown }) => {
   if (typeof film?.website !== 'string' || typeof film.titel !== 'string' || !istGruppe(film.gruppe)) return null;
   const ziel = await seitenZiel({ website: film.website, gruppe: film.gruppe, titel: film.titel });

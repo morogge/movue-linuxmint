@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Film, IndexZustand, Sortierung, SuchErgebnis } from '@shared/film';
 import { formatDatum, formatDauer, formatZahl } from '@shared/format';
+import { GENRES, genreName, istGenre, type GenreId } from '@shared/genres';
 import { GRUPPEN, type SenderGruppe } from '@shared/sender';
 import { Icon } from '../components/Icon';
 import { SENDER_FARBE } from '../senderFarben';
@@ -34,6 +35,14 @@ function Treffer({ film }: { film: Film }) {
           {unterSender && <span className="unter-sender"> · {film.sender}</span>}
         </span>
         {film.thema && film.thema !== film.titel && <span className="treffer-thema">{film.thema}</span>}
+        {film.genres
+          .filter((g) => g !== 'sonstiges')
+          .slice(0, 3)
+          .map((g) => (
+            <span key={g} className="genre-tag">
+              {genreName(g)}
+            </span>
+          ))}
       </div>
       <h3 className="treffer-titel">{film.titel}</h3>
       {film.beschreibung && <p className="treffer-text">{film.beschreibung}</p>}
@@ -63,7 +72,14 @@ function Treffer({ film }: { film: Film }) {
   );
 }
 
-export function SearchScreen({ suchtext, zustand }: { suchtext: string; zustand: IndexZustand }) {
+interface Props {
+  suchtext: string;
+  zustand: IndexZustand;
+  genre: GenreId | null;
+  onGenre: (g: GenreId | null) => void;
+}
+
+export function SearchScreen({ suchtext, zustand, genre, onGenre }: Props) {
   const [gruppe, setGruppe] = useState<SenderGruppe | null>(null);
   const [sortierung, setSortierung] = useState<Sortierung>('relevanz');
   const [ergebnis, setErgebnis] = useState<SuchErgebnis>({ treffer: [], gesamt: 0 });
@@ -75,19 +91,20 @@ export function SearchScreen({ suchtext, zustand }: { suchtext: string; zustand:
     if (!api) return;
     let aktiv = true;
     const t = setTimeout(() => {
-      void api.suche({ text: suchtext, gruppe, sortierung, limit: SEITE, offset: 0 }).then((e) => aktiv && setErgebnis(e));
+      void api.suche({ text: suchtext, gruppe, genre, sortierung, limit: SEITE, offset: 0 }).then((e) => aktiv && setErgebnis(e));
     }, 200);
     return () => {
       aktiv = false;
       clearTimeout(t);
     };
-  }, [suchtext, gruppe, sortierung, zustand.anzahl, zustand.stand]);
+  }, [suchtext, gruppe, genre, sortierung, zustand.anzahl, zustand.stand]);
 
   const mehrLaden = async () => {
     setLaedtMehr(true);
     const e = await window.movue.index.suche({
       text: suchtext,
       gruppe,
+      genre,
       sortierung,
       limit: SEITE,
       offset: ergebnis.treffer.length
@@ -102,7 +119,9 @@ export function SearchScreen({ suchtext, zustand }: { suchtext: string; zustand:
   return (
     <section className="suche" aria-labelledby="suche-titel">
       <div className="suche-kopf">
-        <h1 id="suche-titel">{ohneText ? 'Neueste Sendungen' : `Suche: „${suchtext.trim()}“`}</h1>
+        <h1 id="suche-titel">
+          {!ohneText ? `Suche: „${suchtext.trim()}“` : genre ? genreName(genre) : 'Neueste Sendungen'}
+        </h1>
         <div className="suche-filter">
           <div className="chips" role="group" aria-label="Sender">
             <button type="button" className={gruppe === null ? 'chip an' : 'chip'} aria-pressed={gruppe === null} onClick={() => setGruppe(null)}>
@@ -121,6 +140,17 @@ export function SearchScreen({ suchtext, zustand }: { suchtext: string; zustand:
               </button>
             ))}
           </div>
+          <label className="sortierung">
+            <span>Genre</span>
+            <select value={genre ?? ''} onChange={(e) => onGenre(istGenre(e.target.value) ? e.target.value : null)}>
+              <option value="">Alle Genres</option>
+              {GENRES.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="sortierung">
             <span>Sortieren</span>
             <select value={sortierung} onChange={(e) => setSortierung(e.target.value as Sortierung)} disabled={ohneText}>

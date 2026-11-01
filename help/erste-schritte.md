@@ -8,10 +8,11 @@ Movue lädt zuerst das Verzeichnis aller Sendungen. Das dauert ein bis zwei Minu
 
 ## Stand dieser Version
 
-- **Suche** über alle vier Mediatheken, mit Filter nach Sender
+- **Suche** über alle vier Mediatheken, mit Filter nach Sender und Genre
+- **Genres**: Stöbern nach Themen über alle Sender hinweg
 - Sendungen öffnest du vorerst auf der Seite des Senders im Browser.
 
-Stöbern nach Genre, der eigene Player, Merkliste und Live-TV kommen in den nächsten Versionen dazu. Neue Versionen installiert Movue selbst (siehe **Aktualisierungen**); was sich ändert, steht unter **Was ist neu**.
+Der eigene Player, Merkliste und Live-TV kommen in den nächsten Versionen dazu. Neue Versionen installiert Movue selbst (siehe **Aktualisierungen**); was sich ändert, steht unter **Was ist neu**.
 
 ## Hilfe aufrufen
 

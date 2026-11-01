@@ -7,7 +7,9 @@ const PATHS = {
   tv: 'M2 7h20v13H2zM7 2l5 5 5-5',
   help: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01',
   fullscreen: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
-  close: 'M6 6l12 12M18 6L6 18'
+  close: 'M6 6l12 12M18 6L6 18',
+  search: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-3.5-3.5',
+  external: 'M14 4h6v6M20 4l-9 9M19 14v6H4V5h6'
 } as const;
 
 export type IconName = keyof typeof PATHS;

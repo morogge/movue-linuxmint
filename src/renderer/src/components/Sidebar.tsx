@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import type { IndexZustand } from '@shared/film';
+import { formatStand, formatZahl } from '@shared/format';
 import type { ScreenId } from '@shared/screens';
 import { Icon, type IconName } from './Icon';
 
@@ -11,13 +13,49 @@ interface NavItem {
 // Einträge ohne id folgen in späteren Versionen und sind noch deaktiviert
 const NAV: NavItem[] = [
   { id: 'start', label: 'Start', icon: 'home' },
+  { id: 'suche', label: 'Suche', icon: 'search' },
   { id: null, label: 'Genres', icon: 'grid' },
   { id: null, label: 'Merkliste', icon: 'bookmark' },
   { id: null, label: 'Läuft bald ab', icon: 'clock' },
   { id: null, label: 'Live-TV', icon: 'tv' }
 ];
 
-export function Sidebar({ current, onNavigate }: { current: ScreenId; onNavigate: (id: ScreenId) => void }) {
+function IndexStatus({ zustand }: { zustand: IndexZustand }) {
+  const laedt = zustand.fortschritt !== undefined;
+  let zeile1: string;
+  let zeile2 = '';
+
+  if (zustand.phase === 'fehler') {
+    zeile1 = 'Sendungsverzeichnis nicht geladen';
+    zeile2 = zustand.meldung ?? '';
+  } else if (zustand.phase === 'leer' || (zustand.phase === 'laedt' && zustand.anzahl === 0)) {
+    zeile1 = 'Lade Sendungsverzeichnis …';
+    zeile2 = laedt && zustand.fortschritt ? `${formatZahl(zustand.fortschritt)} Einträge gelesen` : '';
+  } else {
+    zeile1 = laedt ? 'Aktualisiere …' : `${formatZahl(zustand.anzahl)} Sendungen`;
+    zeile2 = zustand.stand ? `Stand ${formatStand(zustand.stand)}` : '';
+  }
+
+  return (
+    <div className="index-status" role="status" aria-live="polite">
+      <span className={zustand.phase === 'fehler' ? 'status-dot fehler' : laedt ? 'status-dot laedt' : 'status-dot'} />
+      <span>
+        <span className="status-zeile">{zeile1}</span>
+        {zeile2 && <span className="status-zeile klein">{zeile2}</span>}
+      </span>
+    </div>
+  );
+}
+
+export function Sidebar({
+  current,
+  onNavigate,
+  zustand
+}: {
+  current: ScreenId;
+  onNavigate: (id: ScreenId) => void;
+  zustand: IndexZustand;
+}) {
   const [version, setVersion] = useState<string>('');
 
   useEffect(() => {
@@ -52,7 +90,10 @@ export function Sidebar({ current, onNavigate }: { current: ScreenId; onNavigate
           </li>
         ))}
       </ul>
-      <div className="sidebar-foot">{version && <span>Version {version}</span>}</div>
+      <div className="sidebar-foot">
+        <IndexStatus zustand={zustand} />
+        {version && <span className="version">Version {version}</span>}
+      </div>
     </nav>
   );
 }

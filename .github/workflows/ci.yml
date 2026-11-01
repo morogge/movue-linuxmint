@@ -46,6 +46,9 @@ jobs:
       - name: Bauen
         run: npm run build
 
+      - name: Native Module für Electron bauen
+        run: npx electron-builder install-app-deps
+
       - name: Oberflächentests (Electron)
         run: |
           npx playwright install-deps chromium

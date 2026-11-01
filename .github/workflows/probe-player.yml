@@ -1,0 +1,53 @@
+name: Probe Player
+on:
+  push:
+    branches: ['probe/**']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - run: curl -sSL -o akt.xz https://liste.mediathekview.de/Filmliste-akt.xz && xz -dc akt.xz > akt.json
+      - name: Auswerten
+        run: |
+          python3 - <<'PY'
+          import json, collections, random, subprocess, re
+          GR={'ARD':'ARD','BR':'ARD','HR':'ARD','MDR':'ARD','NDR':'ARD','ONE':'ARD','RBB':'ARD','SR':'ARD','SWR':'ARD','WDR':'ARD','tagesschau24':'ARD','ARD-alpha':'ARD','ZDF':'ZDF','ZDFinfo':'ZDF','ZDFneo':'ZDF','ZDF-tivi':'ZDF','3Sat':'3sat','ARTE.DE':'Arte'}
+          pairs=json.load(open('akt.json',encoding='utf-8'),object_pairs_hook=lambda p:p)
+          last=''; data=[]
+          for k,r in pairs:
+              if k!='X': continue
+              s=r[0] or last; last=s
+              g=GR.get(s)
+              if g: data.append((g,s,r))
+          ext=collections.Counter(); ut=collections.Counter(); utbsp={}
+          for g,s,r in data:
+              u=r[8].split('?')[0].lower()
+              e='m3u8' if u.endswith('.m3u8') else 'mp4' if u.endswith('.mp4') else u.rsplit('.',1)[-1][:6]
+              ext[(g,e)]+=1
+              if r[10]:
+                  ue=r[10].split('?')[0].lower().rsplit('.',1)[-1][:6]
+                  ut[(g,ue)]+=1
+                  utbsp.setdefault((g,ue),r[10])
+              else: ut[(g,'-')]+=1
+          print('VIDEO', sorted(ext.items()))
+          print('UNTERTITEL', sorted(ut.items()))
+          UA='Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'
+          for k,u in utbsp.items():
+              p=subprocess.run(['curl','-s','-L','--compressed','--max-time','20','-A',UA,u],capture_output=True)
+              t=p.stdout.decode('utf-8','replace')
+              print('=== BEISPIEL',k,u); print(t[:1800].replace('\n','⏎')); print('...')
+          # CORS-Header der Video-Server (Preflight-frei: einfacher GET mit Origin)
+          random.seed(3)
+          print('=== CORS')
+          for g in ['ARD','ZDF','3sat','Arte']:
+              teil=[d for d in data if d[0]==g]
+              for _,s,r in random.sample(teil,3):
+                  out=subprocess.run(['curl','-s','-o','/dev/null','-D','-','-r','0-1000','--max-time','15','-A',UA,'-H','Origin: file://',r[8]],capture_output=True,text=True).stdout
+                  st=out.split('\n')[0].strip(); acao=[l.strip() for l in out.split('\n') if l.lower().startswith('access-control-allow-origin')]
+                  print(g, s, st, acao, r[8][:90])
+          m3=[d for d in data if d[2][8].lower().split('?')[0].endswith('.m3u8')][:3]
+          for g,s,r in m3:
+              out=subprocess.run(['curl','-s','-D','-','--max-time','15','-A',UA,'-H','Origin: file://',r[8]],capture_output=True,text=True).stdout
+              print('M3U8',g,s,r[8][:100]); print(out[:900].replace('\n','⏎'))
+          PY

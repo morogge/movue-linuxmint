@@ -5,6 +5,7 @@
   "description": "Die Mediatheken von ARD, ZDF, 3sat und Arte in einer Desktop-App für Linux Mint",
   "homepage": "https://github.com/morogge/movue-linuxmint",
   "author": "morogge",
+  "license": "MIT",
   "private": true,
   "main": "./out/main/index.js",
   "engines": {

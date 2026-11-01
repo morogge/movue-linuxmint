@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Prüfen, testen, bauen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Abhängigkeiten installieren
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Lockfile sichern (solange es noch nicht im Repo liegt)
+        if: hashFiles('package-lock.json') != '' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-lock
+          path: package-lock.json
+
+      - name: Typen prüfen
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit-Tests
+        run: npm test
+
+      - name: Hilfe-Check
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: npm run check:help
+
+      - name: Bauen
+        run: npm run build
+
+      - name: Oberflächentests (Electron)
+        run: |
+          npx playwright install-deps chromium
+          xvfb-run -a npm run test:e2e
+
+      - name: Screenshots und Testbericht
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore

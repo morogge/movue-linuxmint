@@ -74,7 +74,7 @@ describe('Qualität und nächste Folge', () => {
     const folgen = [film(3, 'Drei (S01/E03)', 100), film(2, 'Zwei (S01/E02)', 200), film(4, 'Neu (S02/E01)', 50), a];
     expect(folgenNummer(a.titel)).toEqual([1, 1]);
     expect(naechsteFolge(a, folgen)?.id).toBe(2);
-    expect(naechsteFolge(folgen[2], folgen)?.id).toBe(4);
+    expect(naechsteFolge(folgen[0], folgen)?.id).toBe(4); // S01/E03 → S02/E01
   });
 
   it('nimmt sonst die nächst-neuere Sendung', () => {

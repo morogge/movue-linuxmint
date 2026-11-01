@@ -1,3 +1,4 @@
+import type { GenreId } from '@shared/genres';
 import { gruppeFuer, type SenderGruppe } from '@shared/sender';
 
 /** Ein Eintrag der Filmliste, wie er in die Datenbank geht. */
@@ -16,6 +17,8 @@ export interface FilmEintrag {
   urlUntertitel: string;
   geo: string;
   neu: boolean;
+  /** Wird beim Import aus Thema, Titel, Sender und Website bestimmt */
+  genres?: GenreId[];
 }
 
 /** Spalten der Filmliste (Kopfzeile "Filmliste" Nr. 2) */

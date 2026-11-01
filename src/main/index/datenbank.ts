@@ -1,9 +1,13 @@
 import Database from 'better-sqlite3';
 import type { Film, Sortierung, SuchAnfrage, SuchErgebnis } from '@shared/film';
+import { GENRES, istGenre, type GenreAnzahl, type GenreId } from '@shared/genres';
 import { istGruppe } from '@shared/sender';
 import type { FilmEintrag } from '../filmliste/eintrag';
 
 export type Db = Database.Database;
+
+/** Erhöhen, wenn sich Tabellen oder abgeleitete Daten (z. B. Genre-Regeln) ändern – erzwingt einen Neuaufbau. */
+export const SCHEMA_VERSION = 2;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS film (
@@ -31,6 +35,15 @@ CREATE VIRTUAL TABLE IF NOT EXISTS film_fts USING fts5(
   tokenize='unicode61 remove_diacritics 2'
 );
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+-- Genres je Sendung; datum doppelt gespeichert, damit „neueste im Genre“ über den Index geht
+CREATE TABLE IF NOT EXISTS film_genre (
+  genre TEXT NOT NULL,
+  film_id INTEGER NOT NULL,
+  datum INTEGER NOT NULL,
+  PRIMARY KEY (genre, film_id)
+) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS film_genre_datum ON film_genre(genre, datum DESC);
+CREATE INDEX IF NOT EXISTS film_genre_film ON film_genre(film_id);
 `;
 
 const TRIGGER = `
@@ -84,8 +97,42 @@ export function schreiber(db: Db): (e: FilmEintrag) => void {
       datum = excluded.datum, dauer = excluded.dauer, beschreibung = excluded.beschreibung,
       website = excluded.website, url_klein = excluded.url_klein, url_hd = excluded.url_hd,
       url_untertitel = excluded.url_untertitel, geo = excluded.geo, neu = excluded.neu
+    RETURNING id
   `);
-  return (e) => stmt.run({ ...e, neu: e.neu ? 1 : 0 });
+  const loescheGenres = db.prepare('DELETE FROM film_genre WHERE film_id = ?');
+  const genre = db.prepare('INSERT OR IGNORE INTO film_genre (genre, film_id, datum) VALUES (?, ?, ?)');
+  return (e) => {
+    const { genres, ...felder } = e;
+    const { id } = stmt.get({ ...felder, neu: e.neu ? 1 : 0 }) as { id: number };
+    loescheGenres.run(id);
+    for (const g of genres ?? ['sonstiges']) genre.run(g, id, e.datum);
+  };
+}
+
+/** Anzahl Sendungen je Genre, in der Reihenfolge von GENRES */
+export function genreAnzahlen(db: Db): GenreAnzahl[] {
+  const zeilen = db.prepare('SELECT genre, count(*) AS n FROM film_genre GROUP BY genre').all() as {
+    genre: string;
+    n: number;
+  }[];
+  const map = new Map(zeilen.map((z) => [z.genre, z.n]));
+  return GENRES.map((g) => ({ id: g.id, name: g.name, anzahl: map.get(g.id) ?? 0 }));
+}
+
+/** Genres zu einer Liste von Sendungen nachladen */
+function genresFuer(db: Db, ids: number[]): Map<number, GenreId[]> {
+  const map = new Map<number, GenreId[]>();
+  if (ids.length === 0) return map;
+  const zeilen = db
+    .prepare(`SELECT film_id, genre FROM film_genre WHERE film_id IN (${ids.map(() => '?').join(',')})`)
+    .all(...ids) as { film_id: number; genre: string }[];
+  for (const z of zeilen) {
+    if (!istGenre(z.genre)) continue;
+    const liste = map.get(z.film_id) ?? [];
+    liste.push(z.genre);
+    map.set(z.film_id, liste);
+  }
+  return map;
 }
 
 export function leseMeta(db: Db, key: string): string | null {
@@ -135,8 +182,9 @@ interface FilmZeile {
   geo: string;
 }
 
-function zuFilm(z: FilmZeile): Film {
+function zuFilm(z: FilmZeile, genres: Map<number, GenreId[]>): Film {
   return {
+    genres: genres.get(z.id) ?? [],
     id: z.id,
     sender: z.sender,
     gruppe: istGruppe(z.gruppe) ? z.gruppe : 'ARD',
@@ -161,33 +209,57 @@ export function suche(db: Db, anfrage: SuchAnfrage): SuchErgebnis {
   const limit = Math.min(Math.max(anfrage.limit ?? 50, 1), 200);
   const offset = Math.max(anfrage.offset ?? 0, 0);
   const gruppe = anfrage.gruppe && istGruppe(anfrage.gruppe) ? anfrage.gruppe : null;
+  const genre = anfrage.genre && istGenre(anfrage.genre) ? anfrage.genre : null;
   const sortierung: Sortierung = anfrage.sortierung ?? 'relevanz';
   const fts = baueFtsAbfrage(anfrage.text);
+  const p = { fts, gruppe, genre, limit, offset };
 
-  if (!fts) {
+  let treffer: FilmZeile[];
+  let gesamt: number;
+
+  if (!fts && genre) {
+    // Neueste im Genre: über den Index (genre, datum)
+    const filter = gruppe ? 'AND f.gruppe = @gruppe' : '';
+    treffer = db
+      .prepare(
+        `SELECT ${SPALTEN} FROM film_genre g JOIN film f ON f.id = g.film_id
+         WHERE g.genre = @genre ${filter} ORDER BY g.datum DESC LIMIT @limit OFFSET @offset`
+      )
+      .all(p) as FilmZeile[];
+    gesamt = (
+      db
+        .prepare(`SELECT count(*) AS n FROM film_genre g JOIN film f ON f.id = g.film_id WHERE g.genre = @genre ${filter}`)
+        .get(p) as { n: number }
+    ).n;
+  } else if (!fts) {
     // Ohne Suchbegriff: neueste Sendungen
     const where = gruppe ? 'WHERE f.gruppe = @gruppe' : '';
-    const treffer = db
+    treffer = db
       .prepare(`SELECT ${SPALTEN} FROM film f ${where} ORDER BY f.datum DESC LIMIT @limit OFFSET @offset`)
-      .all({ gruppe, limit, offset }) as FilmZeile[];
-    const gesamt = (db.prepare(`SELECT count(*) AS n FROM film f ${where}`).get({ gruppe }) as { n: number }).n;
-    return { treffer: treffer.map(zuFilm), gesamt };
+      .all(p) as FilmZeile[];
+    gesamt = (db.prepare(`SELECT count(*) AS n FROM film f ${where}`).get(p) as { n: number }).n;
+  } else {
+    const filter = [
+      gruppe ? 'AND f.gruppe = @gruppe' : '',
+      genre ? 'AND EXISTS (SELECT 1 FROM film_genre g WHERE g.genre = @genre AND g.film_id = f.id)' : ''
+    ].join(' ');
+    const order = sortierung === 'datum' ? 'f.datum DESC' : 'bm25(film_fts, 10.0, 5.0, 1.0), f.datum DESC';
+    treffer = db
+      .prepare(
+        `SELECT ${SPALTEN} FROM film_fts JOIN film f ON f.id = film_fts.rowid
+         WHERE film_fts MATCH @fts ${filter} ORDER BY ${order} LIMIT @limit OFFSET @offset`
+      )
+      .all(p) as FilmZeile[];
+    gesamt = (
+      db
+        .prepare(`SELECT count(*) AS n FROM film_fts JOIN film f ON f.id = film_fts.rowid WHERE film_fts MATCH @fts ${filter}`)
+        .get(p) as { n: number }
+    ).n;
   }
 
-  const filter = gruppe ? 'AND f.gruppe = @gruppe' : '';
-  const order = sortierung === 'datum' ? 'f.datum DESC' : 'bm25(film_fts, 10.0, 5.0, 1.0), f.datum DESC';
-  const treffer = db
-    .prepare(
-      `SELECT ${SPALTEN} FROM film_fts JOIN film f ON f.id = film_fts.rowid
-       WHERE film_fts MATCH @fts ${filter} ORDER BY ${order} LIMIT @limit OFFSET @offset`
-    )
-    .all({ fts, gruppe, limit, offset }) as FilmZeile[];
-  const gesamt = (
-    db
-      .prepare(
-        `SELECT count(*) AS n FROM film_fts JOIN film f ON f.id = film_fts.rowid WHERE film_fts MATCH @fts ${filter}`
-      )
-      .get({ fts, gruppe }) as { n: number }
-  ).n;
-  return { treffer: treffer.map(zuFilm), gesamt };
+  const genres = genresFuer(
+    db,
+    treffer.map((t) => t.id)
+  );
+  return { treffer: treffer.map((t) => zuFilm(t, genres)), gesamt };
 }

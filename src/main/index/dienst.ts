@@ -1,7 +1,8 @@
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import type { IndexZustand, SuchAnfrage, SuchErgebnis } from '@shared/film';
 import type { ListenArt } from '../filmliste/quelle';
-import { anzahl, leseMeta, oeffneDb, suche, type Db } from './datenbank';
+import { anzahl, genreAnzahlen, leseMeta, oeffneDb, SCHEMA_VERSION, suche, type Db } from './datenbank';
+import type { GenreAnzahl } from '@shared/genres';
 import type { IndexerAuftrag, IndexerNachricht } from './indexer.worker';
 import { naechsteAktion } from './plan';
 import createIndexer from './indexer.worker?nodeWorker';
@@ -17,6 +18,7 @@ export class IndexDienst {
   private laeuft = false;
   private timer: NodeJS.Timeout | null = null;
   private zustand: IndexZustand = { phase: 'leer', anzahl: 0, stand: null };
+  private genreCache: GenreAnzahl[] | null = null;
 
   constructor(
     private readonly dbPfad: string,
@@ -40,6 +42,13 @@ export class IndexDienst {
     return this.zustand;
   }
 
+  /** Anzahl je Genre – nach jedem Laden einmal berechnet */
+  genres(): GenreAnzahl[] {
+    if (!this.db) return [];
+    this.genreCache ??= genreAnzahlen(this.db);
+    return this.genreCache;
+  }
+
   suche(anfrage: SuchAnfrage): SuchErgebnis {
     if (!this.db) return { treffer: [], gesamt: 0 };
     return suche(this.db, anfrage);
@@ -51,6 +60,7 @@ export class IndexDienst {
   }
 
   private oeffne(): void {
+    this.genreCache = null;
     this.db?.close();
     this.db = null;
     if (!existsSync(this.dbPfad)) {
@@ -73,7 +83,12 @@ export class IndexDienst {
     if (this.laeuft) return;
     const meta = (key: string) => (this.db ? Number(leseMeta(this.db, key)) || null : null);
     const art = naechsteAktion(
-      { vorhanden: this.db !== null, vollGeladen: meta('vollGeladen'), diffGeladen: meta('diffGeladen') },
+      {
+        vorhanden: this.db !== null,
+        schemaAktuell: meta('schema') === SCHEMA_VERSION,
+        vollGeladen: meta('vollGeladen'),
+        diffGeladen: meta('diffGeladen')
+      },
       Date.now()
     );
     if (art) await this.lade(art);

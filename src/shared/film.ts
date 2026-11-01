@@ -1,3 +1,4 @@
+import type { GenreId } from './genres';
 import type { SenderGruppe } from './sender';
 
 /** Eine Sendung aus dem Index. Zeiten in Sekunden seit 1970 (UTC), Dauer in Sekunden. */
@@ -16,6 +17,7 @@ export interface Film {
   urlHd: string;
   urlUntertitel: string;
   geo: string;
+  genres: GenreId[];
 }
 
 export type Sortierung = 'relevanz' | 'datum';
@@ -23,6 +25,7 @@ export type Sortierung = 'relevanz' | 'datum';
 export interface SuchAnfrage {
   text: string;
   gruppe?: SenderGruppe | null;
+  genre?: GenreId | null;
   sortierung?: Sortierung;
   limit?: number;
   offset?: number;

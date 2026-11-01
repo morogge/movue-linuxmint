@@ -4,7 +4,7 @@
  */
 import { parentPort, workerData } from 'node:worker_threads';
 import { listenAdresse, oeffneListe, type ListenArt } from '../filmliste/quelle';
-import { anzahl, oeffneDb, schliesseAufbau, schreibeMeta } from './datenbank';
+import { anzahl, oeffneDb, schliesseAufbau, schreibeMeta, SCHEMA_VERSION } from './datenbank';
 import { importiere } from './import';
 
 export interface IndexerAuftrag {
@@ -34,6 +34,7 @@ async function lauf(auftrag: IndexerAuftrag): Promise<void> {
     if (voll) {
       schliesseAufbau(db);
       schreibeMeta(db, 'vollGeladen', jetzt);
+      schreibeMeta(db, 'schema', SCHEMA_VERSION);
     } else {
       schreibeMeta(db, 'diffGeladen', jetzt);
     }

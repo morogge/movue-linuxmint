@@ -15,7 +15,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { id: 'start', label: 'Start', icon: 'home' },
   { id: 'suche', label: 'Suche', icon: 'search' },
-  { id: null, label: 'Genres', icon: 'grid' },
+  { id: 'genres', label: 'Genres', icon: 'grid' },
   { id: null, label: 'Merkliste', icon: 'bookmark' },
   { id: null, label: 'Läuft bald ab', icon: 'clock' },
   { id: null, label: 'Live-TV', icon: 'tv' }

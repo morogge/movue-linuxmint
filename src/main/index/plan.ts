@@ -9,6 +9,8 @@ export const DIFF_INTERVALL = STUNDE;
 export interface LadeStand {
   /** Index vorhanden? */
   vorhanden: boolean;
+  /** Stammt der Index von der aktuellen Programmversion (Tabellen, Genre-Regeln)? */
+  schemaAktuell?: boolean;
   /** Zeitpunkt (ms) des letzten vollständigen Imports */
   vollGeladen: number | null;
   /** Zeitpunkt (ms) des letzten Diff-Imports */
@@ -17,7 +19,7 @@ export interface LadeStand {
 
 /** Entscheidet, welche Liste jetzt geladen werden soll – oder ob nichts zu tun ist. */
 export function naechsteAktion(stand: LadeStand, jetzt: number): ListenArt | null {
-  if (!stand.vorhanden || stand.vollGeladen === null) return 'voll';
+  if (!stand.vorhanden || stand.vollGeladen === null || stand.schemaAktuell === false) return 'voll';
   if (jetzt - stand.vollGeladen >= VOLL_INTERVALL) return 'voll';
   const zuletzt = Math.max(stand.vollGeladen, stand.diffGeladen ?? 0);
   if (jetzt - zuletzt >= DIFF_INTERVALL) return 'diff';

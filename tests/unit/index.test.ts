@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   anzahl,
   baueFtsAbfrage,
+  genreAnzahlen,
   leseMeta,
   oeffneDb,
   schliesseAufbau,
@@ -137,5 +138,41 @@ describe('naechsteAktion', () => {
     expect(naechsteAktion({ vorhanden: true, vollGeladen: vor30, diffGeladen: null }, jetzt)).toBeNull();
     expect(naechsteAktion({ vorhanden: true, vollGeladen: jetzt - 2 * DIFF_INTERVALL, diffGeladen: vor30 }, jetzt)).toBeNull();
     expect(naechsteAktion({ vorhanden: true, vollGeladen: jetzt - 2 * DIFF_INTERVALL, diffGeladen: null }, jetzt)).toBe('diff');
+  });
+});
+
+describe('Genres im Index', () => {
+  it('speichert Genres je Sendung und zählt sie', () => {
+    const anzahlen = Object.fromEntries(genreAnzahlen(db).map((g) => [g.id, g.anzahl]));
+    expect(anzahlen.krimi).toBe(2);
+    expect(anzahlen.wissen).toBeGreaterThanOrEqual(1);
+    expect(Object.keys(anzahlen)).toHaveLength(16);
+  });
+
+  it('liefert die Genres mit jedem Treffer', () => {
+    const tatort = suche(db, { text: 'münster' }).treffer[0];
+    expect(tatort.genres).toContain('krimi');
+  });
+
+  it('filtert nach Genre – mit und ohne Suchbegriff', () => {
+    const krimis = suche(db, { text: '', genre: 'krimi' });
+    expect(krimis.gesamt).toBe(2);
+    expect(krimis.treffer.map((f) => f.titel)).toEqual(['Tatort: Der Fall Münster', 'Tatort: Zweiter Fall']);
+    expect(suche(db, { text: 'tatort', genre: 'wissen' }).treffer.map((f) => f.titel)).toEqual(['Terra X: Die Ostsee']);
+    expect(suche(db, { text: '', genre: 'krimi', gruppe: 'ZDF' }).gesamt).toBe(0);
+  });
+
+  it('behält die Genres beim Aktualisieren per Diff', async () => {
+    await importiere(createReadStream(join(fixtures, 'filmliste-diff-mini.json')), db);
+    expect(suche(db, { text: '', genre: 'krimi' }).treffer.map((f) => f.titel)).toContain('Tatort: Zweiter Fall (neu geschnitten)');
+    expect(suche(db, { text: '', genre: 'krimi' }).gesamt).toBe(2);
+  });
+});
+
+describe('Neuaufbau bei neuer Programmversion', () => {
+  it('lädt die komplette Liste, wenn der Index von einer älteren Version stammt', () => {
+    const jetzt = Date.UTC(2026, 10, 1, 12);
+    expect(naechsteAktion({ vorhanden: true, schemaAktuell: false, vollGeladen: jetzt, diffGeladen: jetzt }, jetzt)).toBe('voll');
+    expect(naechsteAktion({ vorhanden: true, schemaAktuell: true, vollGeladen: jetzt, diffGeladen: jetzt }, jetzt)).toBeNull();
   });
 });

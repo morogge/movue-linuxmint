@@ -5,7 +5,8 @@
 
 export const SCREENS = {
   start: { title: 'Start', help: 'erste-schritte' },
-  suche: { title: 'Suche', help: 'suchen' }
+  suche: { title: 'Suche', help: 'suchen' },
+  genres: { title: 'Genres', help: 'genres' }
 } as const;
 
 export type ScreenId = keyof typeof SCREENS;

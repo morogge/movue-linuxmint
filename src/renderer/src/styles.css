@@ -703,3 +703,66 @@ button {
 .text-button:hover {
   color: var(--text);
 }
+
+/* Genres */
+.genres {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.genres h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+
+.genre-raster {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.genre-kachel {
+  width: 100%;
+  min-height: 120px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.genre-kachel:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.genre-kachel.weitere {
+  border-style: dashed;
+}
+
+.genre-name {
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.genre-zahl {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.genre-tag {
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 12px;
+}

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { listenAdresse, oeffneListe } from '../../src/main/filmliste/quelle';
-import { anzahl, oeffneDb, schliesseAufbau, suche } from '../../src/main/index/datenbank';
+import { anzahl, genreAnzahlen, oeffneDb, schliesseAufbau, suche } from '../../src/main/index/datenbank';
 import { importiere } from '../../src/main/index/import';
 import { GRUPPEN } from '../../src/shared/sender';
 
@@ -51,6 +51,32 @@ describe('Echte Filmliste', () => {
           2
         )
       );
+      // Genre-Bericht: Abdeckung, häufigste nicht zugeordnete Themen, Stichproben je Genre
+      const genres = genreAnzahlen(lese);
+      const ohne = genres.find((g) => g.id === 'sonstiges')!.anzahl;
+      console.log(`GENRES zugeordnet: ${(100 - (100 * ohne) / n).toFixed(1)} %`);
+      console.log('GENRES je Genre: ' + genres.map((g) => `${g.id}=${g.anzahl}`).join(' '));
+      const proFilm = lese.prepare('SELECT avg(c) AS a FROM (SELECT count(*) AS c FROM film_genre GROUP BY film_id)').get() as { a: number };
+      console.log(`GENRES pro Sendung im Schnitt: ${proFilm.a.toFixed(2)}`);
+      for (const g of GRUPPEN) {
+        const offen = lese
+          .prepare(
+            `SELECT f.thema, count(*) AS n, min(f.titel) AS bsp FROM film_genre fg JOIN film f ON f.id = fg.film_id
+             WHERE fg.genre = 'sonstiges' AND f.gruppe = ? GROUP BY f.thema ORDER BY n DESC LIMIT 45`
+          )
+          .all(g.id) as { thema: string; n: number; bsp: string }[];
+        console.log(`OFFEN ${g.id}: ` + offen.map((o) => `${o.n}× ${o.thema} [${o.bsp.slice(0, 40)}]`).join(' | '));
+      }
+      for (const g of genres) {
+        if (g.id === 'sonstiges') continue;
+        const bsp = lese
+          .prepare(
+            `SELECT f.sender, f.thema, f.titel FROM film_genre fg JOIN film f ON f.id = fg.film_id
+             WHERE fg.genre = ? ORDER BY (f.id * 2654435761) % 1000003 LIMIT 14`
+          )
+          .all(g.id) as { sender: string; thema: string; titel: string }[];
+        console.log(`STICHPROBE ${g.id}: ` + bsp.map((b) => `${b.sender}/${b.thema.slice(0, 30)}/${b.titel.slice(0, 45)}`).join(' | '));
+      }
       lese.close();
 
       expect(verarbeitet).toBeGreaterThan(300_000);

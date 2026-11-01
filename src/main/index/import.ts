@@ -1,5 +1,6 @@
 import type { Readable } from 'node:stream';
 import { EintragsLeser, parseListenStand } from '../filmliste/eintrag';
+import { bestimmeGenres } from '../genre/regeln';
 import { FilmlistenParser } from '../filmliste/parser';
 import { schreiber, schreibeMeta, type Db } from './datenbank';
 
@@ -42,6 +43,7 @@ export async function importiere(
     verarbeitet++;
     const e = leser.lies(werte);
     if (e) {
+      e.genres = bestimmeGenres(e);
       puffer.push(e);
       anzahl++;
     }

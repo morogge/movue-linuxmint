@@ -73,6 +73,18 @@ test('Tastenkürzel-Seite zeigt die Tabelle aus der App', async () => {
   await win.getByRole('button', { name: 'Hilfe schließen (Esc)' }).click();
 });
 
+test('Genres: Kacheln zeigen, ein Genre öffnen', async () => {
+  await win.getByRole('button', { name: 'Genres', exact: true }).click();
+  await expect(win.getByRole('heading', { name: 'Genres', level: 1 })).toBeVisible();
+  const krimi = win.getByRole('button', { name: /Krimi & Thriller/ });
+  await expect(krimi).toContainText('2 Sendungen');
+  await win.screenshot({ path: 'test-results/screens/genres.png' });
+  await krimi.click();
+  await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 1 })).toBeVisible();
+  await expect(win.getByText('2 Treffer')).toBeVisible();
+  await win.screenshot({ path: 'test-results/screens/genre-krimi.png' });
+});
+
 test('Hinweis auf eine heruntergeladene neue Version', async () => {
   const hinweis = win.getByRole('region', { name: 'Neue Version' });
   await expect(hinweis).toContainText('Movue 9.9.9 ist da.');

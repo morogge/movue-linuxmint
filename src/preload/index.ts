@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import type { IndexZustand, SuchAnfrage, SuchErgebnis } from '../shared/film';
 import type { UpdateZustand } from '../shared/update';
+import type { GenreAnzahl } from '../shared/genres';
 
 export interface AppInfo {
   version: string;
@@ -14,6 +15,7 @@ const api = {
   index: {
     zustand: (): Promise<IndexZustand> => ipcRenderer.invoke('index:zustand'),
     suche: (anfrage: SuchAnfrage): Promise<SuchErgebnis> => ipcRenderer.invoke('index:suche', anfrage),
+    genres: (): Promise<GenreAnzahl[]> => ipcRenderer.invoke('index:genres'),
     /** Meldet jede Zustandsänderung; gibt eine Funktion zum Abmelden zurück. */
     beiAenderung: (callback: (z: IndexZustand) => void): (() => void) => {
       const listener = (_e: IpcRendererEvent, z: IndexZustand) => callback(z);

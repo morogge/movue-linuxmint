@@ -4,6 +4,19 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.4.0 – 2026-11-01
+
+### Neu
+
+- **Genres**: Alle Sendungen von ARD, ZDF, 3sat und Arte sind jetzt nach 15 Genres geordnet – von Krimi über Dokus bis Kinder. Die neue Seite „Genres“ zeigt sie als Kacheln mit der Anzahl der Sendungen.
+- In der Suche gibt es einen Genre-Filter; Suchbegriff, Sender und Genre lassen sich kombinieren.
+- Jeder Treffer zeigt seine Genres.
+- Neue Hilfeseite „Genres“
+
+### Hinweis
+
+- Nach dem Update baut Movue das Sendungsverzeichnis einmal neu auf (ein bis zwei Minuten). Die Suche funktioniert währenddessen weiter.
+
 ## 0.3.1 – 2026-11-01
 
 ### Verbessert

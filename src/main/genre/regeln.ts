@@ -31,7 +31,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'kinokino', 'filmdebüt', 'arthouse', 'freitagskino', 'sonntagskino', 'spätfilm', 'kurzfilm',
     'animationsfilm', 'liebesfilm', 'heimatfilm', 'familienfilm', 'western', 'komödie', 'tragikomödie',
     'melodram', 'märchenfilm', 'märchen', 'mittwochsfilm', 'filmfestival', 'ard degeto', 'degeto',
-    'kino -', 'kino –'
+    'kino -', 'kino –',
+    'filme in der ard', 'debüt im dritten', 'unicato'
   ],
   serie: [
     'serie', 'serien', 'rote rosen', 'sturm der liebe', 'in aller freundschaft', 'um himmels willen',
@@ -40,8 +41,7 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'die fallers', 'hubert und/ohne staller', 'doctor’s diary', 'das boot', 'der lehrer', 'die bergwacht',
     'die küstenwache', 'notruf hafenkante', 'heiter bis tödlich', 'tierärztin dr. mertens', 'praxis mit meerblick',
     'die eifelpraxis', 'der hafenpastor', 'frühling', 'rentnercops', 'die drei von der müllabfuhr', 'kitz',
-    'miniserie', 'webserie', 'staffel', 'telenovela', 'soap', 'sitcom',
-    'dave!'
+    'miniserie', 'webserie', 'staffel', 'telenovela', 'soap', 'sitcom'
   ],
   doku: [
     'doku', 'dokumentation', 'dokumentarfilm', 'reportage', 'reporter', 'exclusiv im ersten', 'die story',
@@ -50,7 +50,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'die nordreportage', 'die nordstory', 'unser leben', 'menschen hautnah', 'inside!', 'investigativ',
     'die rbb reporter', 'betrifft', 'der osten – entdecke', 'echt!', 'lebensläufe', 'porträt', 'portrait',
     'biografie', 'biographie', 'dokumentarisch', 'zeitreise', 'stationen', 'die dokumentation', 'dok 5',
-    'zdfzeit', 'zdfzoom', 'handwerkskunst', 'dokumentationen und reportagen'
+    'zdfzeit', 'zdfzoom', 'handwerkskunst', 'dokumentationen und reportagen',
+    'lebenslinien', 'einzeldok'
   ],
   wissen: [
     'terra x', 'terra xpress', 'nano!', 'quarks', 'planet wissen', 'xenius', 'leschs kosmos', 'abenteuer forschung',
@@ -70,7 +71,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'wikinger', 'kelten', 'germanen', 'ritter', 'revolution', 'imperium', 'dynastie', 'adel', 'monarchie',
     'kalter krieg', 'nachkrieg', 'gründerzeit', 'bonner republik', 'zdf-history', 'zdfhistory',
     'mdr zeitreise', 'unser dorf hat wochenende', 'retro', 'vor 50 jahren', 'die 50er', 'die 60er', 'die 70er',
-    'die 80er', 'die 90er'
+    'die 80er', 'die 90er',
+    'sellemols'
   ],
   reise: [
     'reise', 'länder!', 'von oben', 'unterwegs', 'abenteuer', 'traumziel', 'metropolen', 'inseln', 'insel!',
@@ -81,7 +83,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'schweden', 'italien', 'frankreich', 'spanien', 'griechenland', 'kanada', 'island', 'schottland', 'irland',
     'japan', 'china', 'indien', 'die schönsten', 'traumhaft', 'urlaub', 'ferien', 'kreuzfahrt', 'expeditionen',
     'nordsee', 'ostsee', 'bodensee', 'schwarzwald', 'bayern erleben', 'reisen',
-    'rhein!', 'elbe!', 'donau!', 'nordtour', 'da will ich hin', 'bilder aus südtirol', 'schweizweit', 'entdeckung der welt', 'herr ostrowski', 'zwischen spessart und karwendel'
+    'rhein!', 'elbe!', 'donau!', 'nordtour', 'da will ich hin', 'bilder aus südtirol', 'schweizweit', 'entdeckung der welt', 'herr ostrowski', 'zwischen spessart und karwendel',
+    'hierzuland', 'bergauf-bergab', 'fahr mal hin', 'der osten - entdecke', 'der osten – entdecke', 'schätze der welt', 'entdeckung!', 'eisenbahn-romantik', 'traumziele'
   ],
   kultur: [
     'kultur', 'kulturzeit', 'ttt', 'titel thesen temperamente', 'titel, thesen, temperamente', 'aspekte',
@@ -92,7 +95,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'architektur', 'design', 'fotografie', 'kulturjournal', 'kulturplatz', 'kino!', 'filmgeschichte', 'blow up',
     'karambolage', 'das literarische quartett', 'lesenswert', 'kunst + krempel', 'kunst und krempel', 'schlager',
     'volksmusik', 'musikantenstadl', 'hip-hop', 'hip hop', 'rap!', 'elektro', 'techno', 'oratorium', 'kammermusik',
-    'klassik!', 'klassische musik', 'eurovision song contest', 'esc!', 'max ophüls', 'cinema strikes back', 'buchzeit', '3satbuchzeit', 'klassixs', 'erlesen', 'popkultur', 'kultur und pop'
+    'klassik!', 'klassische musik', 'eurovision song contest', 'esc!', 'max ophüls', 'cinema strikes back', 'buchzeit', '3satbuchzeit', 'klassixs', 'erlesen', 'popkultur', 'kultur und pop',
+    'rbbkultur', 'puls startrampe', 'kunscht', 'westart', 'landesart', 'masterclass', 'capriccio'
   ],
   comedy: [
     'comedy', 'kabarett', 'satire', 'extra 3', 'heute-show', 'heute show', 'zdf magazin royale', 'die anstalt',
@@ -101,7 +105,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'spätschicht', 'satire gipfel', 'satiregipfel', 'die carolin kebekus show', 'freitag nacht news', 'neo magazin',
     'browser ballett', 'mann, sieber', 'die bierbichler', 'olafs klub', 'quatsch', 'comedystreet',
     'kabarettfestival', 'schreinerei', 'mittermeier', 'pispers', 'priol', 'tegtmeier', 'loriot', 'otto!',
-    'brettl-spitzen', 'world wide wohnzimmer', 'quer!', 'happy hour', 'pufpaff', 'schlachthof', 'pratersterne', 'vereinsheim schwabing', 'asül', 'schleichfernsehen', 'tafelrunde', 'noch nicht schicht', 'pelzig', 'karlsplatz', 'bosetti', 'till reiners', 'was gibt es neues', '3satfestival'
+    'brettl-spitzen', 'world wide wohnzimmer', 'quer!', 'happy hour', 'pufpaff', 'schlachthof', 'pratersterne', 'vereinsheim schwabing', 'asül', 'schleichfernsehen', 'tafelrunde', 'noch nicht schicht', 'pelzig', 'karlsplatz', 'bosetti', 'till reiners', 'was gibt es neues', '3satfestival',
+    'walulis', 'nockherberg'
   ],
   unterhaltung: [
     'show!', 'shows', 'quiz', 'gala', 'wer weiß denn sowas', 'gefragt – gejagt', 'gefragt gejagt', 'das quiz',
@@ -111,7 +116,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'die schlagerchance', 'promi', 'unterhaltung', 'rate mal', 'pointless',
     'samstagabend', 'familienduell', 'sag die wahrheit', 'was bin ich', 'dalli dalli',
     'zdf-fernsehgarten', 'riverboat', 'tietjen', 'inas nacht', 'nachtcafé', 'kölner treff', '3nach9', 'talk',
-    'kurzstrecke', 'ehrlich brothers', 'zauber'
+    'kurzstrecke', 'ehrlich brothers', 'zauber',
+    'fastnacht', 'fasching', 'karneval', 'game two', 'mainzelmännchen'
   ],
   nachrichten: [
     'tagesschau', 'tagesthemen', 'heute journal', 'heute-journal', 'heute!', 'heute 19', 'heute 17', 'heute xpress',
@@ -128,7 +134,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'debatte', 'interview', 'unter den linden', 'phoenix runde', 'phoenix vor ort', 'tagesgespräch', 'ukraine',
     'nahost', 'israel', 'gaza', 'russland', 'usa!', 'trump', 'europawahl', 'bundestagswahl', 'landtagswahl',
     'zdf-morgenmagazin', 'moma', 'tagesschau24', 'ndr info', 'wdr aktuell', 'swr landesschau', 'heute-show!',
-    'saarlandwetter', 'sr info', 'berichte vom tage', 'der tag in berlin', 'maintower', 'nordschau', 'schleswig-holstein 18', 'zapp!', 'kontrovers', 'daten der woche', 'ard sondersendung', 'wirtschaft', 'makro!', 'länderspiegel', 'info und gesellschaft', 'info et société'
+    'saarlandwetter', 'sr info', 'berichte vom tage', 'der tag in berlin', 'maintower', 'nordschau', 'schleswig-holstein 18', 'zapp!', 'kontrovers', 'daten der woche', 'ard sondersendung', 'wirtschaft', 'makro!', 'länderspiegel', 'info und gesellschaft', 'info et société',
+    'politix', 'politbarometer', 'standpunkte', 'was nun'
   ],
   gesellschaft: [
     'gesellschaft', 'leben!', 'menschen', 'familie', 'religion', 'kirche', 'gottesdienst', 'glaube',
@@ -138,7 +145,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'mein land', 'hier und heute', 'mdr zeitreise', 'echtes leben', 'gott und die welt', 'wort zum sonntag',
     'sonntags', 'kirche in', 'evangelisch', 'katholisch', 'islam', 'judentum', 'philosophie', 'sternstunde',
     'precht', 'ethik', 'feminismus', 'queer', 'lgbt', 'die ard-themenwoche', 'themenwoche',
-    'wir im saarland', 'hallo deutschland', 'hallo hessen', 'wir in bayern', 'swr1 leute', 'aus christlicher sicht', 'das! rote sofa', 'unser land!', 'schwaben + altbayern', 'liebesg', 'forum am freitag', 'peter voß', 'dinner für zwei', 'stöckl'
+    'wir im saarland', 'hallo deutschland', 'hallo hessen', 'wir in bayern', 'swr1 leute', 'aus christlicher sicht', 'das! rote sofa', 'unser land!', 'schwaben + altbayern', 'liebesg', 'forum am freitag', 'peter voß', 'dinner für zwei', 'stöckl',
+    'rund um den michel', 'alpha-forum', 'frau tv', 'unbubble', 'am puls'
   ],
   ratgeber: [
     'ratgeber', 'verbraucher', 'markt!', 'marktcheck', 'plusminus', 'wiso', 'servicezeit', 'kochen',
@@ -148,7 +156,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'mdr garten', 'grünzeug', 'abenteuer diagnose', 'die ernährungs-docs', 'diät', 'fitness', 'sprechstunde',
     'tipps', 'so geht', 'genial einfach', 'heimwerk', 'vorsorge', 'versicherung', 'steuer', 'rente', 'auto!',
     'mobilität', 'mittagsmagazin', 'brisant', 'kaum zu glauben', 'marktplatz', 'die tricks', 'der vorkoster',
-    'mex!', 'mit herz am herd', 'flohmarkt', 'schau hin', 'besseresser', 'esskulturen', 'kulinarik', 'essen und trinken'
+    'mex!', 'mit herz am herd', 'flohmarkt', 'schau hin', 'besseresser', 'esskulturen', 'kulinarik', 'essen und trinken',
+    'querbeet', 'freizeit', 'lohnt sich das', 'schnittgut', 'room tour', 'ökochecker'
   ],
   kinder: [
     'kika', 'logo!', 'die sendung mit der maus', 'sendung mit der maus', 'maus!', 'sandmann',
@@ -167,7 +176,8 @@ const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
     'golf!', 'volleyball', 'darts', 'rodeln', 'bob!', 'sportclub', 'sport im osten', 'sport inside', 'sportplatz',
     'abpfiff', 'fifa', 'uefa', 'dfb', 'länderspiel', 'pokal', 'finale', 'halbfinale', 'liga', 'highlights',
     'zusammenfassung', 'paralympics', 'turnen', 'reiten', 'segeln', 'rudern', 'kanu', 'triathlon', 'marathon',
-    'motorsport', 'dtm', 'snooker', 'tischtennis', 'hockey', 'american football', 'nfl'
+    'motorsport', 'dtm', 'snooker', 'tischtennis', 'hockey', 'american football', 'nfl',
+    'die finals'
   ]
 };
 
@@ -198,7 +208,8 @@ const THEMA_EXAKT: Record<string, GenreId[]> = {
   kino: ['film'],
   'filme im zdf': ['film'],
   serien: ['serie'],
-  serie: ['serie']
+  serie: ['serie'],
+  dave: ['serie']
 };
 
 /** Sender, deren Programm ein Genre vorgibt */
@@ -231,6 +242,12 @@ export interface GenreQuelle {
   dauer: number;
 }
 
+/** Genres, deren Begriffe nur im Thema zählen (im Titel zu viele Zufallstreffer, z. B. Ortsnamen in Nachrichten) */
+const NUR_THEMA = new Set<GenreId>(['reise']);
+
+/** Hat eine Sendung eines dieser Genres, macht eine Folgen-Kennung „(S01/E05)“ sie nicht zur Serie */
+const KEINE_SERIE = new Set<GenreId>(['doku', 'nachrichten', 'sport', 'kultur', 'wissen', 'ratgeber', 'geschichte', 'comedy', 'gesellschaft', 'reise', 'unterhaltung']);
+
 const SPIELFILM_IM_TITEL = /\s[-–]\s(spielfilm|fernsehfilm|kinofilm|dokumentarfilm)\b/i;
 
 export function bestimmeGenres(e: GenreQuelle): GenreId[] {
@@ -243,12 +260,14 @@ export function bestimmeGenres(e: GenreQuelle): GenreId[] {
   }
 
   const text = `${e.thema} | ${e.titel}`;
-  for (const r of REGELN) if (r.re.test(text)) genres.add(r.genre);
+  for (const r of REGELN) {
+    if (r.re.test(NUR_THEMA.has(r.genre) ? e.thema : text)) genres.add(r.genre);
+  }
 
   // „- Spielfilm, USA 1993“ im Titel (3sat, Arte) und lange Einzelsendungen ohne Reihe
   if (SPIELFILM_IM_TITEL.test(e.titel)) genres.add(/dokumentarfilm/i.test(e.titel) ? 'doku' : 'film');
   // Folgen-Kennung „(S01/E17)“ = Serie, außer bei Dokureihen und Nachrichten
-  if (/\(S\d{1,2}\/E\d+\)/.test(e.titel) && !genres.has('doku') && !genres.has('nachrichten')) genres.add('serie');
+  if (/\(S\d{1,2}\/E\d+\)/.test(e.titel) && ![...genres].some((x) => KEINE_SERIE.has(x))) genres.add('serie');
 
   // Arte-Rubrik „Fernsehfilme und Serien - Serien“: Serie, kein Spielfilm
   if (/fernsehfilme und serien\s*[-–]\s*serien/i.test(e.thema)) {

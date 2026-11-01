@@ -40,6 +40,11 @@ describe('Genre-Regeln', () => {
     expect(g('ARTE.DE', 'Fernsehfilme und Serien - Serien', 'Loulou - Staffel 1')).toEqual(['serie']);
   });
 
+  it('„quer“ ist nur als Sendung Satire, nicht als Wort im Titel', () => {
+    expect(g('BR', 'quer', 'quer vom 31. Oktober 2026')).toContain('comedy');
+    expect(g('3Sat', 'Länder', 'Japans Nordinsel – Einmal quer durch')).not.toContain('comedy');
+  });
+
   it('gibt immer mindestens ein Genre zurück', () => {
     expect(g('ARD', 'Beiträge', 'Ohne Hinweis')).toEqual(['sonstiges']);
   });

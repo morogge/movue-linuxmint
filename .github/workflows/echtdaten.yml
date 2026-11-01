@@ -1,0 +1,27 @@
+name: Echtdaten
+
+# Importiert die echte Filmliste vom Server: bei Änderungen am Import und einmal pro Woche,
+# damit Formatänderungen bei MediathekView früh auffallen.
+on:
+  pull_request:
+    paths:
+      - 'src/main/filmliste/**'
+      - 'src/main/index/**'
+      - 'src/shared/sender.ts'
+      - 'tests/echt/**'
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+jobs:
+  import:
+    name: Echte Filmliste importieren
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run --config vitest.echt.config.ts

@@ -1,5 +1,12 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join } from 'node:path';
+import type { IndexZustand, SuchAnfrage } from '@shared/film';
+import { IndexDienst } from './index/dienst';
+
+// Für Tests: eigenes Datenverzeichnis statt ~/.config/Movue
+if (process.env['MOVUE_DATEN']) app.setPath('userData', process.env['MOVUE_DATEN']);
+
+let index: IndexDienst | null = null;
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -35,6 +42,10 @@ function createWindow(): BrowserWindow {
   return win;
 }
 
+function sendeZustand(z: IndexZustand): void {
+  for (const win of BrowserWindow.getAllWindows()) win.webContents.send('index:zustand', z);
+}
+
 ipcMain.handle('app:info', () => ({
   version: app.getVersion(),
   electron: process.versions.electron,
@@ -48,12 +59,25 @@ ipcMain.handle('window:toggle-fullscreen', (event) => {
   return win.isFullScreen();
 });
 
+ipcMain.handle('index:zustand', () => index?.aktuellerZustand() ?? { phase: 'leer', anzahl: 0, stand: null });
+
+ipcMain.handle('index:suche', (_event, anfrage: SuchAnfrage) => {
+  if (!index || typeof anfrage?.text !== 'string') return { treffer: [], gesamt: 0 };
+  return index.suche(anfrage);
+});
+
 app.whenReady().then(() => {
+  const userAgent = `Movue/${app.getVersion()} (+https://github.com/morogge/movue-linuxmint)`;
+  index = new IndexDienst(join(app.getPath('userData'), 'index.db'), userAgent, sendeZustand);
   createWindow();
+  index.start();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
+
+app.on('before-quit', () => index?.stop());
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

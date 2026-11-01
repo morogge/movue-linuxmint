@@ -1,10 +1,31 @@
+import { forwardRef } from 'react';
 import { Icon } from './Icon';
 
-export function TopBar({ onHelp }: { onHelp: () => void }) {
+interface Props {
+  suchtext: string;
+  onSuche: (text: string) => void;
+  onHelp: () => void;
+}
+
+export const TopBar = forwardRef<HTMLInputElement, Props>(function TopBar({ suchtext, onSuche, onHelp }, ref) {
   return (
     <header className="topbar">
-      <div className="search-placeholder" aria-hidden="true">
-        Suche in allen Mediatheken – folgt mit Version 0.2
+      <div className="search-field">
+        <Icon name="search" size={18} />
+        <label htmlFor="suche" className="sr-only">
+          Suche in allen Mediatheken
+        </label>
+        <input
+          ref={ref}
+          id="suche"
+          type="search"
+          placeholder="Suche in allen Mediatheken …"
+          autoComplete="off"
+          spellCheck={false}
+          value={suchtext}
+          onChange={(e) => onSuche(e.target.value)}
+        />
+        <kbd aria-hidden="true">Strg K</kbd>
       </div>
       <button type="button" className="icon-button" aria-label="Hilfe (F1)" title="Hilfe (F1)" onClick={onHelp}>
         <Icon name="help" />
@@ -20,4 +41,4 @@ export function TopBar({ onHelp }: { onHelp: () => void }) {
       </button>
     </header>
   );
-}
+});

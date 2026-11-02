@@ -287,9 +287,14 @@ const SAMMELTHEMEN = new Set(
     'dokus', 'serien', 'videos', 'sendungen', 'clips', 'br', 'sr', 'ard', 'zdf', '3sat', 'livestream']
 );
 
+/** Ob ein Thema eine Reihe ist (und sich damit abonnieren lässt) */
+export function istReihenThema(thema: string): boolean {
+  return thema.trim() !== '' && !SAMMELTHEMEN.has(thema.trim().toLowerCase());
+}
+
 /** Weitere Folgen derselben Reihe (gleicher Sender, gleiches Thema), neueste zuerst; ohne Varianten */
 export function folgen(db: Db, film: Pick<Film, 'gruppe' | 'thema'>, limit = 200): Film[] {
-  if (!film.thema || SAMMELTHEMEN.has(film.thema.trim().toLowerCase())) return [];
+  if (!istReihenThema(film.thema)) return [];
   const zeilen = db
     .prepare(
       `SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.variante = 0
@@ -372,4 +377,24 @@ export function filmeNachUrl(db: Db, urls: string[]): Map<string, Film> {
   );
   for (const z of zeilen) map.set(z.url, zuFilm(z, genres));
   return map;
+}
+
+export interface ReihenStand {
+  /** Folgen im Verzeichnis (ohne Varianten) */
+  anzahl: number;
+  /** Folgen mit Datum nach `seit` */
+  neu: number;
+  /** Neueste Folge, null wenn die Reihe nicht mehr im Verzeichnis ist */
+  neueste: Film | null;
+}
+
+/** Stand einer abonnierten Reihe: wie viele Folgen gibt es, wie viele sind neuer als `seit` (Sekunden) */
+export function reihenStand(db: Db, gruppe: string, thema: string, seit: number): ReihenStand {
+  const z = db
+    .prepare(`SELECT COUNT(*) AS anzahl, COALESCE(SUM(datum > ?), 0) AS neu FROM film WHERE gruppe = ? AND thema = ? AND variante = 0`)
+    .get(seit, gruppe, thema) as { anzahl: number; neu: number };
+  const n = db
+    .prepare(`SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.variante = 0 ORDER BY f.datum DESC LIMIT 1`)
+    .get(gruppe, thema) as FilmZeile | undefined;
+  return { anzahl: z.anzahl, neu: z.neu, neueste: n ? zuFilm(n, genresFuer(db, [n.id])) : null };
 }

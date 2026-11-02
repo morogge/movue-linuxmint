@@ -17,6 +17,9 @@ import { SearchScreen } from './screens/SearchScreen';
 import { StartScreen } from './screens/StartScreen';
 import { PlayerScreen } from './screens/PlayerScreen';
 import { MiniPlayer } from './components/MiniPlayer';
+import { MerklisteScreen } from './screens/MerklisteScreen';
+import { AblaufScreen } from './screens/AblaufScreen';
+import { istScreen } from '@shared/screens';
 
 const ZULETZT_GESEHEN = 'movue.zuletztGeseheneVersion';
 
@@ -75,6 +78,19 @@ export function App() {
       window.scrollTo({ top: 0 });
     },
     [ansicht]
+  );
+
+  // Klick auf eine Benachrichtigung (neue Folgen) öffnet die Merkliste
+  const gehZu = useRef(gehe);
+  useEffect(() => {
+    gehZu.current = gehe;
+  }, [gehe]);
+  useEffect(
+    () =>
+      window.movue?.beiNavigation((screen) => {
+        if (istScreen(screen)) gehZu.current({ screen });
+      }),
+    []
   );
 
   const zurueck = useCallback(() => {
@@ -159,6 +175,8 @@ export function App() {
           <SearchScreen suchtext={suchtext} zustand={zustand} genre={genre} onGenre={setGenre} onOeffne={oeffneFilm} onAbspielen={abspielen} />
         )}
         {ansicht.screen === 'genres' && <GenresScreen zustand={zustand} onWaehle={zeigeGenre} />}
+        {ansicht.screen === 'merkliste' && <MerklisteScreen stand={zustand.stand} onOeffne={oeffneFilm} />}
+        {ansicht.screen === 'ablauf' && <AblaufScreen stand={zustand.stand} onOeffne={oeffneFilm} />}
         {ansicht.screen === 'detail' && ansicht.filmId !== undefined && (
           <DetailScreen filmId={ansicht.filmId} onOeffne={oeffneFilm} onZurueck={zurueck} onAbspielen={abspielen} />
         )}

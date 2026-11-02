@@ -7,6 +7,7 @@ import { UpdateDienst } from './update';
 import { BildDienst } from './bilder';
 import { NutzerDb } from './nutzer';
 import { AblaufDienst } from './ablauf';
+import { TitelInfoDienst } from './titelinfo';
 import { aboMeldung, laeuftBaldAb, type Abo, type Ablauf, type MerkEintrag } from '@shared/nutzer';
 import type { Film } from '@shared/film';
 import { ladeUntertitel } from './untertitel';
@@ -22,6 +23,7 @@ let update: UpdateDienst | null = null;
 let bilder: BildDienst | null = null;
 let nutzer: NutzerDb | null = null;
 let ablauf: AblaufDienst | null = null;
+let titelInfos: TitelInfoDienst | null = null;
 /** Stand des Verzeichnisses, für den die Abos zuletzt geprüft wurden */
 let aboStand: number | null = null;
 
@@ -173,10 +175,19 @@ ipcMain.handle('fortschritt:viele', (_event, urls: unknown) =>
 
 ipcMain.handle('index:film', (_event, id: unknown) => (index && typeof id === 'number' ? index.film(id) : null));
 
+ipcMain.handle('index:auch-bei', (_event, id: unknown) => (index && typeof id === 'number' ? index.auchBei(id) : []));
+
+/** Besetzung und Stab von der Sendungsseite (ZDF, 3sat) */
+ipcMain.handle('titel:info', async (_event, id: unknown) => {
+  if (!index || !titelInfos || typeof id !== 'number') return null;
+  const film = index.film(id);
+  return film ? titelInfos.hole(film.website) : null;
+});
+
 ipcMain.handle('index:folgen', (_event, id: unknown) => (index && typeof id === 'number' ? index.folgen(id) : []));
 
-ipcMain.handle('bild:url', (_event, website: unknown) =>
-  bilder && typeof website === 'string' ? bilder.url(website) : null
+ipcMain.handle('bild:url', (_event, website: unknown, art: unknown) =>
+  bilder && typeof website === 'string' ? bilder.url(website, art === 'serie' || art === 'banner' ? art : 'folge') : null
 );
 
 ipcMain.handle('untertitel:laden', async (_event, url: unknown) => {
@@ -293,9 +304,14 @@ app.whenReady().then(() => {
   nutzer = new NutzerDb(join(app.getPath('userData'), 'nutzer.db'));
   // Für Tests: keine Abrufe bei den Sendern
   ablauf = new AblaufDienst(nutzer, process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined);
+  titelInfos = new TitelInfoDienst(
+    join(app.getPath('userData'), 'infos.db'),
+    process.env['MOVUE_BILDER_AUS'] ? async () => ({ darsteller: [], stab: [] }) : undefined
+  );
   // Für Tests: keine Abrufe bei den Sendern
   bilder = new BildDienst(
     join(app.getPath('userData'), 'bilder.db'),
+    process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined,
     process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined
   );
   createWindow();
@@ -311,6 +327,7 @@ app.on('before-quit', () => {
   index?.stop();
   update?.stop();
   bilder?.schliessen();
+  titelInfos?.schliessen();
   nutzer?.schliessen();
 });
 

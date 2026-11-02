@@ -19,6 +19,8 @@ Unter **Sender** in der Seitenleiste hat jede Mediathek ihre eigene Seite – mi
 Ein Klick auf eine Kachel oder einen Titel in der Suche öffnet die Detailseite:
 
 - Bild, Titel, Reihe, Genres, Beschreibung, Datum und Länge
+- **Auch bei …**: Läuft dieselbe Sendung auch bei einem anderen Sender (oft ein Fernsehfilm in der ARD und bei 3sat), führt ein Klick auf den Sender zu dessen Fassung – praktisch, wenn eine Fassung bald abläuft oder nicht abspielbar ist.
+- **Besetzung**: Darsteller mit ihren Rollen und der Stab (Regie, Drehbuch …), sofern der Sender sie nennt. Das tun bisher ZDF und 3sat; bei ARD und Arte fehlt dieser Abschnitt.
 - **Abspielen** startet den Player (bei angefangenen Sendungen: **Weiterschauen ab …**), **Beim Sender ansehen** öffnet die Seite der Mediathek. **Extern öffnen** gibt die Videodatei an den Browser oder dein Videoprogramm.
 - Gehört die Sendung zu einer Serie, führt **Alle Folgen von …** zur Serienseite mit Staffeln und Folgen. Bei Reihen mit nur zwei Folgen stehen die **weiteren Folgen** direkt darunter.
 

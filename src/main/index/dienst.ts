@@ -6,6 +6,7 @@ import {
   filmNachId,
   filmeNachUrl,
   folgen,
+  auchBei,
   genreAnzahlen,
   leseMeta,
   oeffneDb,
@@ -113,6 +114,13 @@ export class IndexDienst {
 
   reihenStand(gruppe: string, thema: string, seit: number): ReihenStand | null {
     return this.db ? reihenStand(this.db, gruppe, thema, seit) : null;
+  }
+
+  /** Dieselbe Sendung bei anderen Sendern */
+  auchBei(id: number): Film[] {
+    if (!this.db) return [];
+    const f = filmNachId(this.db, id);
+    return f ? auchBei(this.db, f) : [];
   }
 
   folgen(id: number): Film[] {

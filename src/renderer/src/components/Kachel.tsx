@@ -2,12 +2,17 @@ import { useState } from 'react';
 import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
 import { serienUmfang, type Serie, type SerieRef } from '@shared/serie';
-import { useBild } from '../hooks/useBild';
+import { useBild, useSerienBild } from '../hooks/useBild';
 import { SENDER_FARBE } from '../senderFarben';
 
-/** Bildfläche einer Sendung: Vorschaubild, sonst eine ruhige Farbfläche mit dem Titel */
-export function FilmBild({ film, gross = false }: { film: Film; gross?: boolean }) {
-  const url = useBild(film);
+/**
+ * Bildfläche einer Sendung: Vorschaubild, sonst eine ruhige Farbfläche mit dem Titel.
+ * Mit `titelbild` zuerst das Titelbild der Serie (ARD), sonst das Bild der Folge.
+ */
+export function FilmBild({ film, gross = false, titelbild }: { film: Film; gross?: boolean; titelbild?: 'serie' | 'banner' }) {
+  const folge = useBild(film);
+  const serie = useSerienBild(film, titelbild);
+  const url = serie ?? folge;
   const [fehler, setFehler] = useState(false);
   const zeigeBild = url && !fehler;
   return (
@@ -58,7 +63,7 @@ export function SerieKachel({ serie, onOeffne, hinweis }: { serie: Serie; onOeff
   return (
     <button type="button" className="kachel serie-kachel" onClick={() => onOeffne(serie)}>
       <span className="kachel-bild">
-        <FilmBild film={bild} />
+        <FilmBild film={bild} titelbild="serie" />
         <SenderMarke film={bild} />
         <span className="kachel-dauer">{hinweis ?? serienUmfang(serie)}</span>
       </span>

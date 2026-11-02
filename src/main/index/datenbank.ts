@@ -4,6 +4,7 @@ import { GENRES, istGenre, type GenreAnzahl, type GenreId } from '@shared/genres
 import { istGruppe, type SenderGruppe } from '@shared/sender';
 import type { FilmEintrag } from '../filmliste/eintrag';
 import { folgenInfo } from '@shared/serie';
+import { titelKern } from '@shared/titelinfo';
 
 export type Db = Database.Database;
 
@@ -462,4 +463,25 @@ export function reihenStand(db: Db, gruppe: string, thema: string, seit: number)
     .prepare(`SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.variante = 0 ORDER BY f.datum DESC LIMIT 1`)
     .get(gruppe, thema) as FilmZeile | undefined;
   return { anzahl: z.anzahl, neu: z.neu, neueste: n ? zuFilm(n, genresFuer(db, [n.id])) : null };
+}
+
+/**
+ * Dieselbe Sendung bei anderen Sendern (z. B. ein Fernsehfilm in der ARD und bei 3sat):
+ * gleicher Titel ohne Zusätze, Länge höchstens drei Minuten verschieden. Je Sender die neueste Fassung.
+ */
+export function auchBei(db: Db, film: Film): Film[] {
+  if (film.dauer < 600) return [];
+  const kern = titelKern(film.titel);
+  if (kern.length < 3) return [];
+  const { treffer } = suche(db, { text: kern, limit: 80 });
+  const jeSender = new Map<string, Film>();
+  for (const f of treffer) {
+    if (f.gruppe === film.gruppe || istVariante(f.titel) || Math.abs(f.dauer - film.dauer) > 180) continue;
+    if (titelKern(f.titel) !== kern) continue;
+    // Gleicher Titel, aber andere Folge (z. B. „Schiffbruch (S03/E02)“ und „Schiffbruch (S01/E21)“)
+    if (film.folge !== null && f.folge !== null && (film.folge !== f.folge || film.staffel !== f.staffel)) continue;
+    const alt = jeSender.get(f.gruppe);
+    if (!alt || f.datum > alt.datum) jeSender.set(f.gruppe, f);
+  }
+  return [...jeSender.values()];
 }

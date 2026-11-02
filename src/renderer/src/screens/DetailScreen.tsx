@@ -5,6 +5,9 @@ import { genreName } from '@shared/genres';
 import { formatZeit } from '@shared/player';
 import { formatAblauf, laeuftBaldAb, type Ablauf } from '@shared/nutzer';
 import { folgenKennung, type SerieRef } from '@shared/serie';
+import type { TitelInfo } from '@shared/titelinfo';
+import { GRUPPEN } from '@shared/sender';
+import { SENDER_FARBE } from '../senderFarben';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Icon } from '../components/Icon';
 
@@ -36,6 +39,8 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
   const [gemerkt, setGemerkt] = useState(false);
   const [abonniert, setAbonniert] = useState(false);
   const [ablauf, setAblauf] = useState<Ablauf | null>(null);
+  const [auchBei, setAuchBei] = useState<Film[]>([]);
+  const [info, setInfo] = useState<TitelInfo | null>(null);
 
   useEffect(() => {
     let aktiv = true;
@@ -48,7 +53,11 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
       setStaffel(f ? staffelVon(f.titel) : null);
       setSeite('bereit');
       setAblauf(null);
+      setAuchBei([]);
+      setInfo(null);
       if (!f) return;
+      void window.movue.index.auchBei(f.id).then((a) => aktiv && setAuchBei(a));
+      void window.movue.index.titelInfo(f.id).then((i) => aktiv && setInfo(i));
       void window.movue.merkliste.ist(f.url).then((g) => aktiv && setGemerkt(g));
       void window.movue.abo.ist({ gruppe: f.gruppe, thema: f.thema }).then((a) => {
         if (!aktiv) return;
@@ -134,6 +143,17 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
               </span>
             )}
           </p>
+          {auchBei.length > 0 && (
+            <p className="auch-bei">
+              Auch bei
+              {auchBei.map((f) => (
+                <button key={f.id} type="button" className="chip" onClick={() => onOeffne(f)} title={`${f.titel} bei ${f.gruppe}`}>
+                  <span className="dot" style={{ background: SENDER_FARBE[f.gruppe] }} />
+                  {GRUPPEN.find((g) => g.id === f.gruppe)?.name ?? f.gruppe}
+                </button>
+              ))}
+            </p>
+          )}
           <div className="hero-actions">
             <button type="button" className="primary" onClick={() => onAbspielen(film)}>
               <Icon name="play" size={16} /> {position !== null ? `Weiterschauen ab ${formatZeit(position)}` : 'Abspielen'}
@@ -169,6 +189,35 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
         </div>
         <FilmBild film={film} gross />
       </div>
+
+      {info && (info.darsteller.length > 0 || info.stab.length > 0) && (
+        <section className="besetzung" aria-labelledby="besetzung-titel">
+          <h2 id="besetzung-titel">Besetzung</h2>
+          {info.darsteller.length > 0 && (
+            <ul className="besetzung-liste" aria-label="Darsteller">
+              {info.darsteller.map((d, i) => (
+                <li key={`${d.name}-${i}`}>
+                  <span className="besetzung-name">{d.name}</span>
+                  {d.rolle && <span className="besetzung-rolle">{d.rolle}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+          {info.stab.length > 0 && (
+            <>
+              <h2>Stab</h2>
+              <ul className="besetzung-liste" aria-label="Stab">
+                {info.stab.map((d, i) => (
+                  <li key={`${d.name}-${i}`}>
+                    <span className="besetzung-name">{d.name}</span>
+                    {d.rolle && <span className="besetzung-rolle">{d.rolle}</span>}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+      )}
 
       {film.serieId !== null && (
         <section className="folgen zur-serie" aria-label="Serie">

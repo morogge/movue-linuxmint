@@ -6,6 +6,13 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ### Neu
 
+- **Titelbilder der ARD**: Serien der ARD zeigen ihr Original-Titelbild auf der Kachel und als breites Banner auf der Serienseite
+- **Auch bei …**: Läuft eine Sendung auch bei einem anderen Sender, steht das auf ihrer Seite – ein Klick führt zur anderen Fassung
+- **Besetzung**: Darsteller mit Rollen und der Stab auf der Seite einer Sendung (bei ZDF und 3sat)
+- Alle Angaben stammen von den Sendern selbst; Movue fragt keine fremden Dienste
+
+### Neu
+
 - **Serien und Sendereihen gebündelt**: Statt vieler einzelner Folgen steht eine Kachel je Serie – auf der Startseite, den Sender-Seiten, in den Genres und in der Suche
 - **Serienseite** mit Reitern für Staffeln bzw. Jahrgänge, Fortschritt je Folge und einem Knopf, der dort weitermacht, wo du aufgehört hast
 - Vorschauen, Making-of und Trailer stehen unter **Extras** und zählen nicht als Folge

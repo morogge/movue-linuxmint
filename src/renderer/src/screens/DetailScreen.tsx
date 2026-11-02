@@ -4,6 +4,7 @@ import { formatDatum, formatDauer } from '@shared/format';
 import { genreName } from '@shared/genres';
 import { formatZeit } from '@shared/player';
 import { formatAblauf, laeuftBaldAb, type Ablauf } from '@shared/nutzer';
+import { folgenKennung, type SerieRef } from '@shared/serie';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Icon } from '../components/Icon';
 
@@ -23,9 +24,10 @@ interface Props {
   onOeffne: (f: Film) => void;
   onZurueck: () => void;
   onAbspielen: (f: Film) => void;
+  onSerie: (s: SerieRef) => void;
 }
 
-export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen }: Props) {
+export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie }: Props) {
   const [position, setPosition] = useState<number | null>(null);
   const [film, setFilm] = useState<Film | null>(null);
   const [folgen, setFolgen] = useState<Film[]>([]);
@@ -168,7 +170,16 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen }: Props
         <FilmBild film={film} gross />
       </div>
 
-      {sichtbareFolgen.length > 0 && (
+      {film.serieId !== null && (
+        <section className="folgen zur-serie" aria-label="Serie">
+          <button type="button" className="secondary" onClick={() => onSerie({ gruppe: film.gruppe, thema: film.thema })}>
+            <Icon name="liste" size={16} /> Alle Folgen von „{film.thema}“
+          </button>
+          {folgenKennung(film) && <span className="klein">Diese Sendung: {folgenKennung(film)}</span>}
+        </section>
+      )}
+
+      {film.serieId === null && sichtbareFolgen.length > 0 && (
         <section className="folgen" aria-labelledby="folgen-titel">
           <div className="reihe-kopf">
             <h2 id="folgen-titel">Weitere Folgen von „{film.thema}“</h2>

@@ -16,7 +16,7 @@ test.beforeAll(async () => {
     env: {
       ...process.env,
       MOVUE_DATEN: daten,
-      MOVUE_FILMLISTE_VOLL: join(__dirname, '../fixtures/filmliste-mini.json'),
+      MOVUE_FILMLISTE_VOLL: join(__dirname, '../fixtures/filmliste-serie.json'),
       MOVUE_UPDATE_SIMULIEREN: '9.9.9',
       MOVUE_BILDER_AUS: '1',
       MOVUE_KEINE_MELDUNG: '1'
@@ -33,7 +33,7 @@ test.afterAll(async () => {
 
 test('Startseite erscheint und das Sendungsverzeichnis wird geladen', async () => {
   await expect(win.getByText(/Version \d+\.\d+\.\d+/)).toBeVisible();
-  await expect(win.getByRole('status')).toContainText('6 Sendungen', { timeout: 60_000 });
+  await expect(win.getByRole('status')).toContainText('10 Sendungen', { timeout: 60_000 });
   await expect(win.getByRole('status')).toContainText('Stand 01.11.');
   await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 2 })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/start.png' });
@@ -47,6 +47,20 @@ test('Kachel öffnet die Detailseite mit weiteren Folgen, Alt+← führt zurück
   await win.screenshot({ path: 'test-results/screens/detail.png' });
   await win.keyboard.press('Alt+ArrowLeft');
   await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 2 })).toBeVisible();
+});
+
+test('Serien erscheinen als eine Kachel und öffnen die Serienseite mit Staffeln', async () => {
+  await win.getByRole('button', { name: /In aller Freundschaft/ }).first().click();
+  await expect(win.getByRole('heading', { name: 'In aller Freundschaft', level: 1 })).toBeVisible();
+  await expect(win.getByText('2 Staffeln · 3 Folgen')).toBeVisible();
+  await expect(win.getByRole('button', { name: /Abspielen S27 · F40/ })).toBeVisible();
+  await expect(win.getByRole('tab', { name: 'Staffel 27' })).toHaveAttribute('aria-selected', 'true');
+  await win.getByRole('tab', { name: 'Staffel 28' }).click();
+  await expect(win.getByRole('button', { name: 'Folge 1102: Alte Freunde (S28/E02) abspielen' })).toBeVisible();
+  await win.screenshot({ path: 'test-results/screens/serie.png' });
+  await win.getByRole('tab', { name: 'Extras' }).click();
+  await expect(win.getByRole('button', { name: 'Vorschau auf Folge 1103 abspielen' })).toBeVisible();
+  await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 
 test('Player öffnet sich und meldet nicht abspielbare Videos verständlich', async () => {
@@ -116,7 +130,7 @@ test('Suche findet Sendungen über alle Sender und filtert nach Sender', async (
   await win.getByLabel('Suche in allen Mediatheken').focus();
   await win.keyboard.press('Escape');
   await expect(win.getByRole('heading', { name: 'Neueste Sendungen' })).toBeVisible();
-  await expect(win.getByText('6 Treffer')).toBeVisible();
+  await expect(win.getByText('10 Treffer')).toBeVisible();
 });
 
 test('F1 öffnet die Hilfe zum aktuellen Bildschirm, Esc schließt sie', async () => {
@@ -146,6 +160,13 @@ test('Genres: Kacheln zeigen, ein Genre öffnen', async () => {
   await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 1 })).toBeVisible();
   await expect(win.getByText('2 Treffer')).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/genre-krimi.png' });
+  // Genre „Serien“: die Serie als ein Eintrag, umschaltbar auf einzelne Folgen
+  await win.getByLabel('Genre').selectOption('serie');
+  await expect(win.getByRole('heading', { name: 'Serien', level: 1 })).toBeVisible();
+  await expect(win.getByRole('button', { name: /In aller Freundschaft/ })).toHaveCount(1);
+  await win.screenshot({ path: 'test-results/screens/genre-serien.png' });
+  await win.getByRole('button', { name: 'Einzelne Folgen' }).click();
+  await expect(win.getByRole('button', { name: /Folge 1101: Neue Wege/ })).toBeVisible();
 });
 
 test('Hinweis auf eine heruntergeladene neue Version', async () => {

@@ -1712,3 +1712,50 @@ button {
   background: rgba(242, 169, 59, 0.18);
   color: var(--accent);
 }
+
+/* Serienseite */
+.serie .folgen-liste li {
+  position: relative;
+}
+
+.serie .folgen-liste li.gesehen .folge {
+  opacity: 0.55;
+}
+
+.folge-bild {
+  position: relative;
+  display: block;
+}
+
+.folge-nummer {
+  margin-right: 8px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.folge-details {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.serie-kachel .kachel-dauer {
+  font-weight: 600;
+}
+
+.serien-treffer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.serien-treffer h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.zur-serie {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}

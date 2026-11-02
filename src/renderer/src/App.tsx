@@ -20,6 +20,8 @@ import { MiniPlayer } from './components/MiniPlayer';
 import { MerklisteScreen } from './screens/MerklisteScreen';
 import { AblaufScreen } from './screens/AblaufScreen';
 import { istScreen } from '@shared/screens';
+import { SerieScreen } from './screens/SerieScreen';
+import type { SerieRef } from '@shared/serie';
 
 const ZULETZT_GESEHEN = 'movue.zuletztGeseheneVersion';
 
@@ -44,6 +46,7 @@ export interface Ansicht {
   screen: ScreenId;
   gruppe?: SenderGruppe;
   filmId?: number;
+  serie?: SerieRef;
 }
 
 export function App() {
@@ -117,6 +120,7 @@ export function App() {
   }, []);
 
   const oeffneFilm = useCallback((f: Film) => gehe({ screen: 'detail', filmId: f.id }), [gehe]);
+  const oeffneSerie = useCallback((s: SerieRef) => gehe({ screen: 'serie', serie: { gruppe: s.gruppe, thema: s.thema } }), [gehe]);
   const zeigeGenre = useCallback(
     (g: GenreId) => {
       setGenre(g);
@@ -166,19 +170,44 @@ export function App() {
         <UpdateBanner zustand={update} />
         <TopBar ref={suchfeld} suchtext={suchtext} onSuche={sucheAendern} onHelp={openHelp} />
         {ansicht.screen === 'start' && (
-          <StartScreen zustand={zustand} onOeffne={oeffneFilm} onGenre={zeigeGenre} onAbspielen={abspielen} />
+          <StartScreen zustand={zustand} onOeffne={oeffneFilm} onGenre={zeigeGenre} onAbspielen={abspielen} onSerie={oeffneSerie} />
         )}
         {ansicht.screen === 'sender' && ansicht.gruppe && (
-          <StartScreen key={ansicht.gruppe} zustand={zustand} gruppe={ansicht.gruppe} onOeffne={oeffneFilm} onGenre={zeigeGenre} onAbspielen={abspielen} />
+          <StartScreen
+            key={ansicht.gruppe}
+            zustand={zustand}
+            gruppe={ansicht.gruppe}
+            onOeffne={oeffneFilm}
+            onGenre={zeigeGenre}
+            onAbspielen={abspielen}
+            onSerie={oeffneSerie}
+          />
         )}
         {ansicht.screen === 'suche' && (
-          <SearchScreen suchtext={suchtext} zustand={zustand} genre={genre} onGenre={setGenre} onOeffne={oeffneFilm} onAbspielen={abspielen} />
+          <SearchScreen
+            suchtext={suchtext}
+            zustand={zustand}
+            genre={genre}
+            onGenre={setGenre}
+            onOeffne={oeffneFilm}
+            onAbspielen={abspielen}
+            onSerie={oeffneSerie}
+          />
         )}
         {ansicht.screen === 'genres' && <GenresScreen zustand={zustand} onWaehle={zeigeGenre} />}
-        {ansicht.screen === 'merkliste' && <MerklisteScreen stand={zustand.stand} onOeffne={oeffneFilm} />}
+        {ansicht.screen === 'merkliste' && <MerklisteScreen stand={zustand.stand} onOeffne={oeffneFilm} onSerie={oeffneSerie} />}
         {ansicht.screen === 'ablauf' && <AblaufScreen stand={zustand.stand} onOeffne={oeffneFilm} />}
         {ansicht.screen === 'detail' && ansicht.filmId !== undefined && (
-          <DetailScreen filmId={ansicht.filmId} onOeffne={oeffneFilm} onZurueck={zurueck} onAbspielen={abspielen} />
+          <DetailScreen filmId={ansicht.filmId} onOeffne={oeffneFilm} onZurueck={zurueck} onAbspielen={abspielen} onSerie={oeffneSerie} />
+        )}
+        {ansicht.screen === 'serie' && ansicht.serie && (
+          <SerieScreen
+            key={`${ansicht.serie.gruppe}|${ansicht.serie.thema}`}
+            serie={ansicht.serie}
+            onZurueck={zurueck}
+            onAbspielen={abspielen}
+            onOeffne={oeffneFilm}
+          />
         )}
         {ansicht.screen === 'player' && ansicht.filmId !== undefined && (
           <PlayerScreen

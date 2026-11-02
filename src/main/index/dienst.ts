@@ -23,6 +23,10 @@ import type { GenreAnzahl } from '@shared/genres';
 import type { IndexerAuftrag, IndexerNachricht } from './indexer.worker';
 import { naechsteAktion } from './plan';
 import createIndexer from './indexer.worker?nodeWorker';
+import { mitSerien, serieDetail, serienSuche, stoebern, type StoebernEintrag } from './serien';
+import type { SerieDetail, Serie } from '@shared/serie';
+import type { GenreId } from '@shared/genres';
+import type { SenderGruppe } from '@shared/sender';
 
 const PRUEF_INTERVALL = 10 * 60 * 1000;
 
@@ -66,8 +70,23 @@ export class IndexDienst {
     return this.genreCache;
   }
 
+  /** Neueste Sendungen eines Genres; Folgen einer Serie tragen ihr Bündel mit. Nachrichten nur im Genre Nachrichten. */
   reihe(anfrage: ReihenAnfrage): Film[] {
-    return this.db ? reihe(this.db, anfrage) : [];
+    if (!this.db) return [];
+    const filme = mitSerien(this.db, reihe(this.db, anfrage));
+    return anfrage.genre === 'nachrichten' ? filme : filme.filter((f) => f.serie?.art !== 'nachrichten');
+  }
+
+  serie(gruppe: string, thema: string): SerieDetail | null {
+    return this.db ? serieDetail(this.db, gruppe, thema) : null;
+  }
+
+  stoebern(a: { genre: GenreId; gruppe?: SenderGruppe | null; limit?: number; offset?: number }): { eintraege: StoebernEintrag[]; gesamt: number } {
+    return this.db ? stoebern(this.db, a) : { eintraege: [], gesamt: 0 };
+  }
+
+  serienSuche(text: string, gruppe?: SenderGruppe | null): Serie[] {
+    return this.db ? serienSuche(this.db, text, gruppe) : [];
   }
 
   film(id: number): Film | null {

@@ -3,6 +3,7 @@ import { EintragsLeser, parseListenStand } from '../filmliste/eintrag';
 import { bestimmeGenres } from '../genre/regeln';
 import { FilmlistenParser } from '../filmliste/parser';
 import { schreiber, schreibeMeta, type Db } from './datenbank';
+import { baueSerien } from './serien';
 
 export interface ImportErgebnis {
   /** Anzahl übernommener Sendungen (nur Sender, die Movue anzeigt) */
@@ -62,5 +63,7 @@ export async function importiere(
   onFortschritt?.(verarbeitet);
 
   if (stand !== null) schreibeMeta(db, 'stand', stand);
+  // Serien und Sendereihen bündeln – nach jedem Import neu, auch nach einem Diff
+  baueSerien(db);
   return { anzahl, stand };
 }

@@ -8,7 +8,8 @@ export const SCREENS = {
   suche: { title: 'Suche', help: 'suchen' },
   genres: { title: 'Genres', help: 'genres' },
   sender: { title: 'Sender', help: 'stoebern' },
-  detail: { title: 'Sendung', help: 'stoebern' }
+  detail: { title: 'Sendung', help: 'stoebern' },
+  player: { title: 'Player', help: 'player' }
 } as const;
 
 export type ScreenId = keyof typeof SCREENS;

@@ -32,13 +32,29 @@ export function SenderMarke({ film }: { film: Film }) {
 }
 
 /** Kachel in einer Reihe: Bild, Sender, Titel, Reihe und Datum */
-export function Kachel({ film, onOeffne }: { film: Film; onOeffne: (f: Film) => void }) {
+export function Kachel({
+  film,
+  onOeffne,
+  fortschritt,
+  hinweis
+}: {
+  film: Film;
+  onOeffne: (f: Film) => void;
+  /** 0–1: wie weit schon gesehen (Weiterschauen) */
+  fortschritt?: number;
+  hinweis?: string;
+}) {
   return (
     <button type="button" className="kachel" onClick={() => onOeffne(film)}>
       <span className="kachel-bild">
         <FilmBild film={film} />
         <SenderMarke film={film} />
-        {film.dauer > 0 && <span className="kachel-dauer">{formatDauer(film.dauer)}</span>}
+        {(hinweis || film.dauer > 0) && <span className="kachel-dauer">{hinweis ?? formatDauer(film.dauer)}</span>}
+        {fortschritt !== undefined && (
+          <span className="kachel-fortschritt" aria-hidden="true">
+            <span style={{ width: `${Math.round(Math.min(1, Math.max(0, fortschritt)) * 100)}%` }} />
+          </span>
+        )}
       </span>
       <span className="kachel-titel">{film.titel}</span>
       <span className="kachel-meta">

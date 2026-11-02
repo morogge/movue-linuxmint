@@ -4,6 +4,7 @@ import type { ListenArt } from '../filmliste/quelle';
 import {
   anzahl,
   filmNachId,
+  filmeNachUrl,
   folgen,
   genreAnzahlen,
   leseMeta,
@@ -68,6 +69,10 @@ export class IndexDienst {
 
   film(id: number): Film | null {
     return this.db ? filmNachId(this.db, id) : null;
+  }
+
+  filmeNachUrl(urls: string[]): Map<string, Film> {
+    return this.db ? filmeNachUrl(this.db, urls) : new Map();
   }
 
   folgen(id: number): Film[] {

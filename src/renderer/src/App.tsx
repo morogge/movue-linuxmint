@@ -15,6 +15,8 @@ import { DetailScreen } from './screens/DetailScreen';
 import { GenresScreen } from './screens/GenresScreen';
 import { SearchScreen } from './screens/SearchScreen';
 import { StartScreen } from './screens/StartScreen';
+import { PlayerScreen } from './screens/PlayerScreen';
+import { MiniPlayer } from './components/MiniPlayer';
 
 const ZULETZT_GESEHEN = 'movue.zuletztGeseheneVersion';
 
@@ -50,6 +52,10 @@ export function App() {
   const suchfeld = useRef<HTMLInputElement>(null);
   const zustand = useIndexZustand();
   const update = useUpdateZustand();
+  /** Was gerade läuft – für den Mini-Player, wenn du den Player verlässt */
+  const [wiedergabe, setWiedergabe] = useState<{ film: Film; position: number } | null>(null);
+  const [mini, setMini] = useState(false);
+  const laeuft = useRef(false);
 
   // Nach einem Update einmal „Was ist neu“ zeigen
   useEffect(() => {
@@ -61,6 +67,9 @@ export function App() {
 
   const gehe = useCallback(
     (neu: Ansicht) => {
+      // Player verlassen, während das Video läuft → im Mini-Player weiterspielen
+      if (ansicht.screen === 'player' && neu.screen !== 'player') setMini(laeuft.current);
+      if (neu.screen === 'player') setMini(false);
       setVerlauf((v) => [...v.slice(-30), ansicht]);
       setAnsicht(neu);
       window.scrollTo({ top: 0 });
@@ -71,9 +80,24 @@ export function App() {
   const zurueck = useCallback(() => {
     setVerlauf((v) => {
       if (v.length === 0) return v;
-      setAnsicht(v[v.length - 1]);
+      const vorher = v[v.length - 1];
+      setAnsicht((jetzt) => {
+        if (jetzt.screen === 'player' && vorher.screen !== 'player') setMini(laeuft.current);
+        if (vorher.screen === 'player') setMini(false);
+        return vorher;
+      });
       return v.slice(0, -1);
     });
+  }, []);
+
+  const abspielen = useCallback((f: Film) => gehe({ screen: 'player', filmId: f.id }), [gehe]);
+  const merkeFilm = useCallback(
+    (f: Film) => setWiedergabe((w) => (w && w.film.id === f.id ? w : { film: f, position: 0 })),
+    []
+  );
+  const merkePosition = useCallback((position: number) => setWiedergabe((w) => (w ? { ...w, position } : w)), []);
+  const merkeLaeuft = useCallback((l: boolean) => {
+    laeuft.current = l;
   }, []);
 
   const oeffneFilm = useCallback((f: Film) => gehe({ screen: 'detail', filmId: f.id }), [gehe]);
@@ -125,18 +149,45 @@ export function App() {
       <main className="main">
         <UpdateBanner zustand={update} />
         <TopBar ref={suchfeld} suchtext={suchtext} onSuche={sucheAendern} onHelp={openHelp} />
-        {ansicht.screen === 'start' && <StartScreen zustand={zustand} onOeffne={oeffneFilm} onGenre={zeigeGenre} />}
+        {ansicht.screen === 'start' && (
+          <StartScreen zustand={zustand} onOeffne={oeffneFilm} onGenre={zeigeGenre} onAbspielen={abspielen} />
+        )}
         {ansicht.screen === 'sender' && ansicht.gruppe && (
-          <StartScreen key={ansicht.gruppe} zustand={zustand} gruppe={ansicht.gruppe} onOeffne={oeffneFilm} onGenre={zeigeGenre} />
+          <StartScreen key={ansicht.gruppe} zustand={zustand} gruppe={ansicht.gruppe} onOeffne={oeffneFilm} onGenre={zeigeGenre} onAbspielen={abspielen} />
         )}
         {ansicht.screen === 'suche' && (
-          <SearchScreen suchtext={suchtext} zustand={zustand} genre={genre} onGenre={setGenre} onOeffne={oeffneFilm} />
+          <SearchScreen suchtext={suchtext} zustand={zustand} genre={genre} onGenre={setGenre} onOeffne={oeffneFilm} onAbspielen={abspielen} />
         )}
         {ansicht.screen === 'genres' && <GenresScreen zustand={zustand} onWaehle={zeigeGenre} />}
         {ansicht.screen === 'detail' && ansicht.filmId !== undefined && (
-          <DetailScreen filmId={ansicht.filmId} onOeffne={oeffneFilm} onZurueck={zurueck} />
+          <DetailScreen filmId={ansicht.filmId} onOeffne={oeffneFilm} onZurueck={zurueck} onAbspielen={abspielen} />
+        )}
+        {ansicht.screen === 'player' && ansicht.filmId !== undefined && (
+          <PlayerScreen
+            filmId={ansicht.filmId}
+            startHinweis={wiedergabe && wiedergabe.film.id === ansicht.filmId ? wiedergabe.position : undefined}
+            onAbspielen={abspielen}
+            onDetails={oeffneFilm}
+            onZurueck={zurueck}
+            onFilm={merkeFilm}
+            onPosition={merkePosition}
+            onLaeuft={merkeLaeuft}
+          />
         )}
       </main>
+      {mini && wiedergabe && ansicht.screen !== 'player' && (
+        <MiniPlayer
+          key={wiedergabe.film.id}
+          film={wiedergabe.film}
+          start={wiedergabe.position}
+          onOeffnen={() => abspielen(wiedergabe.film)}
+          onSchliessen={() => {
+            setMini(false);
+            laeuft.current = false;
+          }}
+          onPosition={merkePosition}
+        />
+      )}
       {helpPage && <HelpView page={helpPage} onSelect={setHelpPage} onClose={closeHelp} />}
     </div>
   );

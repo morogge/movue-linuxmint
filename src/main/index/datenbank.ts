@@ -358,3 +358,18 @@ export function reihe(db: Db, anfrage: ReihenAnfrage): Film[] {
   );
   return auswahl.map((z) => zuFilm(z, genres));
 }
+
+/** Sendungen zu Videoadressen (für „Weiterschauen“ – die Adresse überdauert den Neuaufbau, die id nicht) */
+export function filmeNachUrl(db: Db, urls: string[]): Map<string, Film> {
+  const map = new Map<string, Film>();
+  if (urls.length === 0) return map;
+  const zeilen = db
+    .prepare(`SELECT ${SPALTEN} FROM film f WHERE f.url IN (${urls.map(() => '?').join(',')})`)
+    .all(...urls) as FilmZeile[];
+  const genres = genresFuer(
+    db,
+    zeilen.map((z) => z.id)
+  );
+  for (const z of zeilen) map.set(z.url, zuFilm(z, genres));
+  return map;
+}

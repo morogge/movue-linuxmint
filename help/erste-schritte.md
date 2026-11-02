@@ -12,9 +12,9 @@ Movue lädt zuerst das Verzeichnis aller Sendungen. Das dauert ein bis zwei Minu
 - **Detailseite** zu jeder Sendung mit allen weiteren Folgen
 - **Suche** über alle vier Mediatheken, mit Filter nach Sender und Genre
 - **Genres**: Stöbern nach Themen über alle Sender hinweg
-- Videos öffnest du vorerst im Browser oder Videoprogramm.
+- **Player** mit Untertiteln, Qualitätswahl, Vollbild, Mini-Player und automatisch nächster Folge
 
-Der eigene Player, Merkliste und Live-TV kommen in den nächsten Versionen dazu. Neue Versionen installiert Movue selbst (siehe **Aktualisierungen**); was sich ändert, steht unter **Was ist neu**.
+Merkliste und Live-TV kommen in den nächsten Versionen dazu. Neue Versionen installiert Movue selbst (siehe **Aktualisierungen**); was sich ändert, steht unter **Was ist neu**.
 
 ## Hilfe aufrufen
 

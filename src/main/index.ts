@@ -5,6 +5,8 @@ import type { UpdateZustand } from '@shared/update';
 import { IndexDienst } from './index/dienst';
 import { UpdateDienst } from './update';
 import { BildDienst } from './bilder';
+import { NutzerDb } from './nutzer';
+import { ladeUntertitel } from './untertitel';
 import { seitenZiel } from './links';
 import { istGruppe } from '@shared/sender';
 import { istGenre } from '@shared/genres';
@@ -15,6 +17,7 @@ if (process.env['MOVUE_DATEN']) app.setPath('userData', process.env['MOVUE_DATEN
 let index: IndexDienst | null = null;
 let update: UpdateDienst | null = null;
 let bilder: BildDienst | null = null;
+let nutzer: NutzerDb | null = null;
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -97,6 +100,37 @@ ipcMain.handle('bild:url', (_event, website: unknown) =>
   bilder && typeof website === 'string' ? bilder.url(website) : null
 );
 
+ipcMain.handle('untertitel:laden', async (_event, url: unknown) => {
+  if (typeof url !== 'string') return null;
+  try {
+    return await ladeUntertitel(url);
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.handle('fortschritt:setzen', (_event, url: unknown, position: unknown, dauer: unknown) => {
+  if (typeof url === 'string' && typeof position === 'number' && typeof dauer === 'number') {
+    nutzer?.setzeFortschritt(url, position, dauer);
+  }
+});
+
+ipcMain.handle('fortschritt:holen', (_event, url: unknown) => (typeof url === 'string' ? (nutzer?.fortschritt(url) ?? null) : null));
+
+ipcMain.handle('fortschritt:vergessen', (_event, url: unknown) => {
+  if (typeof url === 'string') nutzer?.vergessen(url);
+});
+
+/** Angefangene Videos mit ihrer Sendung; Videos, die es nicht mehr gibt, fallen weg */
+ipcMain.handle('index:weiterschauen', () => {
+  if (!nutzer || !index) return [];
+  const liste = nutzer.angefangen(30);
+  const filme = index.filmeNachUrl(liste.map((f) => f.url));
+  return liste
+    .filter((f) => filme.has(f.url))
+    .map((f) => ({ film: filme.get(f.url)!, position: f.position, dauer: f.dauer }));
+});
+
 ipcMain.handle('film:seite-oeffnen', async (_event, film: { website?: unknown; gruppe?: unknown; titel?: unknown }) => {
   if (typeof film?.website !== 'string' || typeof film.titel !== 'string' || !istGruppe(film.gruppe)) return null;
   const ziel = await seitenZiel({ website: film.website, gruppe: film.gruppe, titel: film.titel });
@@ -112,6 +146,7 @@ app.whenReady().then(() => {
   const userAgent = `Movue/${app.getVersion()} (+https://github.com/morogge/movue-linuxmint)`;
   index = new IndexDienst(join(app.getPath('userData'), 'index.db'), userAgent, sendeZustand);
   update = new UpdateDienst(sendeUpdate);
+  nutzer = new NutzerDb(join(app.getPath('userData'), 'nutzer.db'));
   // Für Tests: keine Abrufe bei den Sendern
   bilder = new BildDienst(
     join(app.getPath('userData'), 'bilder.db'),
@@ -130,6 +165,7 @@ app.on('before-quit', () => {
   index?.stop();
   update?.stop();
   bilder?.schliessen();
+  nutzer?.schliessen();
 });
 
 app.on('window-all-closed', () => {

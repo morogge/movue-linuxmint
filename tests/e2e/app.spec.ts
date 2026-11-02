@@ -73,7 +73,7 @@ test('Merken und Reihe abonnieren landen in der Merkliste', async () => {
   await expect(win.getByRole('heading', { name: 'Merkliste', level: 1 })).toBeVisible();
   await expect(win.getByRole('heading', { name: 'Abos' })).toBeVisible();
   await expect(win.getByRole('button', { name: 'Abo „Tatort“ beenden' })).toBeVisible();
-  await expect(win.getByRole('button', { name: /Tatort: Der Fall Münster/ })).toBeVisible();
+  await expect(win.getByRole('region', { name: 'Gemerkt' }).getByRole('button', { name: /^Tatort: Der Fall Münster/ })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/merkliste.png' });
 
   await win.getByRole('button', { name: '„Tatort: Der Fall Münster“ aus der Merkliste entfernen' }).click();

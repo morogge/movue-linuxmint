@@ -38,25 +38,15 @@ it('Meta-Probe', async () => {
 
     // Gleiche Sendung bei mehreren Sendern (Titel normalisiert, Dauer ±3 Min.)
     db.function('norm', { deterministic: true }, (t: unknown) => String(t).toLowerCase().replace(/\([^)]*\)/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim());
-    aus.dubletten = db
-      .prepare(
-        `WITH f AS (SELECT norm(titel) k, gruppe, dauer, id FROM film WHERE variante = 0 AND dauer >= 1500)
-         SELECT COUNT(*) AS paare, COUNT(DISTINCT a.k) AS titel FROM f a JOIN f b ON a.k = b.k AND a.gruppe < b.gruppe AND abs(a.dauer - b.dauer) <= 180`
-      )
-      .get();
+    db.exec(`CREATE TEMP TABLE n AS SELECT norm(titel) k, gruppe, dauer, titel, thema FROM film WHERE variante = 0 AND dauer >= 1500;
+             CREATE INDEX temp.n_k ON n(k, gruppe);`);
+    const paare = `FROM n a JOIN n b ON b.k = a.k AND b.gruppe > a.gruppe AND abs(a.dauer - b.dauer) <= 180`;
+    aus.dubletten = db.prepare(`SELECT COUNT(*) AS paare, COUNT(DISTINCT a.k) AS titel ${paare}`).get();
+    aus.dublettenJePaar = db.prepare(`SELECT a.gruppe || '/' || b.gruppe AS paar, COUNT(DISTINCT a.k) n ${paare} GROUP BY paar`).all();
     aus.dublettenBeispiele = db
-      .prepare(
-        `WITH f AS (SELECT norm(titel) k, gruppe, dauer, titel, thema FROM film WHERE variante = 0 AND dauer >= 3600)
-         SELECT a.titel, a.gruppe || ' / ' || b.gruppe AS gruppen, a.thema || ' / ' || b.thema AS themen FROM f a JOIN f b ON a.k = b.k AND a.gruppe < b.gruppe AND abs(a.dauer - b.dauer) <= 180
-         GROUP BY a.k ORDER BY random() LIMIT 30`
-      )
+      .prepare(`SELECT a.titel, a.gruppe || ' / ' || b.gruppe AS gruppen, a.thema || ' / ' || b.thema AS themen ${paare} WHERE a.dauer >= 3600 GROUP BY a.k ORDER BY random() LIMIT 30`)
       .all();
-    aus.dublettenJePaar = db
-      .prepare(
-        `WITH f AS (SELECT norm(titel) k, gruppe, dauer FROM film WHERE variante = 0 AND dauer >= 1500)
-         SELECT a.gruppe || '/' || b.gruppe AS paar, COUNT(DISTINCT a.k) n FROM f a JOIN f b ON a.k = b.k AND a.gruppe < b.gruppe AND abs(a.dauer - b.dauer) <= 180 GROUP BY paar`
-      )
-      .all();
+    console.log('DUBLETTEN ' + JSON.stringify([aus.dubletten, aus.dublettenJePaar]));
 
     // Seiten der Sender: Bildformate, Besetzung
     const muster: [string, RegExp][] = [

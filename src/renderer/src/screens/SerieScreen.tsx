@@ -7,6 +7,7 @@ import { folgenKennung, gruppenName, gruppeVon, serienUmfang, sortiereGruppen, s
 import { GESEHEN_ANTEIL } from '@shared/nutzer';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Icon } from '../components/Icon';
+import { useSerienBild } from '../hooks/useBild';
 
 interface Props {
   serie: SerieRef;
@@ -20,6 +21,9 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
   const [staende, setStaende] = useState<Map<string, FolgenStand>>(new Map());
   const [reiter, setReiter] = useState<string | null>(null);
   const [abonniert, setAbonniert] = useState(false);
+  const [bannerFehler, setBannerFehler] = useState(false);
+  const bannerFilm = detail ? (detail.serie.bild ?? detail.folgen[0] ?? null) : null;
+  const banner = useSerienBild(bannerFilm, 'banner');
 
   useEffect(() => {
     let aktiv = true;
@@ -76,7 +80,13 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
         ← Zurück
       </button>
 
-      <div className="detail-kopf">
+      {banner && !bannerFehler && (
+        <div className="serie-banner">
+          <img src={banner} alt="" referrerPolicy="no-referrer" onError={() => setBannerFehler(true)} />
+        </div>
+      )}
+
+      <div className={banner && !bannerFehler ? 'detail-kopf ohne-bild' : 'detail-kopf'}>
         <div className="detail-text">
           <div className="hero-meta">
             {kopfFilm && <SenderMarke film={kopfFilm} />}
@@ -114,7 +124,7 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
             </button>
           </div>
         </div>
-        {kopfFilm && <FilmBild film={kopfFilm} gross />}
+        {kopfFilm && !(banner && !bannerFehler) && <FilmBild film={kopfFilm} gross titelbild="serie" />}
       </div>
 
       <section className="folgen" aria-labelledby="serie-folgen-titel">

@@ -4,9 +4,13 @@ Movue fasst alle Folgen einer Serie oder Sendereihe zusammen. Statt zehn einzeln
 
 ## Woran du eine Serie erkennst
 
-- Die **Serienkachel** zeigt den Namen der Serie, das Bild der neuesten Folge und ihren Umfang, z. B. **2 Staffeln · 24 Folgen**. Darunter steht **Serie** oder **Sendereihe** und das Datum der neuesten Folge.
+- Die **Serienkachel** zeigt den Namen der Serie, ihr Titelbild und ihren Umfang, z. B. **2 Staffeln · 24 Folgen**. Darunter steht **Serie** oder **Sendereihe** und das Datum der neuesten Folge.
 - Movue bündelt, wenn ein Sender mindestens drei Folgen unter demselben Namen führt. Sammelrubriken wie „Beiträge“ oder „Fernsehfilm“ bleiben einzelne Sendungen.
 - Läuft dieselbe Sendung bei zwei Sendern (z. B. „Kulturzeit“ bei 3sat und ZDF), bekommt jeder Sender seine eigene Kachel.
+
+## Titelbilder
+
+Bei Serien der ARD zeigt Movue das Titelbild, das die ARD Mediathek für die Serie verwendet – oft mit Schriftzug –, auf der Serienseite als breites Banner. ZDF, 3sat und Arte liefern solche Bilder nicht in auslesbarer Form; dort steht das Bild der neuesten Folge.
 
 ## Die Serienseite
 

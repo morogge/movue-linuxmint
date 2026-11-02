@@ -77,6 +77,52 @@ async function seitenBild(website: string): Promise<string | null> {
   }
 }
 
+/** Bildart: Bild der Folge, Titelbild der Serie (16:9) oder breites Banner der Serie (16:7) */
+export type BildArt = 'folge' | 'serie' | 'banner';
+
+/**
+ * Sucht in der Antwort der ARD-Schnittstelle das Bild der Sendereihe („show“) im gewünschten Format.
+ * Die ARD liefert dort eigene Titelbilder je Serie, oft mit Schriftzug – anders als das Szenenbild der Folge.
+ */
+export function ardSerienBild(json: unknown, format: '16x9' | '16x7'): string | null {
+  const stapel: unknown[] = [json];
+  let schritte = 0;
+  while (stapel.length && schritte++ < 200_000) {
+    const o = stapel.pop();
+    if (!o || typeof o !== 'object') continue;
+    if (Array.isArray(o)) {
+      for (const x of o) stapel.push(x);
+      continue;
+    }
+    const rec = o as Record<string, unknown>;
+    const show = rec['show'] as Record<string, unknown> | undefined;
+    const bilder = show && typeof show === 'object' ? (show['images'] as Record<string, { src?: unknown }> | undefined) : undefined;
+    if (bilder && typeof bilder === 'object') {
+      const b = bilder[format] ?? bilder[`aspect${format}`];
+      if (b && typeof b.src === 'string' && /^https:\/\//.test(b.src)) return b.src;
+    }
+    for (const v of Object.values(rec)) if (v && typeof v === 'object') stapel.push(v);
+  }
+  return null;
+}
+
+async function ardSerie(id: string, format: '16x9' | '16x7'): Promise<string | null> {
+  const antwort = await fetch(`https://api.ardmediathek.de/page-gateway/pages/ard/item/${id}?devicetype=pc&embedded=true`, {
+    headers: { 'User-Agent': UA },
+    signal: AbortSignal.timeout(10_000)
+  });
+  if (!antwort.ok) return null;
+  return ardSerienBild(await antwort.json(), format);
+}
+
+/** Titelbild einer Serie – bisher nur bei der ARD; sonst null (die Oberfläche nimmt dann das Bild der Folge) */
+export async function findeSerienBild(website: string, art: 'serie' | 'banner'): Promise<string | null> {
+  const id = ardId(website);
+  if (!id) return null;
+  const url = await ardSerie(id, art === 'banner' ? '16x7' : '16x9');
+  return url ? url.replace(/\{width\}/g, art === 'banner' ? '1600' : '640') : null;
+}
+
 export async function findeBild(website: string): Promise<string | null> {
   if (!/^https?:\/\//.test(website)) return null;
   const id = ardId(website);
@@ -94,7 +140,8 @@ export class BildDienst {
 
   constructor(
     pfad: string,
-    private readonly finde: (website: string) => Promise<string | null> = findeBild
+    private readonly finde: (website: string) => Promise<string | null> = findeBild,
+    private readonly findeSerie: (website: string, art: 'serie' | 'banner') => Promise<string | null> = findeSerienBild
   ) {
     this.db = new Database(pfad);
     this.db.pragma('journal_mode = WAL');
@@ -106,25 +153,27 @@ export class BildDienst {
   }
 
   /** Bildadresse zu einer Sendungsseite – aus dem Zwischenspeicher oder frisch geholt */
-  async url(website: string): Promise<string | null> {
+  async url(website: string, art: BildArt = 'folge'): Promise<string | null> {
     if (!/^https?:\/\//.test(website)) return null;
-    const gespeichert = this.db.prepare('SELECT url, zeit FROM bild WHERE website = ?').get(website) as
+    // Serienbilder unter eigenem Schlüssel, damit sie das Bild der Folge nicht überschreiben
+    const schluessel = art === 'folge' ? website : `${art}|${website}`;
+    const gespeichert = this.db.prepare('SELECT url, zeit FROM bild WHERE website = ?').get(schluessel) as
       | { url: string | null; zeit: number }
       | undefined;
     if (gespeichert && (gespeichert.url || Date.now() - gespeichert.zeit < NEGATIV_GUELTIG)) return gespeichert.url;
 
-    let p = this.laufend.get(website);
+    let p = this.laufend.get(schluessel);
     if (!p) {
-      p = this.begrenzt(() => this.finde(website))
+      p = this.begrenzt(() => (art === 'folge' ? this.finde(website) : this.findeSerie(website, art)))
         .catch(() => null)
         .then((url) => {
           this.db
             .prepare('INSERT INTO bild (website, url, zeit) VALUES (?, ?, ?) ON CONFLICT(website) DO UPDATE SET url = excluded.url, zeit = excluded.zeit')
-            .run(website, url, Date.now());
-          this.laufend.delete(website);
+            .run(schluessel, url, Date.now());
+          this.laufend.delete(schluessel);
           return url;
         });
-      this.laufend.set(website, p);
+      this.laufend.set(schluessel, p);
     }
     return p;
   }

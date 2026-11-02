@@ -27,6 +27,7 @@ describe('Folgen aus dem Titel lesen', () => {
     expect(folgenInfo('Vorschau Folge 1744 "Doktor Dressler"')).toMatchObject({ extra: true });
     expect(folgenInfo('Making-of Folge "Täuschung"')).toMatchObject({ extra: true });
     expect(folgenInfo('Ghosts | Outtakes | Folge 4: Rätselhafter Fall')).toMatchObject({ extra: true, folge: 4 });
+    expect(folgenInfo('Erinnerungen (958)')).toEqual({ staffel: null, folge: 958, extra: false });
     expect(folgenInfo('Terra X: Die Ostsee')).toEqual({ staffel: null, folge: null, extra: false });
   });
 

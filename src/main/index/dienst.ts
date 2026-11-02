@@ -73,8 +73,18 @@ export class IndexDienst {
   /** Neueste Sendungen eines Genres; Folgen einer Serie tragen ihr Bündel mit. Nachrichten nur im Genre Nachrichten. */
   reihe(anfrage: ReihenAnfrage): Film[] {
     if (!this.db) return [];
-    const filme = mitSerien(this.db, reihe(this.db, anfrage));
-    return anfrage.genre === 'nachrichten' ? filme : filme.filter((f) => f.serie?.art !== 'nachrichten');
+    const roh = reihe(this.db, anfrage);
+    // Spielfilme stehen immer einzeln, auch wenn sie in einer Rubrik wie „Filme im Ersten“ laufen
+    if (anfrage.genre === 'film') return roh;
+    const gesehen = new Set<number>();
+    return mitSerien(this.db, roh).filter((f) => {
+      if (f.serie?.art === 'nachrichten' && anfrage.genre !== 'nachrichten') return false;
+      // Jede Serie nur einmal je Reihe
+      if (f.serieId === null) return true;
+      if (gesehen.has(f.serieId)) return false;
+      gesehen.add(f.serieId);
+      return true;
+    });
   }
 
   serie(gruppe: string, thema: string): SerieDetail | null {

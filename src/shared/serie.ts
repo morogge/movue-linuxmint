@@ -58,7 +58,8 @@ export function folgenInfo(titel: string): FolgenInfo {
   const extra = EXTRA.test(titel);
   const se = /\(S(\d{1,4})\/E(\d{1,4})\)/.exec(titel);
   if (se) return { staffel: Number(se[1]), folge: Number(se[2]), extra };
-  const folge = /\bFolge\s+(\d{1,5})\b/i.exec(titel) ?? /^(\d{1,4})\.\s*Folge\b/i.exec(titel);
+  // „Folge 1237: …“, „3. Folge“ oder eine Nummer am Ende wie „Erinnerungen (958)“
+  const folge = /\bFolge\s+(\d{1,5})\b/i.exec(titel) ?? /^(\d{1,4})\.\s*Folge\b/i.exec(titel) ?? /\((\d{1,4})\)\s*$/.exec(titel);
   const staffel = /\bStaffel\s+(\d{1,2})\b/i.exec(titel);
   return { staffel: staffel ? Number(staffel[1]) : null, folge: folge ? Number(folge[1]) : null, extra };
 }

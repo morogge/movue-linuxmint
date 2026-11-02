@@ -344,7 +344,12 @@ export function filmNachId(db: Db, id: number): Film | null {
 /** Themen, die keine Reihe sind, sondern Sammelrubriken – dort gibt es keine „weiteren Folgen“ */
 const SAMMELTHEMEN = new Set(
   ['filme', 'film', 'spielfilm', 'spielfilme', 'fernsehfilm', 'fernsehfilme', 'kino', 'beiträge', 'dokumentationen',
-    'dokus', 'serien', 'videos', 'sendungen', 'clips', 'br', 'sr', 'ard', 'zdf', '3sat', 'livestream']
+    'dokus', 'serien', 'videos', 'sendungen', 'clips', 'br', 'sr', 'ard', 'zdf', '3sat', 'livestream',
+    // Rubriken, die die Echtdaten-Probe als Sammelbecken gezeigt hat
+    'filme in der ard', 'märchen in der ard', 'kurzfilm', 'kinderfilm', 'unterhaltung', 'unterhaltung & comedy',
+    'kabarett & comedy', 'reise', 'reisen', 'tiere', 'natur', 'politik', 'politik und gesellschaft', 'gesellschaft',
+    'sport', 'sport allgemein', 'musik', 'kultur', 'wissen', 'geschichte', 'dokumentation', 'doku & reportage',
+    'dokus & reportagen im br', 'kultur und pop - kunst', 'serie', 'beitrag']
 );
 
 /** Ob ein Thema eine Reihe ist (und sich damit abonnieren lässt) */

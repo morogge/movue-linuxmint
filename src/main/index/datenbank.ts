@@ -478,6 +478,8 @@ export function auchBei(db: Db, film: Film): Film[] {
   for (const f of treffer) {
     if (f.gruppe === film.gruppe || istVariante(f.titel) || Math.abs(f.dauer - film.dauer) > 180) continue;
     if (titelKern(f.titel) !== kern) continue;
+    // Gleicher Titel, aber andere Folge (z. B. „Schiffbruch (S03/E02)“ und „Schiffbruch (S01/E21)“)
+    if (film.folge !== null && f.folge !== null && (film.folge !== f.folge || film.staffel !== f.staffel)) continue;
     const alt = jeSender.get(f.gruppe);
     if (!alt || f.datum > alt.datum) jeSender.set(f.gruppe, f);
   }

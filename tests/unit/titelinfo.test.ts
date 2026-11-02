@@ -117,6 +117,8 @@ describe('Dieselbe Sendung bei anderen Sendern', () => {
     schreibe(eintrag({ sender: '3Sat', gruppe: '3sat', thema: 'Fernsehfilm', titel: 'Sprachlos in Irland (Audiodeskription)', dauer: 5300 }));
     schreibe(eintrag({ sender: 'ZDF', gruppe: 'ZDF', thema: 'Doku', titel: 'Sprachlos in Irland', dauer: 1700 }));
     schreibe(eintrag({ sender: 'ARTE.DE', gruppe: 'Arte', thema: 'Film', titel: 'Sprachlos', dauer: 5340 }));
+    schreibe(eintrag({ thema: 'Krimi', titel: 'Schiffbruch (S01/E21)', dauer: 2700 }));
+    schreibe(eintrag({ sender: 'ZDF', gruppe: 'ZDF', thema: 'Andere Serie', titel: 'Schiffbruch (S03/E02)', dauer: 2700 }));
     schliesseAufbau(aufbau);
     aufbau.close();
     db = oeffneDb(pfad);
@@ -132,6 +134,11 @@ describe('Dieselbe Sendung bei anderen Sendern', () => {
     const andere = auchBei(db, filmNachId(db, ard.id)!);
     expect(andere.map((f) => f.gruppe)).toEqual(['3sat']);
     expect(andere[0].titel).toBe('Sprachlos in Irland - Fernsehfilm, Deutschland 2020');
+  });
+
+  it('hält gleich betitelte, aber verschiedene Folgen auseinander', () => {
+    const ard = suche(db, { text: 'schiffbruch', gruppe: 'ARD' }).treffer[0];
+    expect(auchBei(db, filmNachId(db, ard.id)!)).toEqual([]);
   });
 
   it('vergleicht Titel ohne Zusätze wie „Fernsehfilm, Deutschland 2020“', () => {

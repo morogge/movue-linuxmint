@@ -45,7 +45,7 @@ it('Meta2-Probe', async () => {
       .all() as { gruppe: string; thema: string; website: string }[];
     const salt = db.prepare(`SELECT gruppe, thema, website FROM film WHERE lower(thema) LIKE '%salt marsh%' LIMIT 1`).all() as typeof serien;
     aus.serienbild = [];
-    for (const s of [...salt, ...serien]) {
+    for (const s of [] as typeof serien) {
       const folge = await lies(s.website);
       const eltern = s.website.replace(/\/[^/]+\/?$/, '');
       const serie = await lies(eltern);
@@ -59,7 +59,7 @@ it('Meta2-Probe', async () => {
     // 2. ZDF-Stab: was folgt auf die Überschrift?
     const zdf = db.prepare(`SELECT website FROM film WHERE gruppe = 'ZDF' AND website LIKE '%/video/serien/%' ORDER BY random() LIMIT 2`).all() as { website: string }[];
     aus.stab = [];
-    for (const z of zdf) {
+    for (const z of zdf.slice(0, 1)) {
       const t = (await lies(z.website)).text;
       const i = t.search(/>\s*Stab\s*<\/h[2-4]>/i);
       (aus.stab as unknown[]).push({ website: z.website, danach: i >= 0 ? t.slice(i, i + 2500) : null });
@@ -68,7 +68,7 @@ it('Meta2-Probe', async () => {
     // 3. Arte: Besetzung, Bilder, Serien-Kennung
     const arte = db.prepare(`SELECT website, titel FROM film WHERE gruppe = 'Arte' AND dauer > 2400 ORDER BY random() LIMIT 3`).all() as { website: string; titel: string }[];
     aus.arte = [];
-    for (const a of arte) {
+    for (const a of arte.slice(0, 0)) {
       const t = (await lies(a.website)).text;
       (aus.arte as unknown[]).push({
         website: a.website, titel: a.titel,
@@ -95,7 +95,18 @@ it('Meta2-Probe', async () => {
         OPTIONAL { ?item p:P161 ?st . ?st ps:P161 ?d . OPTIONAL { ?st pq:P453 ?rolle } OPTIONAL { ?st pq:P4633 ?rolle } }
         OPTIONAL { ?item wdt:P577 ?jahr } OPTIONAL { ?item wdt:P4947|wdt:P4983 ?tmdb }
       } GROUP BY ?label ?item ?typ`;
-      const r = await lies(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(q)}`, WD_UA);
+      let r: { status: number; text: string };
+      try {
+        const a = await fetch('https://query.wikidata.org/sparql', {
+          method: 'POST',
+          headers: { 'User-Agent': WD_UA, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/sparql-results+json' },
+          body: 'query=' + encodeURIComponent(q),
+          signal: AbortSignal.timeout(60_000)
+        });
+        r = { status: a.status, text: await a.text() };
+      } catch (e) {
+        r = { status: 0, text: String(e) };
+      }
       try {
         const j = JSON.parse(r.text) as { results: { bindings: Record<string, { value: string }>[] } };
         return j.results.bindings.map((b) => ({ label: b.label?.value, item: b.item?.value.split('/').pop(), typ: b.typ?.value.split('/').pop(), darsteller: Number(b.darsteller?.value), rollen: Number(b.rollen?.value), jahr: b.j?.value?.slice(0, 4), tmdb: b.tm?.value }));

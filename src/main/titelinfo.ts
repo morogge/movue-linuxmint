@@ -98,7 +98,11 @@ export function leseArteCredits(html: string): TitelInfo | null {
   const maskiert = html.indexOf('\\"credits\\":[');
   let roh: string | null = null;
   if (maskiert >= 0) {
-    const stueck = html.slice(maskiert, maskiert + 40_000).replace(/\\\\/g, '\u0000').replace(/\\"/g, '"').replace(/\u0000/g, '\\');
+    const stueck = html
+      .slice(maskiert, maskiert + 40_000)
+      .split('\\\\')
+      .map((teil) => teil.replace(/\\"/g, '"'))
+      .join('\\');
     roh = jsonArray(stueck, stueck.indexOf('['));
   } else {
     const i = html.indexOf('"credits":[');

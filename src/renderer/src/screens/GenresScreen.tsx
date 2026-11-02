@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { IndexZustand } from '@shared/film';
 import { formatZahl } from '@shared/format';
-import type { GenreAnzahl, GenreId } from '@shared/genres';
+import { istInhaltsGenre, type GenreAnzahl, type GenreId } from '@shared/genres';
 
 /** Farbton je Genre für die Kacheln (gedämpft, damit weißer Text gut lesbar bleibt) */
 const FARBE: Record<GenreId, string> = {
@@ -40,29 +40,38 @@ export function GenresScreen({ zustand, onWaehle }: Props) {
     };
   }, [zustand.anzahl, zustand.stand]);
 
+  const kachel = (g: GenreAnzahl) => (
+    <li key={g.id}>
+      <button
+        type="button"
+        className={g.id === 'sonstiges' ? 'genre-kachel weitere' : 'genre-kachel'}
+        style={{ background: FARBE[g.id] }}
+        onClick={() => onWaehle(g.id)}
+        disabled={g.anzahl === 0}
+      >
+        <span className="genre-name">{g.id === 'film' ? 'Filme' : g.name}</span>
+        <span className="genre-zahl">{formatZahl(g.anzahl)} Sendungen</span>
+      </button>
+    </li>
+  );
+
   return (
     <section className="genres" aria-labelledby="genres-titel">
-      <h1 id="genres-titel">Genres</h1>
-      <p className="anzahl">Sendungen aller vier Mediatheken, nach Genre sortiert. Eine Sendung kann in mehreren Genres stehen.</p>
+      <h1 id="genres-titel">Genres und Formate</h1>
+      <p className="anzahl">Formate sagen, was eine Sendung ist (Serie oder Film), Genres, worum es geht. Eine Sendung kann in mehreren Genres stehen; beides lässt sich in der Übersicht kombinieren.</p>
       {genres.length === 0 ? (
         <p className="hinweis">Das Sendungsverzeichnis wird gerade geladen. Danach erscheinen hier die Genres.</p>
       ) : (
-        <ul className="genre-raster">
-          {genres.map((g) => (
-            <li key={g.id}>
-              <button
-                type="button"
-                className={g.id === 'sonstiges' ? 'genre-kachel weitere' : 'genre-kachel'}
-                style={{ background: FARBE[g.id] }}
-                onClick={() => onWaehle(g.id)}
-                disabled={g.anzahl === 0}
-              >
-                <span className="genre-name">{g.name}</span>
-                <span className="genre-zahl">{formatZahl(g.anzahl)} Sendungen</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <>
+          <section aria-labelledby="formate-titel" className="genre-gruppe">
+            <h2 id="formate-titel">Formate</h2>
+            <ul className="genre-raster">{genres.filter((g) => !istInhaltsGenre(g.id)).map(kachel)}</ul>
+          </section>
+          <section aria-labelledby="inhalte-titel" className="genre-gruppe">
+            <h2 id="inhalte-titel">Genres</h2>
+            <ul className="genre-raster">{genres.filter((g) => istInhaltsGenre(g.id)).map(kachel)}</ul>
+          </section>
+        </>
       )}
     </section>
   );

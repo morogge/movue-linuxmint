@@ -1,4 +1,4 @@
-import type { GenreId } from './genres';
+import type { Format, GenreId } from './genres';
 import type { SenderGruppe } from './sender';
 import type { Serie } from './serie';
 
@@ -35,6 +35,8 @@ export interface SuchAnfrage {
   text: string;
   gruppe?: SenderGruppe | null;
   genre?: GenreId | null;
+  /** Nur Filme bzw. nur Folgen von Serien */
+  format?: Format | null;
   sortierung?: Sortierung;
   limit?: number;
   offset?: number;

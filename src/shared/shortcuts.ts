@@ -9,6 +9,7 @@ export type ShortcutId =
   | 'back'
   | 'fullscreen'
   | 'close'
+  | 'seitenleiste'
   | 'abspielen'
   | 'zurueckspulen'
   | 'vorspulen'
@@ -44,6 +45,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
   { id: 'back', keys: ['Alt', '←'], key: 'ArrowLeft', alt: true, description: 'Zurück zur vorigen Seite' },
   { id: 'fullscreen', keys: ['F11'], key: 'F11', description: 'Vollbild ein- oder ausschalten' },
   { id: 'close', keys: ['Esc'], key: 'Escape', description: 'Hilfe schließen bzw. Suchfeld leeren' },
+  { id: 'seitenleiste', keys: ['Strg', 'B'], key: 'b', ctrl: true, description: 'Seitenleiste ein- oder ausklappen' },
   { id: 'abspielen', keys: ['Leertaste'], key: ' ', bereich: 'player', description: 'Abspielen / Pause' },
   { id: 'zurueckspulen', keys: ['←'], key: 'ArrowLeft', bereich: 'player', description: '10 Sekunden zurück' },
   { id: 'vorspulen', keys: ['→'], key: 'ArrowRight', bereich: 'player', description: '10 Sekunden vor' },

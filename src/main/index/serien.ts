@@ -1,5 +1,5 @@
 import type { Film } from '@shared/film';
-import { istGenre, type GenreId } from '@shared/genres';
+import { istGenre, type Format, type GenreId } from '@shared/genres';
 import { istGruppe, type SenderGruppe } from '@shared/sender';
 import { JAHRGANG_AB, MIN_FOLGEN, serienArt, sortiereFolgen, type Serie, type SerieDetail } from '@shared/serie';
 import { baueFtsAbfrage, genresFuer, istReihenThema, SPALTEN, zuFilm, type Db, type FilmZeile } from './datenbank';
@@ -181,18 +181,27 @@ export type StoebernEintrag = { typ: 'serie'; serie: Serie; datum: number } | { 
  */
 export function stoebern(
   db: Db,
-  a: { genre: GenreId; gruppe?: SenderGruppe | null; limit?: number; offset?: number }
+  a: { genre?: GenreId | null; format?: Format | null; gruppe?: SenderGruppe | null; limit?: number; offset?: number }
 ): { eintraege: StoebernEintrag[]; gesamt: number } {
   const limit = Math.min(Math.max(a.limit ?? 60, 1), 200);
   const offset = Math.max(a.offset ?? 0, 0);
   const gruppe = a.gruppe && istGruppe(a.gruppe) ? a.gruppe : null;
-  const p = { genre: a.genre, gruppe, limit, offset, nachrichten: a.genre === 'nachrichten' ? 1 : 0 };
-  const quelle = `
-    SELECT 'serie' AS typ, sg.serie_id AS id, sg.neueste AS datum FROM serie_genre sg JOIN serie s ON s.id = sg.serie_id
-      WHERE sg.genre = @genre AND (@gruppe IS NULL OR s.gruppe = @gruppe) AND (s.art != 'nachrichten' OR @nachrichten = 1)
-    UNION ALL
-    SELECT 'film', f.id, g.datum FROM film_genre g JOIN film f ON f.id = g.film_id
-      WHERE g.genre = @genre AND f.serie_id IS NULL AND f.variante = 0 AND (@gruppe IS NULL OR f.gruppe = @gruppe)`;
+  const genre = a.genre ?? null;
+  const format = a.format ?? null;
+  const p = { genre, gruppe, limit, offset, nachrichten: genre === 'nachrichten' ? 1 : 0 };
+  const istFilm = "EXISTS (SELECT 1 FROM film_genre fg WHERE fg.genre = 'film' AND fg.film_id = f.id)";
+
+  // Bündel: Serien (bei Format „Serien“ nur echte Serien), ohne Nachrichten außerhalb ihres Genres
+  const serienTeil = `SELECT 'serie' AS typ, s.id AS id, s.neueste AS datum FROM serie s
+      ${genre ? 'JOIN serie_genre sg ON sg.serie_id = s.id AND sg.genre = @genre' : ''}
+      WHERE (@gruppe IS NULL OR s.gruppe = @gruppe) AND (s.art != 'nachrichten' OR @nachrichten = 1)
+      ${format === 'serie' ? "AND s.art = 'serie'" : ''}`;
+  // Einzelne Sendungen: ohne Bündel; bei Format „Filme“ alle Filme, auch aus Reihen wie „Tatort“
+  const filmTeil = `SELECT 'film', f.id, f.datum FROM film f
+      ${genre ? 'JOIN film_genre g ON g.film_id = f.id AND g.genre = @genre' : ''}
+      WHERE f.variante = 0 AND (@gruppe IS NULL OR f.gruppe = @gruppe)
+      ${format === 'film' ? `AND ${istFilm}` : 'AND f.serie_id IS NULL'}`;
+  const quelle = format === 'serie' ? serienTeil : format === 'film' ? filmTeil : `${serienTeil} UNION ALL ${filmTeil}`;
   const gesamt = (db.prepare(`SELECT COUNT(*) AS n FROM (${quelle})`).get(p) as { n: number }).n;
   const zeilen = db.prepare(`${quelle} ORDER BY datum DESC LIMIT @limit OFFSET @offset`).all(p) as { typ: string; id: number; datum: number }[];
 

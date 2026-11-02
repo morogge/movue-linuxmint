@@ -6,6 +6,29 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ### Neu
 
+- **Fassungen zusammengefasst**: Audiodeskription, Gebärdensprache und Originalfassungen stehen als Auswahl auf der Seite der Sendung; Listen zeigen nur noch die Standardfassung
+- **Format-Filter**: Serien oder Filme – kombinierbar mit Sender und Genre; „Filter zurücksetzen“ hebt alles auf einmal auf
+- **Genres und Formate getrennt**: Serien und Filme stehen auf der Genre-Seite als eigene Formate
+- **Seitenleiste einklappbar** auf Symbole (Pfeil oben oder Strg+B); sie bleibt beim Scrollen stehen
+- **Titelbilder auch bei ZDF und 3sat** für Serien (z. B. „Under Salt Marsh“)
+- **Besetzung und Stab bei Arte**, dazu Land und Jahr auf der Seite der Sendung
+
+### Verbessert
+
+- Ruhigere Filterleiste: Filter oben, Anzahl, Darstellung und Sortierung in einer Ergebnisleiste darunter; die Sortierung erscheint nur bei einer Suche
+- Stand des Verzeichnisses und Version stehen direkt unter der Navigation statt ganz unten
+
+### Behoben
+
+- Im Vollbild ragte das Video über den Bildschirm hinaus; jetzt ist immer das ganze Bild zu sehen
+- Beim ZDF landeten Links aus dem Seitenfuß unter „Stab“
+
+### Hinweis
+
+- Beim ersten Start nach dem Update baut Movue das Sendungsverzeichnis einmal neu auf (ein bis zwei Minuten).
+
+### Neu
+
 - **Titelbilder der ARD**: Serien der ARD zeigen ihr Original-Titelbild auf der Kachel und als breites Banner auf der Serienseite
 - **Auch bei …**: Läuft eine Sendung auch bei einem anderen Sender, steht das auf ihrer Seite – ein Klick führt zur anderen Fassung
 - **Besetzung**: Darsteller mit Rollen und der Stab auf der Seite einer Sendung (bei ZDF und 3sat)

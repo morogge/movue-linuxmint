@@ -3,10 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { listenAdresse, oeffneListe } from '../../src/main/filmliste/quelle';
-import { anzahl, auchBei, filmNachId, folgen, genreAnzahlen, oeffneDb, reihe, schliesseAufbau, suche } from '../../src/main/index/datenbank';
+import { anzahl, auchBei, fassungen, filmNachId, folgen, genreAnzahlen, oeffneDb, reihe, schliesseAufbau, suche } from '../../src/main/index/datenbank';
 import type { GenreId } from '../../src/shared/genres';
 import { importiere } from '../../src/main/index/import';
 import { frageTitelInfo } from '../../src/main/titelinfo';
+import { fassungKern } from '../../src/shared/fassung';
 import { findeSerienBild } from '../../src/main/bilder';
 import { baueSerien, mitSerien, serieDetail, serienSuche, stoebern } from '../../src/main/index/serien';
 import { GRUPPEN } from '../../src/shared/sender';
@@ -130,6 +131,22 @@ describe('Echte Filmliste', () => {
         const info = await frageTitelInfo(m.website).catch((e: unknown) => String(e));
         console.log(`BESETZUNG ${m.gruppe} ${m.website}: ${JSON.stringify(info).slice(0, 400)}`);
       }
+      // Fassungen: wie viele ausgeblendet, Beispiele mit Auswahl
+      const fz = lese.prepare('SELECT SUM(fassung) AS fassung, SUM(variante) AS versteckt FROM film').get();
+      const mitFassung = lese.prepare('SELECT id FROM film WHERE variante = 1 ORDER BY (id * 2654435761) % 1000003 LIMIT 6').all() as { id: number }[];
+      for (const { id } of mitFassung) {
+        const v = filmNachId(lese, id)!;
+        const standard = lese.prepare('SELECT id FROM film WHERE gruppe = ? AND thema = ? AND kern = ? AND fassung = 0 LIMIT 1').get(v.gruppe, v.thema, fassungKern(v.titel)) as { id: number } | undefined;
+        const liste = standard ? fassungen(lese, filmNachId(lese, standard.id)!) : [];
+        console.log(`FASSUNG ${v.titel} → ${liste.map((x) => `${x.name ?? 'Standard'}: ${x.film.titel}`).join(' | ')}`);
+      }
+      console.log('FASSUNGEN ' + JSON.stringify(fz));
+      const arteSeiten = lese.prepare(`SELECT website FROM film WHERE gruppe = 'Arte' AND dauer > 3000 ORDER BY (id * 2654435761) % 1000003 LIMIT 4`).all() as { website: string }[];
+      for (const a of arteSeiten) console.log(`ARTE-INFO ${a.website}: ${JSON.stringify(await frageTitelInfo(a.website).catch((e: unknown) => String(e))).slice(0, 400)}`);
+      const zdfSerien = lese
+        .prepare(`SELECT f.website FROM serie s JOIN film f ON f.id = s.film_id WHERE s.gruppe IN ('ZDF', '3sat') AND s.art = 'serie' ORDER BY s.folgen DESC LIMIT 6`)
+        .all() as { website: string }[];
+      for (const z of zdfSerien) console.log(`SERIENBILD-ZDF ${z.website}: ${await findeSerienBild(z.website, 'serie').catch(() => null)}`);
       const ardSerien = lese
         .prepare(`SELECT f.website FROM serie s JOIN film f ON f.id = s.film_id WHERE s.gruppe = 'ARD' AND s.art = 'serie' ORDER BY s.folgen DESC LIMIT 6`)
         .all() as { website: string }[];

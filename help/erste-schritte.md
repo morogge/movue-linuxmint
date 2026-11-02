@@ -10,7 +10,7 @@ Movue lädt zuerst das Verzeichnis aller Sendungen. Das dauert ein bis zwei Minu
 
 - **Startseite** mit Empfehlung und Reihen je Genre, dazu eine Seite je Sender
 - **Detailseite** zu jeder Sendung mit allen weiteren Folgen
-- **Suche** über alle vier Mediatheken, mit Filter nach Sender und Genre
+- **Suche** über alle vier Mediatheken, mit Filter nach Sender, Format (Serien, Filme) und Genre
 - **Genres**: Stöbern nach Themen über alle Sender hinweg
 - **Player** mit Untertiteln, Qualitätswahl, Vollbild, Mini-Player und automatisch nächster Folge
 - **Merkliste** und **Abos**: Sendungen für später ablegen, über neue Folgen informiert werden und sehen, was bald aus der Mediathek verschwindet

@@ -130,7 +130,8 @@ test('Suche findet Sendungen über alle Sender und filtert nach Sender', async (
   await win.getByLabel('Suche in allen Mediatheken').focus();
   await win.keyboard.press('Escape');
   await expect(win.getByRole('heading', { name: 'Neueste Sendungen' })).toBeVisible();
-  await expect(win.getByText('10 Treffer')).toBeVisible();
+  // Ohne Suchbegriff: Serien gebündelt (In aller Freundschaft = 1 Eintrag statt 4)
+  await expect(win.getByText('7 Treffer')).toBeVisible();
 });
 
 test('F1 öffnet die Hilfe zum aktuellen Bildschirm, Esc schließt sie', async () => {
@@ -160,13 +161,19 @@ test('Genres: Kacheln zeigen, ein Genre öffnen', async () => {
   await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 1 })).toBeVisible();
   await expect(win.getByText('2 Treffer')).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/genre-krimi.png' });
-  // Genre „Serien“: die Serie als ein Eintrag, umschaltbar auf einzelne Folgen
-  await win.getByLabel('Genre').selectOption('serie');
+  // Formate sind eigene Filter: Krimis als Serien → keine; alle Serien → die Serie als ein Eintrag
+  const format = win.getByRole('group', { name: 'Format' });
+  await format.getByRole('button', { name: 'Serien' }).click();
+  await expect(win.getByRole('heading', { name: 'Krimi & Thriller · Serien', level: 1 })).toBeVisible();
+  await expect(win.getByText('Keine Treffer.')).toBeVisible();
+  await win.getByLabel('Genre', { exact: true }).selectOption('');
   await expect(win.getByRole('heading', { name: 'Serien', level: 1 })).toBeVisible();
   await expect(win.getByRole('button', { name: /In aller Freundschaft/ })).toHaveCount(1);
-  await win.screenshot({ path: 'test-results/screens/genre-serien.png' });
+  await win.screenshot({ path: 'test-results/screens/format-serien.png' });
   await win.getByRole('button', { name: 'Einzelne Folgen' }).click();
   await expect(win.getByRole('button', { name: /Folge 1101: Neue Wege/ })).toBeVisible();
+  await win.getByRole('button', { name: 'Filter zurücksetzen' }).click();
+  await expect(win.getByRole('heading', { name: 'Neueste Sendungen', level: 1 })).toBeVisible();
 });
 
 test('Hinweis auf eine heruntergeladene neue Version', async () => {

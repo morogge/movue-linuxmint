@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Film } from '@shared/film';
-import type { GenreId } from '@shared/genres';
+import type { Format, GenreId } from '@shared/genres';
 import { CHANGELOG_PAGE_ID } from '@shared/help';
 import { SCREENS, type ScreenId } from '@shared/screens';
 import type { SenderGruppe } from '@shared/sender';
@@ -24,6 +24,7 @@ import { SerieScreen } from './screens/SerieScreen';
 import type { SerieRef } from '@shared/serie';
 
 const ZULETZT_GESEHEN = 'movue.zuletztGeseheneVersion';
+const SEITENLEISTE = 'movue.seitenleiste';
 
 function leseSpeicher(key: string): string | null {
   try {
@@ -53,8 +54,18 @@ export function App() {
   const [ansicht, setAnsicht] = useState<Ansicht>({ screen: 'start' });
   const [, setVerlauf] = useState<Ansicht[]>([]);
   const [helpPage, setHelpPage] = useState<string | null>(null);
+  const [eingeklappt, setEingeklappt] = useState(() => leseSpeicher(SEITENLEISTE) === 'eingeklappt');
+  const einklappen = useCallback(
+    () =>
+      setEingeklappt((e) => {
+        schreibeSpeicher(SEITENLEISTE, e ? 'offen' : 'eingeklappt');
+        return !e;
+      }),
+    []
+  );
   const [suchtext, setSuchtext] = useState('');
   const [genre, setGenre] = useState<GenreId | null>(null);
+  const [format, setFormat] = useState<Format | null>(null);
   const suchfeld = useRef<HTMLInputElement>(null);
   const zustand = useIndexZustand();
   const update = useUpdateZustand();
@@ -123,7 +134,14 @@ export function App() {
   const oeffneSerie = useCallback((s: SerieRef) => gehe({ screen: 'serie', serie: { gruppe: s.gruppe, thema: s.thema } }), [gehe]);
   const zeigeGenre = useCallback(
     (g: GenreId) => {
-      setGenre(g);
+      // „Spielfilme“ und „Serien“ sind Formate: als Format-Filter öffnen, nicht als Genre
+      if (g === 'film' || g === 'serie') {
+        setFormat(g);
+        setGenre(null);
+      } else {
+        setGenre(g);
+        setFormat(null);
+      }
       setSuchtext('');
       gehe({ screen: 'suche' });
     },
@@ -154,6 +172,7 @@ export function App() {
       }
       if (action === 'back') zurueck();
       if (action === 'fullscreen') void window.movue?.toggleFullscreen();
+      if (action === 'seitenleiste') einklappen();
       if (action === 'close') {
         if (helpPage) closeHelp();
         else if (document.activeElement === suchfeld.current) setSuchtext('');
@@ -161,11 +180,11 @@ export function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [openHelp, closeHelp, helpPage, zurueck]);
+  }, [openHelp, closeHelp, helpPage, zurueck, einklappen]);
 
   return (
     <div className="app">
-      <Sidebar ansicht={ansicht} onNavigate={gehe} zustand={zustand} update={update} />
+      <Sidebar ansicht={ansicht} onNavigate={gehe} zustand={zustand} update={update} eingeklappt={eingeklappt} onEinklappen={einklappen} />
       <main className="main">
         <UpdateBanner zustand={update} />
         <TopBar ref={suchfeld} suchtext={suchtext} onSuche={sucheAendern} onHelp={openHelp} />
@@ -189,6 +208,8 @@ export function App() {
             zustand={zustand}
             genre={genre}
             onGenre={setGenre}
+            format={format}
+            onFormat={setFormat}
             onOeffne={oeffneFilm}
             onAbspielen={abspielen}
             onSerie={oeffneSerie}

@@ -37,3 +37,25 @@ export interface GenreAnzahl {
   name: string;
   anzahl: number;
 }
+
+/**
+ * Formate sind keine Genres: „Serien“ und „Spielfilme“ beschreiben die Form, nicht den Inhalt.
+ * Sie stehen als eigener Filter neben dem Genre (ein Krimi kann Serie oder Film sein).
+ */
+export type Format = 'serie' | 'film';
+
+export const FORMATE: { id: Format; name: string }[] = [
+  { id: 'serie', name: 'Serien' },
+  { id: 'film', name: 'Filme' }
+];
+
+export function istFormat(wert: unknown): wert is Format {
+  return wert === 'serie' || wert === 'film';
+}
+
+/** Genres, die eigentlich Formate sind – im Genre-Filter ausgeblendet */
+export const FORMAT_GENRES: GenreId[] = ['film', 'serie'];
+
+export function istInhaltsGenre(id: GenreId): boolean {
+  return !FORMAT_GENRES.includes(id);
+}

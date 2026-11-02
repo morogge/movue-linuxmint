@@ -29,10 +29,12 @@ export function useBild(film: Pick<Film, 'website'> | null): string | null {
 
 const serienCache = new Map<string, Promise<string | null>>();
 
-/** Titelbild der Serie (16:9) oder Banner (16:7) – bisher nur bei der ARD; null, wenn es keins gibt */
+/** Titelbild der Serie (16:9) oder Banner (16:7); null, wenn der Sender keins liefert */
 export function useSerienBild(film: Pick<Film, 'website' | 'gruppe'> | null, art: 'serie' | 'banner' | undefined): string | null {
   const [url, setUrl] = useState<string | null>(null);
-  const website = film && art && film.gruppe === 'ARD' ? film.website : null;
+  // Titelbilder: ARD (16:9 und Banner), ZDF und 3sat (nur 16:9)
+  const moeglich = film && art && (film.gruppe === 'ARD' || (art === 'serie' && (film.gruppe === 'ZDF' || film.gruppe === '3sat')));
+  const website = moeglich ? film.website : null;
   useEffect(() => {
     if (!website || !art) return;
     let aktiv = true;

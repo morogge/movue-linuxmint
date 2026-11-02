@@ -15,22 +15,36 @@ Die Suche durchsucht die Sendungen von ARD, ZDF, 3sat und Arte gleichzeitig – 
 
 Passt dein Suchbegriff zum Namen einer Serie oder Sendereihe, steht sie über den Treffern unter **Serien und Sendereihen**. Ein Klick öffnet die Serienseite mit allen Folgen.
 
+## Filtern
+
+Unter der Überschrift stehen drei Filter, die du beliebig kombinierst:
+
+- **Sender**: nur eine Mediathek – oder **Alle Sender**.
+- **Format**: **Serien** oder **Filme** – oder **Alle Formate**. Das Format sagt, *was* eine Sendung ist; ein Krimi kann eine Serie oder ein Film sein.
+- **Genre**: worum es geht, etwa Krimi, Doku oder Kultur.
+
+Unter den Filtern steht, wie viele Treffer es gibt. Ist ein Filter gesetzt, hebt **Filter zurücksetzen** alle auf einmal auf.
+
 ## Nach Sender filtern
 
-Mit den Knöpfen unter der Überschrift suchst du nur in einer Mediathek. **Alle Sender** hebt den Filter wieder auf.
+Mit den Knöpfen unter **Sender** suchst du nur in einer Mediathek. **Alle Sender** hebt den Filter wieder auf.
 
 Zur ARD gehören auch die Sendungen der Landesrundfunkanstalten (BR, HR, MDR, NDR, Radio Bremen, RBB, SR, SWR, WDR) sowie ONE, ARD-alpha und tagesschau24. Zum ZDF gehören ZDFinfo, ZDFneo und ZDFtivi. Der jeweilige Sender steht neben dem Kürzel im Treffer.
 
 ## Sortieren
 
+Die Sortierung erscheint rechts in der Ergebnisleiste, sobald du einen Suchbegriff eingibst:
+
 - **Beste Treffer**: Sendungen, bei denen das Suchwort im Titel steht, kommen zuerst.
 - **Neueste zuerst**: nach Sendedatum.
 
-Ohne Suchbegriff zeigt die Seite die neuesten Sendungen.
+Ohne Suchbegriff zeigt die Seite die neuesten Sendungen; Serien stehen dabei gebündelt als eine Kachel. **Einzelne Folgen** rechts in der Ergebnisleiste zeigt stattdessen jede Folge für sich.
+
+Jede Sendung erscheint nur einmal – in der Standardfassung. Fassungen mit Audiodeskription, in Gebärdensprache oder im Original findest du auf der Seite der Sendung.
 
 ## Kacheln oder Liste
 
-Oben wählst du die Darstellung der Treffer:
+Rechts in der Ergebnisleiste wählst du die Darstellung der einzelnen Sendungen:
 
 - **Kacheln**: ein Raster mit Vorschaubild, Titel, Reihe und Datum – gut zum Stöbern.
 - **Liste**: Bild links, dazu Beschreibung, Kennzeichen und die Knöpfe zum Öffnen – gut, wenn du Details vergleichen willst.

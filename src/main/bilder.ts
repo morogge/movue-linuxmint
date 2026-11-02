@@ -115,10 +115,26 @@ async function ardSerie(id: string, format: '16x9' | '16x7'): Promise<string | n
   return ardSerienBild(await antwort.json(), format);
 }
 
-/** Titelbild einer Serie – bisher nur bei der ARD; sonst null (die Oberfläche nimmt dann das Bild der Folge) */
+/**
+ * Seite der Sendereihe zu einer Folge bei ZDF und 3sat: die Adresse ohne den letzten Teil,
+ * z. B. …/video/serien/under-salt-marsh-100/die-flut-100 → …/video/serien/under-salt-marsh-100
+ */
+export function serienSeite(website: string): string | null {
+  const zdf = /^(https?:\/\/(?:www\.)?zdf\.de\/video\/[^/]+\/[^/]+)\/[^/]+\/?$/.exec(website);
+  if (zdf) return zdf[1];
+  const dreisat = /^(https?:\/\/(?:www\.)?3sat\.de\/[^/]+\/[^/]+)\/[^/]+\.html$/.exec(website);
+  return dreisat ? dreisat[1] : null;
+}
+
+/** Titelbild einer Serie: ARD über die Schnittstelle, ZDF und 3sat über die Seite der Sendereihe; sonst null */
 export async function findeSerienBild(website: string, art: 'serie' | 'banner'): Promise<string | null> {
   const id = ardId(website);
-  if (!id) return null;
+  if (!id) {
+    // ZDF/3sat haben kein Banner-Format; das Titelbild (16:9, oft mit Schriftzug) steht als og:image auf der Seite der Reihe
+    const seite = art === 'serie' ? serienSeite(website) : null;
+    const bild = seite ? await seitenBild(seite) : null;
+    return bild ? verkleinere(bild) : null;
+  }
   const url = await ardSerie(id, art === 'banner' ? '16x7' : '16x9');
   return url ? url.replace(/\{width\}/g, art === 'banner' ? '1600' : '640') : null;
 }

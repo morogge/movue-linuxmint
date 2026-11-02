@@ -2,7 +2,7 @@ import type { Readable } from 'node:stream';
 import { EintragsLeser, parseListenStand } from '../filmliste/eintrag';
 import { bestimmeGenres } from '../genre/regeln';
 import { FilmlistenParser } from '../filmliste/parser';
-import { schreiber, schreibeMeta, type Db } from './datenbank';
+import { baueFassungen, schreiber, schreibeMeta, type Db } from './datenbank';
 import { baueSerien } from './serien';
 
 export interface ImportErgebnis {
@@ -63,7 +63,8 @@ export async function importiere(
   onFortschritt?.(verarbeitet);
 
   if (stand !== null) schreibeMeta(db, 'stand', stand);
-  // Serien und Sendereihen bündeln – nach jedem Import neu, auch nach einem Diff
+  // Fassungen zuordnen, dann Serien und Sendereihen bündeln – nach jedem Import neu, auch nach einem Diff
+  baueFassungen(db);
   baueSerien(db);
   return { anzahl, stand };
 }

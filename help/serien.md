@@ -10,7 +10,11 @@ Movue fasst alle Folgen einer Serie oder Sendereihe zusammen. Statt zehn einzeln
 
 ## Titelbilder
 
-Bei Serien der ARD zeigt Movue das Titelbild, das die ARD Mediathek für die Serie verwendet – oft mit Schriftzug –, auf der Serienseite als breites Banner. ZDF, 3sat und Arte liefern solche Bilder nicht in auslesbarer Form; dort steht das Bild der neuesten Folge.
+Movue zeigt das Titelbild, das die Mediathek für die Serie verwendet – oft mit Schriftzug:
+
+- **ARD**: auf der Kachel und auf der Serienseite als breites Banner.
+- **ZDF und 3sat**: auf der Kachel und neben dem Titel der Serienseite (ein Banner bieten sie nicht an).
+- **Arte**: liefert kein eigenes Serienbild; dort steht das Bild der neuesten Folge.
 
 ## Die Serienseite
 

@@ -1,15 +1,16 @@
 import Database from 'better-sqlite3';
 import type { Film, Sortierung, SuchAnfrage, SuchErgebnis } from '@shared/film';
-import { GENRES, istGenre, type GenreAnzahl, type GenreId } from '@shared/genres';
+import { GENRES, istFormat, istGenre, type GenreAnzahl, type GenreId } from '@shared/genres';
 import { istGruppe, type SenderGruppe } from '@shared/sender';
 import type { FilmEintrag } from '../filmliste/eintrag';
 import { folgenInfo } from '@shared/serie';
 import { titelKern } from '@shared/titelinfo';
+import { fassungKern, fassungName, istFassung } from '@shared/fassung';
 
 export type Db = Database.Database;
 
 /** Erhöhen, wenn sich Tabellen oder abgeleitete Daten (z. B. Genre-Regeln) ändern – erzwingt einen Neuaufbau. */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS film (
@@ -28,8 +29,12 @@ CREATE TABLE IF NOT EXISTS film (
   url_untertitel TEXT NOT NULL,
   geo TEXT NOT NULL,
   neu INTEGER NOT NULL,
-  -- 1 = Fassung mit Audiodeskription, Gebärdensprache o. Ä.; beim Stöbern ausgeblendet
+  -- 1 = andere Fassung (Audiodeskription, Gebärdensprache, Original …), zu der es eine Standardfassung gibt;
+  -- in allen Listen ausgeblendet, auf der Seite der Sendung als Auswahl (siehe baueFassungen)
   variante INTEGER NOT NULL DEFAULT 0,
+  -- 1 = der Titel kennzeichnet eine besondere Fassung; kern = Titel ohne solche Zusätze
+  fassung INTEGER NOT NULL DEFAULT 0,
+  kern TEXT NOT NULL DEFAULT '',
   -- aus dem Titel gelesen (shared/serie.ts)
   staffel INTEGER,
   folge INTEGER,
@@ -83,13 +88,16 @@ const NEUE_SPALTEN: [string, string][] = [
   ['staffel', 'INTEGER'],
   ['folge', 'INTEGER'],
   ['extra', 'INTEGER NOT NULL DEFAULT 0'],
-  ['serie_id', 'INTEGER']
+  ['serie_id', 'INTEGER'],
+  ['fassung', 'INTEGER NOT NULL DEFAULT 0'],
+  ['kern', "TEXT NOT NULL DEFAULT ''"]
 ];
 
 function ergaenzeSpalten(db: Database.Database): void {
   const vorhanden = new Set((db.pragma('table_info(film)') as { name: string }[]).map((c) => c.name));
   for (const [name, typ] of NEUE_SPALTEN) if (!vorhanden.has(name)) db.exec(`ALTER TABLE film ADD COLUMN ${name} ${typ}`);
   db.exec('CREATE INDEX IF NOT EXISTS film_serie ON film(serie_id, datum DESC)');
+  db.exec('CREATE INDEX IF NOT EXISTS film_fassung ON film(gruppe, thema, kern)');
 }
 
 const TRIGGER = `
@@ -138,21 +146,22 @@ export function schliesseAufbau(db: Db): void {
 const VARIANTE = /\((?:[^)]*\b)?(audiodeskription|gebärdensprache|originalversion|originalfassung|klare sprache|hörfassung|mit untertitel)\b[^)]*\)/i;
 
 export function istVariante(titel: string): boolean {
-  return VARIANTE.test(titel) || /\s[-–]\s(audiodeskription|gebärdensprache|hörfassung)\s*$/i.test(titel);
+  return VARIANTE.test(titel) || istFassung(titel);
 }
 
 export function schreiber(db: Db): (e: FilmEintrag) => void {
   const stmt = db.prepare(`
     INSERT INTO film (url, sender, gruppe, thema, titel, datum, dauer, beschreibung, website,
-                      url_klein, url_hd, url_untertitel, geo, neu, variante, staffel, folge, extra)
+                      url_klein, url_hd, url_untertitel, geo, neu, variante, staffel, folge, extra, fassung, kern)
     VALUES (@url, @sender, @gruppe, @thema, @titel, @datum, @dauer, @beschreibung, @website,
-            @urlKlein, @urlHd, @urlUntertitel, @geo, @neu, @variante, @staffel, @folge, @extra)
+            @urlKlein, @urlHd, @urlUntertitel, @geo, @neu, @variante, @staffel, @folge, @extra, @fassung, @kern)
     ON CONFLICT(url) DO UPDATE SET
       sender = excluded.sender, gruppe = excluded.gruppe, thema = excluded.thema, titel = excluded.titel,
       datum = excluded.datum, dauer = excluded.dauer, beschreibung = excluded.beschreibung,
       website = excluded.website, url_klein = excluded.url_klein, url_hd = excluded.url_hd,
       url_untertitel = excluded.url_untertitel, geo = excluded.geo, neu = excluded.neu,
-      variante = excluded.variante, staffel = excluded.staffel, folge = excluded.folge, extra = excluded.extra
+      variante = excluded.variante, staffel = excluded.staffel, folge = excluded.folge, extra = excluded.extra,
+      fassung = excluded.fassung, kern = excluded.kern
     RETURNING id
   `);
   const loescheGenres = db.prepare('DELETE FROM film_genre WHERE film_id = ?');
@@ -160,10 +169,14 @@ export function schreiber(db: Db): (e: FilmEintrag) => void {
   return (e) => {
     const { genres, ...felder } = e;
     const info = folgenInfo(e.titel);
+    const fassung = istVariante(e.titel) ? 1 : 0;
     const { id } = stmt.get({
       ...felder,
       neu: e.neu ? 1 : 0,
-      variante: istVariante(e.titel) ? 1 : 0,
+      // vorläufig; baueFassungen blendet nur Fassungen aus, zu denen es eine Standardfassung gibt
+      variante: fassung,
+      fassung,
+      kern: fassungKern(e.titel),
       staffel: info.staffel,
       folge: info.folge,
       extra: info.extra ? 1 : 0
@@ -285,33 +298,44 @@ export function suche(db: Db, anfrage: SuchAnfrage): SuchErgebnis {
   const sortierung: Sortierung = anfrage.sortierung ?? 'relevanz';
   const fts = baueFtsAbfrage(anfrage.text);
   const p = { fts, gruppe, genre, limit, offset };
+  // Format: nur Filme (Genre „Spielfilme“) bzw. nur Folgen echter Serien
+  const format = istFormat(anfrage.format) ? anfrage.format : null;
+  const formatFilter =
+    format === 'film'
+      ? "AND EXISTS (SELECT 1 FROM film_genre fg WHERE fg.genre = 'film' AND fg.film_id = f.id)"
+      : format === 'serie'
+        ? "AND EXISTS (SELECT 1 FROM serie s WHERE s.id = f.serie_id AND s.art = 'serie')"
+        : '';
 
   let treffer: FilmZeile[];
   let gesamt: number;
 
   if (!fts && genre) {
     // Neueste im Genre: über den Index (genre, datum)
-    const filter = gruppe ? 'AND f.gruppe = @gruppe' : '';
+    const filter = (gruppe ? 'AND f.gruppe = @gruppe ' : '') + formatFilter;
     treffer = db
       .prepare(
         `SELECT ${SPALTEN} FROM film_genre g JOIN film f ON f.id = g.film_id
-         WHERE g.genre = @genre ${filter} ORDER BY g.datum DESC LIMIT @limit OFFSET @offset`
+         WHERE g.genre = @genre AND f.variante = 0 ${filter} ORDER BY g.datum DESC LIMIT @limit OFFSET @offset`
       )
       .all(p) as FilmZeile[];
     gesamt = (
       db
-        .prepare(`SELECT count(*) AS n FROM film_genre g JOIN film f ON f.id = g.film_id WHERE g.genre = @genre ${filter}`)
+        .prepare(`SELECT count(*) AS n FROM film_genre g JOIN film f ON f.id = g.film_id WHERE g.genre = @genre AND f.variante = 0 ${filter}`)
         .get(p) as { n: number }
     ).n;
   } else if (!fts) {
     // Ohne Suchbegriff: neueste Sendungen
-    const where = gruppe ? 'WHERE f.gruppe = @gruppe' : '';
+    // Nur Standardfassungen – andere Fassungen stehen auf der Seite der Sendung
+    const where = (gruppe ? 'WHERE f.variante = 0 AND f.gruppe = @gruppe ' : 'WHERE f.variante = 0 ') + formatFilter;
     treffer = db
       .prepare(`SELECT ${SPALTEN} FROM film f ${where} ORDER BY f.datum DESC LIMIT @limit OFFSET @offset`)
       .all(p) as FilmZeile[];
     gesamt = (db.prepare(`SELECT count(*) AS n FROM film f ${where}`).get(p) as { n: number }).n;
   } else {
     const filter = [
+      'AND f.variante = 0',
+      formatFilter,
       gruppe ? 'AND f.gruppe = @gruppe' : '',
       genre ? 'AND EXISTS (SELECT 1 FROM film_genre g WHERE g.genre = @genre AND g.film_id = f.id)' : ''
     ].join(' ');
@@ -484,4 +508,50 @@ export function auchBei(db: Db, film: Film): Film[] {
     if (!alt || f.datum > alt.datum) jeSender.set(f.gruppe, f);
   }
   return [...jeSender.values()];
+}
+
+/**
+ * Nach jedem Import: Eine besondere Fassung (Audiodeskription, Original …) wird nur ausgeblendet,
+ * wenn es dieselbe Sendung auch in der Standardfassung gibt – sonst ist sie selbst der Eintrag im Listing.
+ */
+export function baueFassungen(db: Db): void {
+  db.exec(`
+    UPDATE film SET variante = CASE WHEN fassung = 1 AND EXISTS (
+        SELECT 1 FROM film s WHERE s.gruppe = film.gruppe AND s.thema = film.thema AND s.kern = film.kern
+          AND s.fassung = 0 AND s.staffel IS film.staffel AND s.folge IS film.folge)
+      THEN 1 ELSE 0 END
+    WHERE fassung = 1 OR variante = 1;
+  `);
+}
+
+export interface Fassung {
+  film: Film;
+  /** null = Standardfassung */
+  name: string | null;
+}
+
+/** Alle Fassungen einer Sendung, Standardfassung zuerst */
+export function fassungen(db: Db, film: Film): Fassung[] {
+  const zeilen = db
+    .prepare(
+      `SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.kern = ? AND f.staffel IS ? AND f.folge IS ?
+       ORDER BY f.fassung, f.datum DESC LIMIT 12`
+    )
+    .all(film.gruppe, film.thema, fassungKern(film.titel), film.staffel, film.folge) as FilmZeile[];
+  const genres = genresFuer(
+    db,
+    zeilen.map((z) => z.id)
+  );
+  const gesehen = new Set<string>();
+  return zeilen
+    .map((z) => {
+      const f = zuFilm(z, genres);
+      return { film: f, name: fassungName(f.titel) };
+    })
+    .filter((x) => {
+      const k = x.name ?? '';
+      if (gesehen.has(k)) return false;
+      gesehen.add(k);
+      return true;
+    });
 }

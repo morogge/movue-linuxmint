@@ -5,7 +5,7 @@ import { genreName } from '@shared/genres';
 import { formatZeit } from '@shared/player';
 import { formatAblauf, laeuftBaldAb, type Ablauf } from '@shared/nutzer';
 import { folgenKennung, type SerieRef } from '@shared/serie';
-import type { TitelInfo } from '@shared/titelinfo';
+import { herkunft, type TitelInfo } from '@shared/titelinfo';
 import { GRUPPEN } from '@shared/sender';
 import { SENDER_FARBE } from '../senderFarben';
 import { FilmBild, SenderMarke } from '../components/Kachel';
@@ -40,6 +40,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
   const [abonniert, setAbonniert] = useState(false);
   const [ablauf, setAblauf] = useState<Ablauf | null>(null);
   const [auchBei, setAuchBei] = useState<Film[]>([]);
+  const [fassungen, setFassungen] = useState<{ film: Film; name: string | null }[]>([]);
   const [info, setInfo] = useState<TitelInfo | null>(null);
 
   useEffect(() => {
@@ -55,7 +56,9 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
       setAblauf(null);
       setAuchBei([]);
       setInfo(null);
+      setFassungen([]);
       if (!f) return;
+      void window.movue.index.fassungen(f.id).then((x) => aktiv && setFassungen(x));
       void window.movue.index.auchBei(f.id).then((a) => aktiv && setAuchBei(a));
       void window.movue.index.titelInfo(f.id).then((i) => aktiv && setInfo(i));
       void window.movue.merkliste.ist(f.url).then((g) => aktiv && setGemerkt(g));
@@ -98,6 +101,11 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
 
   const video = videoDatei(film);
   const ablaufText = formatAblauf(ablauf);
+  // Land und Jahr: vom Sender (Arte, Wikidata) oder aus Titel/Beschreibung („Spielfilm, Italien 2015“)
+  const h = herkunft(film.titel, film.beschreibung);
+  const land = info?.land ?? h?.land;
+  const jahr = info?.jahr ?? h?.jahr;
+  const herkunftText = [land, jahr].filter(Boolean).join(' ');
   const merkenUmschalten = async () => setGemerkt(await window.movue.merkliste.setzen(film, !gemerkt));
   const aboUmschalten = async () => setAbonniert(await window.movue.abo.setzen({ gruppe: film.gruppe, thema: film.thema }, !abonniert));
   const seiteOeffnen = async () => {
@@ -128,6 +136,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
                   {genreName(g)}
                 </span>
               ))}
+            {herkunftText && <span className="tag">{herkunftText}</span>}
             {film.urlUntertitel && <span className="tag">UT</span>}
             {film.urlHd && <span className="tag">HD</span>}
             {film.geo && <span className="tag">{film.geo.replace(/-/g, ' · ')}</span>}
@@ -143,6 +152,21 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
               </span>
             )}
           </p>
+          {fassungen.length > 1 && (
+            <div className="chips fassungen" role="group" aria-label="Fassung">
+              {fassungen.map((x) => (
+                <button
+                  key={x.film.id}
+                  type="button"
+                  className={x.film.id === film.id ? 'chip an' : 'chip'}
+                  aria-pressed={x.film.id === film.id}
+                  onClick={() => x.film.id !== film.id && onOeffne(x.film)}
+                >
+                  {x.name ?? 'Standard'}
+                </button>
+              ))}
+            </div>
+          )}
           {auchBei.length > 0 && (
             <p className="auch-bei">
               Auch bei

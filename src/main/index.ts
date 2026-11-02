@@ -13,7 +13,7 @@ import type { Film } from '@shared/film';
 import { ladeUntertitel } from './untertitel';
 import { seitenZiel } from './links';
 import { istGruppe } from '@shared/sender';
-import { istGenre } from '@shared/genres';
+import { istFormat, istGenre } from '@shared/genres';
 
 // Für Tests: eigenes Datenverzeichnis statt ~/.config/Movue
 if (process.env['MOVUE_DATEN']) app.setPath('userData', process.env['MOVUE_DATEN']);
@@ -155,10 +155,11 @@ ipcMain.handle('index:serie', (_event, r: { gruppe?: unknown; thema?: unknown })
   index && typeof r?.gruppe === 'string' && typeof r.thema === 'string' ? index.serie(r.gruppe, r.thema) : null
 );
 
-ipcMain.handle('index:stoebern', (_event, a: { genre?: unknown; gruppe?: unknown; limit?: unknown; offset?: unknown }) => {
-  if (!index || !istGenre(a?.genre)) return { eintraege: [], gesamt: 0 };
+ipcMain.handle('index:stoebern', (_event, a: { genre?: unknown; format?: unknown; gruppe?: unknown; limit?: unknown; offset?: unknown }) => {
+  if (!index || !a) return { eintraege: [], gesamt: 0 };
   return index.stoebern({
-    genre: a.genre,
+    genre: istGenre(a.genre) ? a.genre : null,
+    format: istFormat(a.format) ? a.format : null,
     gruppe: istGruppe(a.gruppe) ? a.gruppe : null,
     limit: typeof a.limit === 'number' ? a.limit : undefined,
     offset: typeof a.offset === 'number' ? a.offset : undefined
@@ -174,6 +175,8 @@ ipcMain.handle('fortschritt:viele', (_event, urls: unknown) =>
 );
 
 ipcMain.handle('index:film', (_event, id: unknown) => (index && typeof id === 'number' ? index.film(id) : null));
+
+ipcMain.handle('index:fassungen', (_event, id: unknown) => (index && typeof id === 'number' ? index.fassungen(id) : []));
 
 ipcMain.handle('index:auch-bei', (_event, id: unknown) => (index && typeof id === 'number' ? index.auchBei(id) : []));
 

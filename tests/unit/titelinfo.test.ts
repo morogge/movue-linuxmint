@@ -5,8 +5,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { titelKern } from '@shared/titelinfo';
 import { auchBei, filmNachId, oeffneDb, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
 import type { FilmEintrag } from '../../src/main/filmliste/eintrag';
-import { ardSerienBild } from '../../src/main/bilder';
-import { leseTitelInfo, hatBesetzung, TitelInfoDienst } from '../../src/main/titelinfo';
+import { ardSerienBild, serienSeite } from '../../src/main/bilder';
+import { leseArteCredits, leseTitelInfo, hatBesetzung, TitelInfoDienst } from '../../src/main/titelinfo';
+import { herkunft } from '@shared/titelinfo';
 
 describe('Besetzung von der Sendungsseite', () => {
   it('liest die Darsteller-Liste des ZDF („Rolle - Name“)', () => {
@@ -25,6 +26,15 @@ describe('Besetzung von der Sendungsseite', () => {
       { rolle: 'Regie', name: 'Kjell Sundvall' },
       { rolle: 'Drehbuch', name: 'Rolf Börjlind' }
     ]);
+  });
+
+  it('nimmt beim Stab nur die Liste unter der Überschrift, nicht den Seitenfuß', () => {
+    const html =
+      '<h2 class="x">Stab</h2><div><ul><li><span>Regie - Kjell Sundvall</span></li></ul></div>' +
+      '<div class="footer"><ul><li><a>Impressum</a></li><li><a>Datenschutz</a></li><li><a>Kontakt - Hilfe</a></li></ul></div>';
+    expect(leseTitelInfo(html).stab).toEqual([{ rolle: 'Regie', name: 'Kjell Sundvall' }]);
+    const mitFooter = '<h2>Stab</h2><ul><li>Regie - A</li></ul><footer><ul><li>Impressum</li></ul></footer>';
+    expect(leseTitelInfo(mitFooter).stab).toHaveLength(1);
   });
 
   it('versteht auch Definitionslisten und Zeilen (3sat)', () => {
@@ -58,6 +68,40 @@ describe('Besetzung von der Sendungsseite', () => {
       dienst.schliessen();
       rmSync(ordner, { recursive: true, force: true });
     }
+  });
+});
+
+describe('Arte: Angaben aus dem eingebetteten JSON', () => {
+  it('liest Regie, Darsteller mit Rolle, Land und Jahr', () => {
+    const html = String.raw`x\"remainingDays\":745},\"credits\":[{\"code\":\"REA\",\"label\":\"Regie\",\"values\":[\"Adèle Flaux\"]},{\"code\":\"ACT\",\"label\":\"Darsteller:in\",\"values\":[\"Kyle MacLachlan (Dale Cooper)\",\"Sheryl Lee\"]},{\"code\":\"COUNTRY\",\"label\":\"Land\",\"values\":[\"Frankreich\"]},{\"code\":\"PRODUCTION_YEAR\",\"label\":\"Jahr\",\"values\":[\"2025\"]}],\"duration\":3795`;
+    expect(leseArteCredits(html)).toEqual({
+      darsteller: [
+        { name: 'Kyle MacLachlan', rolle: 'Dale Cooper' },
+        { name: 'Sheryl Lee', rolle: '' }
+      ],
+      stab: [{ rolle: 'Regie', name: 'Adèle Flaux' }],
+      land: 'Frankreich',
+      jahr: '2025'
+    });
+    expect(leseArteCredits('<h2>Darsteller</h2>')).toBeNull();
+    expect(hatBesetzung('https://www.arte.tv/de/videos/044639-003-A/twin-peaks/')).toBe(true);
+  });
+
+  it('liest Land und Jahr aus Titel oder Beschreibung', () => {
+    expect(herkunft('A Bigger Splash - Spielfilm, Italien/Frankreich 2015', '')).toMatchObject({ land: 'Italien/Frankreich', jahr: '2015' });
+    expect(herkunft('Wer zögert, ist tot', 'Fernsehfilm Deutschland 2021\r\n\r\nMitten am Tag')).toMatchObject({ land: 'Deutschland', jahr: '2021' });
+    expect(herkunft('Tatort', 'Ein Mord erschüttert Münster.')).toBeNull();
+  });
+});
+
+describe('Titelbild der Serie (ZDF, 3sat)', () => {
+  it('findet die Seite der Sendereihe zur Folge', () => {
+    expect(serienSeite('https://www.zdf.de/video/serien/under-salt-marsh-tod-in-den-salzwiesen-100/die-flut-100')).toBe(
+      'https://www.zdf.de/video/serien/under-salt-marsh-tod-in-den-salzwiesen-100'
+    );
+    expect(serienSeite('https://www.3sat.de/film/wilder/wilder-sau-100.html')).toBe('https://www.3sat.de/film/wilder');
+    expect(serienSeite('https://www.zdf.de/nachrichten/panorama/x-100.html')).toBeNull();
+    expect(serienSeite('https://www.ardmediathek.de/video/x')).toBeNull();
   });
 });
 

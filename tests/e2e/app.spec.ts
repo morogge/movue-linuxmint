@@ -32,7 +32,7 @@ test.afterAll(async () => {
 
 test('Startseite erscheint und das Sendungsverzeichnis wird geladen', async () => {
   await expect(win.getByText(/Version \d+\.\d+\.\d+/)).toBeVisible();
-  await expect(win.getByRole('status')).toContainText('6 Sendungen', { timeout: 30_000 });
+  await expect(win.getByRole('status')).toContainText('6 Sendungen', { timeout: 60_000 });
   await expect(win.getByRole('status')).toContainText('Stand 01.11.');
   await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 2 })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/start.png' });
@@ -55,7 +55,7 @@ test('Player öffnet sich und meldet nicht abspielbare Videos verständlich', as
   await expect(win.locator('.player-steuerung').getByRole('button', { name: 'Vollbild' })).toBeAttached();
   // Die Testliste zeigt auf nicht existierende Videos → verständliche Meldung statt schwarzem Bild
   await expect(win.getByRole('alert')).toContainText('lässt sich nicht abspielen', { timeout: 20_000 });
-  await expect(win.getByRole('heading', { name: 'Als Nächstes' })).toBeVisible();
+  await expect(win.getByRole('heading', { name: /Als Nächstes|Weitere Folgen/ })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/player.png' });
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });

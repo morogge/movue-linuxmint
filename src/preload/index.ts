@@ -5,6 +5,7 @@ import type { GenreAnzahl, GenreId } from '../shared/genres';
 import type { SenderGruppe } from '../shared/sender';
 import type { Abo, Ablauf, MerkEintrag } from '../shared/nutzer';
 import type { Serie, SerieDetail } from '../shared/serie';
+import type { TitelInfo } from '../shared/titelinfo';
 
 export interface AppInfo {
   version: string;
@@ -35,6 +36,10 @@ const api = {
       ipcRenderer.invoke('index:stoebern', a),
     serienSuche: (a: { text: string; gruppe?: SenderGruppe | null }): Promise<Serie[]> => ipcRenderer.invoke('index:serien-suche', a),
     folgen: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:folgen', id),
+    /** Dieselbe Sendung bei anderen Sendern */
+    auchBei: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:auch-bei', id),
+    /** Besetzung und Stab (ZDF, 3sat) – null, wenn der Sender nicht erreichbar war */
+    titelInfo: (id: number): Promise<TitelInfo | null> => ipcRenderer.invoke('titel:info', id),
     /** Meldet jede Zustandsänderung; gibt eine Funktion zum Abmelden zurück. */
     beiAenderung: (callback: (z: IndexZustand) => void): (() => void) => {
       const listener = (_e: IpcRendererEvent, z: IndexZustand) => callback(z);
@@ -91,7 +96,9 @@ const api = {
   },
   bild: {
     /** Vorschaubild zur Sendungsseite (null = keins gefunden) */
-    url: (website: string): Promise<string | null> => ipcRenderer.invoke('bild:url', website)
+    url: (website: string): Promise<string | null> => ipcRenderer.invoke('bild:url', website, 'folge'),
+    /** Titelbild der Serie (16:9) bzw. breites Banner (16:7) – bisher nur ARD, sonst null */
+    serie: (website: string, art: 'serie' | 'banner'): Promise<string | null> => ipcRenderer.invoke('bild:url', website, art)
   },
   update: {
     zustand: (): Promise<UpdateZustand> => ipcRenderer.invoke('update:zustand'),

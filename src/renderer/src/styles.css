@@ -1759,3 +1759,74 @@ button {
   align-items: center;
   gap: 16px;
 }
+
+/* Serienseite: Banner der ARD (16:7) */
+.serie-banner {
+  margin: 0 0 8px;
+  border-radius: 16px;
+  overflow: hidden;
+  aspect-ratio: 16 / 7;
+  max-height: 420px;
+  background: var(--surface);
+}
+
+.serie-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.detail-kopf.ohne-bild {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 820px;
+}
+
+/* Detailseite: auch bei anderen Sendern, Besetzung */
+.auch-bei {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.besetzung {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.besetzung h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.besetzung-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px 24px;
+}
+
+.besetzung-liste li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.besetzung-name {
+  font-weight: 600;
+}
+
+.besetzung-rolle {
+  font-size: 13px;
+  color: var(--muted);
+}

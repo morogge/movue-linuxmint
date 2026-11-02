@@ -3,9 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { listenAdresse, oeffneListe } from '../../src/main/filmliste/quelle';
-import { anzahl, folgen, genreAnzahlen, oeffneDb, reihe, schliesseAufbau, suche } from '../../src/main/index/datenbank';
+import { anzahl, auchBei, filmNachId, folgen, genreAnzahlen, oeffneDb, reihe, schliesseAufbau, suche } from '../../src/main/index/datenbank';
 import type { GenreId } from '../../src/shared/genres';
 import { importiere } from '../../src/main/index/import';
+import { frageTitelInfo } from '../../src/main/titelinfo';
+import { findeSerienBild } from '../../src/main/bilder';
 import { baueSerien, mitSerien, serieDetail, serienSuche, stoebern } from '../../src/main/index/serien';
 import { GRUPPEN } from '../../src/shared/sender';
 
@@ -101,6 +103,40 @@ describe('Echte Filmliste', () => {
       const zufall = lese.prepare(`SELECT gruppe, thema, art, folgen, staffeln, extras FROM serie ORDER BY (id * 2654435761) % 1000003 LIMIT 40`).all();
       console.log('SERIEN zufall: ' + JSON.stringify(zufall));
       expect(bau.ms).toBeLessThan(20_000);
+
+      // Titelinfos: dieselbe Sendung bei mehreren Sendern, Besetzung (ZDF/3sat), Serienbilder (ARD)
+      const filme = lese
+        .prepare(`SELECT id FROM film WHERE variante = 0 AND dauer >= 3600 ORDER BY (id * 2654435761) % 1000003 LIMIT 400`)
+        .all() as { id: number }[];
+      const a0 = Date.now();
+      let mitAnderen = 0;
+      const auchBeispiele: string[] = [];
+      for (const { id } of filme) {
+        const f = filmNachId(lese, id)!;
+        const andere = auchBei(lese, f);
+        if (andere.length) {
+          mitAnderen++;
+          if (auchBeispiele.length < 12) auchBeispiele.push(`${f.gruppe}: ${f.titel} → ${andere.map((x) => `${x.gruppe}: ${x.titel}`).join(', ')}`);
+        }
+      }
+      console.log(`AUCHBEI ${mitAnderen}/${filme.length} in ${Math.round((Date.now() - a0) / filme.length)} ms je Film: ${auchBeispiele.join(' | ')}`);
+      const mitSeite = lese
+        .prepare(
+          `SELECT f.website, f.gruppe FROM film f JOIN film_genre g ON g.film_id = f.id
+           WHERE f.gruppe IN ('ZDF', '3sat') AND g.genre IN ('film', 'serie', 'krimi') AND f.variante = 0 ORDER BY (f.id * 2654435761) % 1000003 LIMIT 8`
+        )
+        .all() as { website: string; gruppe: string }[];
+      for (const m of mitSeite) {
+        const info = await frageTitelInfo(m.website).catch((e: unknown) => String(e));
+        console.log(`BESETZUNG ${m.gruppe} ${m.website}: ${JSON.stringify(info).slice(0, 400)}`);
+      }
+      const ardSerien = lese
+        .prepare(`SELECT f.website FROM serie s JOIN film f ON f.id = s.film_id WHERE s.gruppe = 'ARD' AND s.art = 'serie' ORDER BY s.folgen DESC LIMIT 6`)
+        .all() as { website: string }[];
+      for (const s of ardSerien) {
+        const [k, b] = await Promise.all([findeSerienBild(s.website, 'serie').catch(() => null), findeSerienBild(s.website, 'banner').catch(() => null)]);
+        console.log(`SERIENBILD ${s.website}: ${k} | ${b}`);
+      }
       expect(s2 - s1).toBeLessThan(2000);
       for (const { filme } of reihen) expect(filme.length).toBeGreaterThan(5);
 

@@ -42,13 +42,18 @@ function abschnitt(html: string, ueberschrift: RegExp): Mitwirkende[] {
   const kopf = new RegExp(`<h[2-4][^>]*>\\s*(?:${ueberschrift.source})\\s*</h[2-4]>`, 'i').exec(html);
   if (!kopf) return [];
   const rest = html.slice(kopf.index + kopf[0].length, kopf.index + kopf[0].length + 20_000);
-  const ende = rest.search(/<h[1-4][\s>]/i);
+  // Bis zur nächsten Überschrift oder zum Seitenfuß – dahinter stehen Navigation und Impressum
+  const ende = rest.search(/<h[1-4][\s>]|<footer[\s>]|<nav[\s>]|<aside[\s>]|<section[\s>]/i);
   const teil = ende >= 0 ? rest.slice(0, ende) : rest;
 
-  const listen = [...teil.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((m) => m[1]);
-  if (listen.length) return listen.map(teile).filter((x): x is Mitwirkende => x !== null);
+  // Nur die erste Liste direkt unter der Überschrift
+  const liste = /<ul[^>]*>([\s\S]*?)<\/ul>/i.exec(teil);
+  const dl = /<dl[^>]*>([\s\S]*?)<\/dl>/i.exec(teil);
+  if (liste && (!dl || liste.index < dl.index)) {
+    return [...liste[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((m) => teile(m[1])).filter((x): x is Mitwirkende => x !== null);
+  }
 
-  const dts = [...teil.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/gi)];
+  const dts = [...(dl ? dl[1] : teil).matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/gi)];
   if (dts.length) return dts.map((m) => ({ rolle: text(m[1]), name: text(m[2]) })).filter((x) => x.name);
 
   const zeilen = teil
@@ -59,15 +64,81 @@ function abschnitt(html: string, ueberschrift: RegExp): Mitwirkende[] {
 }
 
 export function leseTitelInfo(html: string): TitelInfo {
+  const arte = leseArteCredits(html);
+  if (arte) return arte;
   return {
     darsteller: abschnitt(html, /Darsteller(?:innen)?|Besetzung|Mitwirkende/).slice(0, 40),
     stab: abschnitt(html, /Stab/).slice(0, 20)
   };
 }
 
+/** Das erste JSON-Array ab `start` (Klammern zählen, Zeichenketten überspringen) */
+function jsonArray(text: string, start: number): string | null {
+  let tiefe = 0;
+  let inString = false;
+  for (let i = start; i < text.length && i < start + 40_000; i++) {
+    const c = text[i];
+    if (inString) {
+      if (c === '\\') i++;
+      else if (c === '"') inString = false;
+      continue;
+    }
+    if (c === '"') inString = true;
+    else if (c === '[') tiefe++;
+    else if (c === ']' && --tiefe === 0) return text.slice(start, i + 1);
+  }
+  return null;
+}
+
+/**
+ * Arte: Die Seite enthält die Angaben als JSON („credits“: Regie, Darsteller, Land, Jahr …),
+ * eingebettet als Zeichenkette – daher erst die maskierten Anführungszeichen auflösen.
+ */
+export function leseArteCredits(html: string): TitelInfo | null {
+  const maskiert = html.indexOf('\\"credits\\":[');
+  let roh: string | null = null;
+  if (maskiert >= 0) {
+    const stueck = html
+      .slice(maskiert, maskiert + 40_000)
+      .split('\\\\')
+      .map((teil) => teil.replace(/\\"/g, '"'))
+      .join('\\');
+    roh = jsonArray(stueck, stueck.indexOf('['));
+  } else {
+    const i = html.indexOf('"credits":[');
+    if (i >= 0) roh = jsonArray(html, html.indexOf('[', i));
+  }
+  if (!roh) return null;
+  let credits: { code?: string; label?: string; values?: unknown[] }[];
+  try {
+    credits = JSON.parse(roh) as typeof credits;
+  } catch {
+    return null;
+  }
+  const info: TitelInfo = { darsteller: [], stab: [] };
+  for (const c of credits) {
+    const werte = (c.values ?? []).filter((v): v is string => typeof v === 'string').map((v) => v.trim()).filter(Boolean);
+    if (werte.length === 0) continue;
+    if (c.code === 'PRODUCTION_YEAR') info.jahr = werte[0];
+    else if (c.code === 'COUNTRY') info.land = werte.join(', ');
+    else if (c.code === 'ORIGIN') continue;
+    else if (c.code === 'ACT' || /darsteller|schauspiel|mit\b|interpret|besetzung/i.test(c.label ?? '')) {
+      for (const w of werte) {
+        const m = /^(.+?)\s*\((.+)\)$/.exec(w);
+        info.darsteller.push(m ? { name: m[1], rolle: m[2] } : { name: w, rolle: '' });
+      }
+    } else {
+      for (const w of werte) info.stab.push({ rolle: (c.label ?? '').replace(/:in$/, ''), name: w });
+    }
+  }
+  info.darsteller = info.darsteller.slice(0, 40);
+  info.stab = info.stab.slice(0, 20);
+  return info;
+}
+
 /** Nur Seiten, die eine Besetzung enthalten können */
 export function hatBesetzung(website: string): boolean {
-  return /^https?:\/\/(www\.)?(zdf|3sat)\.de\//.test(website);
+  return /^https?:\/\/(www\.)?(zdf\.de|3sat\.de|arte\.tv)\//.test(website);
 }
 
 export async function frageTitelInfo(website: string): Promise<TitelInfo | null> {
@@ -103,7 +174,8 @@ export class TitelInfoDienst {
   ) {
     this.db = new Database(pfad);
     this.db.pragma('journal_mode = WAL');
-    this.db.exec('CREATE TABLE IF NOT EXISTS info (website TEXT PRIMARY KEY, json TEXT NOT NULL, zeit INTEGER NOT NULL)');
+    // info2: neu ab 0.10, weil 0.9 beim Stab teils den Seitenfuß mitgelesen hat
+    this.db.exec('DROP TABLE IF EXISTS info; CREATE TABLE IF NOT EXISTS info2 (website TEXT PRIMARY KEY, json TEXT NOT NULL, zeit INTEGER NOT NULL)');
   }
 
   schliessen(): void {
@@ -112,7 +184,7 @@ export class TitelInfoDienst {
 
   async hole(website: string, jetzt = Date.now()): Promise<TitelInfo | null> {
     if (!/^https?:\/\//.test(website)) return null;
-    const z = this.db.prepare('SELECT json, zeit FROM info WHERE website = ?').get(website) as { json: string; zeit: number } | undefined;
+    const z = this.db.prepare('SELECT json, zeit FROM info2 WHERE website = ?').get(website) as { json: string; zeit: number } | undefined;
     if (z) {
       const info = JSON.parse(z.json) as TitelInfo;
       const leer = info.darsteller.length === 0 && info.stab.length === 0;
@@ -125,7 +197,7 @@ export class TitelInfoDienst {
         .then((info) => {
           if (info) {
             this.db
-              .prepare('INSERT INTO info (website, json, zeit) VALUES (?, ?, ?) ON CONFLICT(website) DO UPDATE SET json = excluded.json, zeit = excluded.zeit')
+              .prepare('INSERT INTO info2 (website, json, zeit) VALUES (?, ?, ?) ON CONFLICT(website) DO UPDATE SET json = excluded.json, zeit = excluded.zeit')
               .run(website, JSON.stringify(info), jetzt);
           }
           this.laufend.delete(website);

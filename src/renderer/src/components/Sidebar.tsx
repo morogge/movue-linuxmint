@@ -43,7 +43,7 @@ function IndexStatus({ zustand }: { zustand: IndexZustand }) {
   return (
     <div className="index-status" role="status" aria-live="polite">
       <span className={zustand.phase === 'fehler' ? 'status-dot fehler' : laedt ? 'status-dot laedt' : 'status-dot'} />
-      <span>
+      <span className="status-text">
         <span className="status-zeile">{zeile1}</span>
         {zeile2 && <span className="status-zeile klein">{zeile2}</span>}
       </span>
@@ -55,9 +55,13 @@ export function Sidebar({
   ansicht,
   onNavigate,
   zustand,
-  update
+  update,
+  eingeklappt,
+  onEinklappen
 }: {
   ansicht: Ansicht;
+  eingeklappt: boolean;
+  onEinklappen: () => void;
   onNavigate: (a: Ansicht) => void;
   zustand: IndexZustand;
   update: UpdateZustand;
@@ -72,12 +76,22 @@ export function Sidebar({
   }, []);
 
   return (
-    <nav className="sidebar" aria-label="Hauptnavigation">
+    <nav className={eingeklappt ? 'sidebar eingeklappt' : 'sidebar'} aria-label="Hauptnavigation">
       <div className="brand">
         <span className="brand-icon">
           <Icon name="logo" size={28} />
         </span>
         <span className="brand-name">Movue</span>
+        <button
+          type="button"
+          className="einklappen"
+          aria-expanded={!eingeklappt}
+          aria-label={eingeklappt ? 'Seitenleiste ausklappen (Strg+B)' : 'Seitenleiste einklappen (Strg+B)'}
+          title={eingeklappt ? 'Seitenleiste ausklappen (Strg+B)' : 'Seitenleiste einklappen (Strg+B)'}
+          onClick={onEinklappen}
+        >
+          <Icon name={eingeklappt ? 'rechts' : 'links'} size={18} />
+        </button>
       </div>
       <ul className="nav">
         {NAV.map((item) => (
@@ -87,11 +101,12 @@ export function Sidebar({
               className={item.id === ansicht.screen ? 'nav-item active' : 'nav-item'}
               disabled={item.id === null}
               aria-current={item.id === ansicht.screen ? 'page' : undefined}
-              title={item.id === null ? 'Folgt in einer späteren Version' : undefined}
+              aria-label={item.label}
+              title={item.id === null ? 'Folgt in einer späteren Version' : eingeklappt ? item.label : undefined}
               onClick={() => item.id && onNavigate({ screen: item.id })}
             >
               <Icon name={item.icon} />
-              <span>{item.label}</span>
+              <span className="nav-text">{item.label}</span>
             </button>
           </li>
         ))}
@@ -107,10 +122,12 @@ export function Sidebar({
                   type="button"
                   className={aktiv ? 'nav-item active' : 'nav-item'}
                   aria-current={aktiv ? 'page' : undefined}
+                  aria-label={g.name}
+                  title={eingeklappt ? g.name : undefined}
                   onClick={() => onNavigate({ screen: 'sender', gruppe: g.id })}
                 >
                   <span className="dot" style={{ background: SENDER_FARBE[g.id] }} />
-                  <span>{g.name}</span>
+                  <span className="nav-text">{g.name}</span>
                 </button>
               </li>
             );

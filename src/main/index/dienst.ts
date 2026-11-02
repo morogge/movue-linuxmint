@@ -7,6 +7,8 @@ import {
   filmeNachUrl,
   folgen,
   auchBei,
+  fassungen,
+  type Fassung,
   genreAnzahlen,
   leseMeta,
   oeffneDb,
@@ -26,7 +28,7 @@ import { naechsteAktion } from './plan';
 import createIndexer from './indexer.worker?nodeWorker';
 import { mitSerien, serieDetail, serienSuche, stoebern, type StoebernEintrag } from './serien';
 import type { SerieDetail, Serie } from '@shared/serie';
-import type { GenreId } from '@shared/genres';
+import type { Format, GenreId } from '@shared/genres';
 import type { SenderGruppe } from '@shared/sender';
 
 const PRUEF_INTERVALL = 10 * 60 * 1000;
@@ -92,7 +94,10 @@ export class IndexDienst {
     return this.db ? serieDetail(this.db, gruppe, thema) : null;
   }
 
-  stoebern(a: { genre: GenreId; gruppe?: SenderGruppe | null; limit?: number; offset?: number }): { eintraege: StoebernEintrag[]; gesamt: number } {
+  stoebern(a: { genre?: GenreId | null; format?: Format | null; gruppe?: SenderGruppe | null; limit?: number; offset?: number }): {
+    eintraege: StoebernEintrag[];
+    gesamt: number;
+  } {
     return this.db ? stoebern(this.db, a) : { eintraege: [], gesamt: 0 };
   }
 
@@ -114,6 +119,13 @@ export class IndexDienst {
 
   reihenStand(gruppe: string, thema: string, seit: number): ReihenStand | null {
     return this.db ? reihenStand(this.db, gruppe, thema, seit) : null;
+  }
+
+  /** Fassungen derselben Sendung (Audiodeskription, Original …), Standardfassung zuerst */
+  fassungen(id: number): Fassung[] {
+    if (!this.db) return [];
+    const f = filmNachId(this.db, id);
+    return f ? fassungen(this.db, f) : [];
   }
 
   /** Dieselbe Sendung bei anderen Sendern */

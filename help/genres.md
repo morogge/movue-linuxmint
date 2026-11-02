@@ -2,6 +2,15 @@
 
 Unter **Genres** findest du alle Sendungen von ARD, ZDF, 3sat und Arte nach Themen geordnet – unabhängig davon, aus welcher Mediathek sie stammen.
 
+## Genres und Formate
+
+Die Seite trennt zwei Dinge:
+
+- **Formate** sagen, was eine Sendung ist: **Serien** oder **Filme**.
+- **Genres** sagen, worum es geht: Krimi, Doku, Kultur und mehr.
+
+In der Übersicht lassen sich beide kombinieren – etwa **Krimi & Thriller** mit dem Format **Filme**, um nur Krimi-Filme zu sehen.
+
 ## So stöberst du
 
 - Klicke in der Seitenleiste auf **Genres**. Jede Kachel zeigt ein Genre und wie viele Sendungen dazu gehören.
@@ -12,9 +21,9 @@ Unter **Genres** findest du alle Sendungen von ARD, ZDF, 3sat und Arte nach Them
 
 ## Die Genres
 
-Krimi & Thriller · Spielfilme · Serien · Dokus & Reportagen · Wissen & Natur · Geschichte · Reisen & Länder · Kultur & Musik · Comedy & Satire · Shows & Unterhaltung · Nachrichten & Politik · Gesellschaft & Talk · Ratgeber & Service · Kinder & Familie · Sport
+Krimi & Thriller · Dokus & Reportagen · Wissen & Natur · Geschichte · Reisen & Länder · Kultur & Musik · Comedy & Satire · Shows & Unterhaltung · Nachrichten & Politik · Gesellschaft & Talk · Ratgeber & Service · Kinder & Familie · Sport
 
-Eine Sendung kann in mehreren Genres stehen, etwa ein Tatort unter **Krimi** und als Film. Die Genres einer Sendung siehst du in der Trefferliste neben dem Sender.
+Eine Sendung kann in mehreren Genres stehen. Ein Tatort ist zum Beispiel ein **Krimi** im Format **Filme**. Die Genres einer Sendung siehst du in der Trefferliste neben dem Sender.
 
 ## Wie Movue die Genres bestimmt
 

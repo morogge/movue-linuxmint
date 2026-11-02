@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import type { Film, IndexZustand, SuchAnfrage, SuchErgebnis } from '../shared/film';
 import type { UpdateZustand } from '../shared/update';
-import type { GenreAnzahl, GenreId } from '../shared/genres';
+import type { Format, GenreAnzahl, GenreId } from '../shared/genres';
 import type { SenderGruppe } from '../shared/sender';
 import type { Abo, Ablauf, MerkEintrag } from '../shared/nutzer';
 import type { Serie, SerieDetail } from '../shared/serie';
@@ -28,7 +28,8 @@ const api = {
     serie: (r: { gruppe: SenderGruppe; thema: string }): Promise<SerieDetail | null> => ipcRenderer.invoke('index:serie', r),
     /** Genre-Seite: Serien als je ein Eintrag, Einzelsendungen dazwischen */
     stoebern: (a: {
-      genre: GenreId;
+      genre?: GenreId | null;
+      format?: Format | null;
       gruppe?: SenderGruppe | null;
       limit?: number;
       offset?: number;
@@ -36,6 +37,8 @@ const api = {
       ipcRenderer.invoke('index:stoebern', a),
     serienSuche: (a: { text: string; gruppe?: SenderGruppe | null }): Promise<Serie[]> => ipcRenderer.invoke('index:serien-suche', a),
     folgen: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:folgen', id),
+    /** Fassungen derselben Sendung; name = null für die Standardfassung */
+    fassungen: (id: number): Promise<{ film: Film; name: string | null }[]> => ipcRenderer.invoke('index:fassungen', id),
     /** Dieselbe Sendung bei anderen Sendern */
     auchBei: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:auch-bei', id),
     /** Besetzung und Stab (ZDF, 3sat) – null, wenn der Sender nicht erreichbar war */

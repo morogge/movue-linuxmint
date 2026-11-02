@@ -44,15 +44,76 @@ button {
   min-height: 100vh;
 }
 
-/* Seitenleiste */
+/* Seitenleiste: bleibt beim Scrollen stehen, lässt sich auf Symbole einklappen */
 .sidebar {
   flex: 0 0 232px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--surface);
   border-right: 1px solid var(--border);
   padding: 28px 16px;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  transition: flex-basis 0.18s ease;
+}
+
+.sidebar.eingeklappt {
+  flex-basis: 76px;
+  padding: 28px 12px;
+}
+
+.sidebar.eingeklappt .brand-name,
+.sidebar.eingeklappt .nav-text,
+.sidebar.eingeklappt .nav-ueberschrift,
+.sidebar.eingeklappt .status-text,
+.sidebar.eingeklappt .version {
+  display: none;
+}
+
+.sidebar.eingeklappt .brand,
+.sidebar.eingeklappt .nav-item,
+.sidebar.eingeklappt .sidebar-foot {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar.eingeklappt .brand {
+  flex-direction: column;
+}
+
+.einklappen {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.einklappen:hover,
+.einklappen:focus-visible {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.sidebar.eingeklappt .einklappen {
+  margin-left: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
 }
 
 .brand {
@@ -112,8 +173,8 @@ button {
 }
 
 .sidebar-foot {
-  margin-top: auto;
-  padding: 0 12px;
+  padding: 16px 12px 0;
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -480,7 +541,43 @@ button {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+/* Segmentierte Auswahl: Knöpfe einer Gruppe stehen als ein Bauteil zusammen */
+.chips.segment {
+  gap: 0;
+  flex-wrap: nowrap;
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.chips.segment .chip {
+  border: 0;
+  border-radius: 0;
+  height: 38px;
+  padding: 0 14px;
+}
+
+.chips.segment .chip + .chip {
+  border-left: 1px solid var(--border-strong);
+}
+
+/* Ergebnisleiste: Anzahl links, Darstellung und Sortierung rechts */
+.ergebnis-leiste {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ergebnis-optionen {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
@@ -511,7 +608,8 @@ button {
   font-weight: 600;
 }
 
-.sortierung {
+.sortierung,
+.auswahl {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -519,7 +617,8 @@ button {
   font-size: 14px;
 }
 
-.sortierung select {
+.sortierung select,
+.auswahl select {
   height: 40px;
   padding: 0 10px;
   border: 1px solid var(--border-strong);
@@ -1284,12 +1383,17 @@ button {
   position: relative;
   aspect-ratio: 16 / 9;
   width: 100%;
+  /* Nie höher als das Fenster: das Bild bleibt ganz sichtbar, notfalls mit schwarzen Rändern */
+  max-height: calc(100vh - 120px);
   background: #000;
   border-radius: 14px;
   overflow: hidden;
 }
 
 .player:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
   border-radius: 0;
   aspect-ratio: auto;
 }
@@ -1302,6 +1406,7 @@ button {
   width: 100%;
   height: 100%;
   display: block;
+  object-fit: contain;
   background: #000;
 }
 
@@ -1829,4 +1934,15 @@ button {
 .besetzung-rolle {
   font-size: 13px;
   color: var(--muted);
+}
+
+.genre-gruppe {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.genre-gruppe h2 {
+  margin: 0;
+  font-size: 20px;
 }

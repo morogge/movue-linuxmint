@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Film, IndexZustand, Sortierung, SuchErgebnis } from '@shared/film';
 import { formatDatum, formatDauer, formatZahl } from '@shared/format';
-import { GENRES, genreName, istGenre, type GenreId } from '@shared/genres';
+import { FORMATE, GENRES, genreName, istGenre, istInhaltsGenre, type Format, type GenreId } from '@shared/genres';
 import { GRUPPEN, type SenderGruppe } from '@shared/sender';
 import { Icon } from '../components/Icon';
 import { FilmBild, Kachel, SerieKachel } from '../components/Kachel';
@@ -79,6 +79,8 @@ interface Props {
   zustand: IndexZustand;
   genre: GenreId | null;
   onGenre: (g: GenreId | null) => void;
+  format: Format | null;
+  onFormat: (f: Format | null) => void;
   onOeffne: (f: Film) => void;
   onAbspielen: (f: Film) => void;
   onSerie: (s: SerieRef) => void;
@@ -99,7 +101,7 @@ function leseDarstellung(): Darstellung {
   }
 }
 
-export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAbspielen, onSerie }: Props) {
+export function SearchScreen({ suchtext, zustand, genre, onGenre, format, onFormat, onOeffne, onAbspielen, onSerie }: Props) {
   const [darstellung, setDarstellungState] = useState<Darstellung>(leseDarstellung);
   const setDarstellung = (d: Darstellung) => {
     setDarstellungState(d);
@@ -117,29 +119,30 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
   const [stoebern, setStoebern] = useState<{ eintraege: StoebernEintrag[]; gesamt: number }>({ eintraege: [], gesamt: 0 });
   const [serien, setSerien] = useState<Serie[]>([]);
   const ohneText = !suchtext.trim();
-  /** Gebündelt nur beim Stöbern in einem Genre; bei einer Suche stehen passende Serien über den Treffern */
-  const gebuendelt = ohneText && genre !== null && buendelung === 'serien';
+  /** Beim Stöbern (ohne Suchbegriff) stehen Serien gebündelt; Filme sind immer einzeln. Bei einer Suche stehen passende Serien über den Treffern. */
+  const kannBuendeln = ohneText && format !== 'film';
+  const gebuendelt = kannBuendeln && buendelung === 'serien';
 
   useEffect(() => {
-    if (!gebuendelt || !genre) return;
+    if (!gebuendelt) return;
     let aktiv = true;
-    void window.movue.index.stoebern({ genre, gruppe, limit: SEITE, offset: 0 }).then((e) => aktiv && setStoebern(e));
+    void window.movue.index.stoebern({ genre, format, gruppe, limit: SEITE, offset: 0 }).then((e) => aktiv && setStoebern(e));
     return () => {
       aktiv = false;
     };
-  }, [gebuendelt, genre, gruppe, zustand.anzahl, zustand.stand]);
+  }, [gebuendelt, genre, format, gruppe, zustand.anzahl, zustand.stand]);
 
   useEffect(() => {
     if (ohneText) return;
     let aktiv = true;
     const t = setTimeout(() => {
-      void window.movue.index.serienSuche({ text: suchtext, gruppe }).then((s) => aktiv && setSerien(s));
+      void window.movue.index.serienSuche({ text: suchtext, gruppe }).then((s) => aktiv && setSerien(format === 'film' ? [] : s));
     }, 200);
     return () => {
       aktiv = false;
       clearTimeout(t);
     };
-  }, [suchtext, ohneText, gruppe, zustand.stand]);
+  }, [suchtext, ohneText, gruppe, format, zustand.stand]);
 
   // Bei jeder Änderung von Text, Filter oder Index neu suchen (kurz verzögert, während getippt wird)
   useEffect(() => {
@@ -147,18 +150,18 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
     if (!api) return;
     let aktiv = true;
     const t = setTimeout(() => {
-      void api.suche({ text: suchtext, gruppe, genre, sortierung, limit: SEITE, offset: 0 }).then((e) => aktiv && setErgebnis(e));
+      void api.suche({ text: suchtext, gruppe, genre, format, sortierung, limit: SEITE, offset: 0 }).then((e) => aktiv && setErgebnis(e));
     }, 200);
     return () => {
       aktiv = false;
       clearTimeout(t);
     };
-  }, [suchtext, gruppe, genre, sortierung, zustand.anzahl, zustand.stand]);
+  }, [suchtext, gruppe, genre, format, sortierung, zustand.anzahl, zustand.stand]);
 
   const mehrLaden = async () => {
     setLaedtMehr(true);
-    if (gebuendelt && genre) {
-      const e = await window.movue.index.stoebern({ genre, gruppe, limit: SEITE, offset: stoebern.eintraege.length });
+    if (gebuendelt) {
+      const e = await window.movue.index.stoebern({ genre, format, gruppe, limit: SEITE, offset: stoebern.eintraege.length });
       setStoebern((alt) => ({ gesamt: e.gesamt, eintraege: [...alt.eintraege, ...e.eintraege] }));
       setLaedtMehr(false);
       return;
@@ -167,6 +170,7 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
       text: suchtext,
       gruppe,
       genre,
+      format,
       sortierung,
       limit: SEITE,
       offset: ergebnis.treffer.length
@@ -179,15 +183,28 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
   const gesamt = gebuendelt ? stoebern.gesamt : ergebnis.gesamt;
   const geladen = gebuendelt ? stoebern.eintraege.length : ergebnis.treffer.length;
   const passendeSerien = ohneText ? [] : serien;
+  const filterAktiv = gruppe !== null || genre !== null || format !== null;
+  const zuruecksetzen = () => {
+    setGruppe(null);
+    onGenre(null);
+    onFormat(null);
+  };
+  const formatName = format ? FORMATE.find((f) => f.id === format)?.name : null;
+  const titel = !ohneText
+    ? `Suche: „${suchtext.trim()}“`
+    : genre && formatName
+      ? `${genreName(genre)} · ${formatName}`
+      : genre
+        ? genreName(genre)
+        : (formatName ?? 'Neueste Sendungen');
 
   return (
     <section className="suche" aria-labelledby="suche-titel">
       <div className="suche-kopf">
-        <h1 id="suche-titel">
-          {!ohneText ? `Suche: „${suchtext.trim()}“` : genre ? genreName(genre) : 'Neueste Sendungen'}
-        </h1>
-        <div className="suche-filter">
-          <div className="chips" role="group" aria-label="Sender">
+        <h1 id="suche-titel">{titel}</h1>
+        {/* Filter: was angezeigt wird – Sender, Format, Genre */}
+        <div className="suche-filter" role="group" aria-label="Filter">
+          <div className="chips segment" role="group" aria-label="Sender">
             <button type="button" className={gruppe === null ? 'chip an' : 'chip'} aria-pressed={gruppe === null} onClick={() => setGruppe(null)}>
               Alle Sender
             </button>
@@ -204,47 +221,29 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
               </button>
             ))}
           </div>
-          {ohneText && genre !== null && (
-            <div className="chips" role="group" aria-label="Bündelung">
-              <button type="button" className={buendelung === 'serien' ? 'chip an' : 'chip'} aria-pressed={buendelung === 'serien'} onClick={() => setBuendelung('serien')}>
-                Serien
-              </button>
-              <button type="button" className={buendelung === 'folgen' ? 'chip an' : 'chip'} aria-pressed={buendelung === 'folgen'} onClick={() => setBuendelung('folgen')}>
-                Einzelne Folgen
-              </button>
-            </div>
-          )}
-          {!gebuendelt && (
-          <div className="chips" role="group" aria-label="Darstellung">
-            <button type="button" className={darstellung === 'kacheln' ? 'chip an' : 'chip'} aria-pressed={darstellung === 'kacheln'} onClick={() => setDarstellung('kacheln')}>
-              <Icon name="grid" size={16} /> Kacheln
+          <div className="chips segment" role="group" aria-label="Format">
+            <button type="button" className={format === null ? 'chip an' : 'chip'} aria-pressed={format === null} onClick={() => onFormat(null)}>
+              Alle Formate
             </button>
-            <button type="button" className={darstellung === 'liste' ? 'chip an' : 'chip'} aria-pressed={darstellung === 'liste'} onClick={() => setDarstellung('liste')}>
-              <Icon name="liste" size={16} /> Liste
-            </button>
+            {FORMATE.map((f) => (
+              <button key={f.id} type="button" className={format === f.id ? 'chip an' : 'chip'} aria-pressed={format === f.id} onClick={() => onFormat(f.id)}>
+                {f.name}
+              </button>
+            ))}
           </div>
-          )}
-          <label className="sortierung">
+          <label className="auswahl">
             <span>Genre</span>
-            <select value={genre ?? ''} onChange={(e) => onGenre(istGenre(e.target.value) ? e.target.value : null)}>
+            <select aria-label="Genre" value={genre ?? ''} onChange={(e) => onGenre(istGenre(e.target.value) ? e.target.value : null)}>
               <option value="">Alle Genres</option>
-              {GENRES.map((g) => (
+              {GENRES.filter((g) => istInhaltsGenre(g.id)).map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name}
                 </option>
               ))}
             </select>
           </label>
-          <label className="sortierung">
-            <span>Sortieren</span>
-            <select value={sortierung} onChange={(e) => setSortierung(e.target.value as Sortierung)} disabled={ohneText}>
-              <option value="relevanz">Beste Treffer</option>
-              <option value="datum">Neueste zuerst</option>
-            </select>
-          </label>
         </div>
       </div>
-
       {indexFehlt ? (
         <p className="hinweis">
           {zustand.phase === 'fehler'
@@ -266,9 +265,49 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
               <h2>Einzelne Sendungen</h2>
             </section>
           )}
-          <p className="anzahl" aria-live="polite">
-            {gesamt === 0 ? 'Keine Treffer.' : `${formatZahl(gesamt)} Treffer`}
-          </p>
+          {/* Ergebnisleiste: Anzahl und Zurücksetzen links, Darstellung rechts */}
+          <div className="ergebnis-leiste">
+            <p className="anzahl" aria-live="polite">
+              {gesamt === 0 ? 'Keine Treffer.' : `${formatZahl(gesamt)} Treffer`}
+            </p>
+            {filterAktiv && (
+              <button type="button" className="text-button" onClick={zuruecksetzen}>
+                Filter zurücksetzen
+              </button>
+            )}
+            <div className="ergebnis-optionen">
+              {kannBuendeln && (
+                <button
+                  type="button"
+                  className={buendelung === 'folgen' ? 'chip an' : 'chip'}
+                  aria-pressed={buendelung === 'folgen'}
+                  title="Folgen von Serien einzeln statt gebündelt zeigen"
+                  onClick={() => setBuendelung((b) => (b === 'folgen' ? 'serien' : 'folgen'))}
+                >
+                  Einzelne Folgen
+                </button>
+              )}
+              {!gebuendelt && (
+                <div className="chips segment" role="group" aria-label="Darstellung">
+                  <button type="button" className={darstellung === 'kacheln' ? 'chip an' : 'chip'} aria-pressed={darstellung === 'kacheln'} aria-label="Kacheln" title="Kacheln" onClick={() => setDarstellung('kacheln')}>
+                    <Icon name="grid" size={16} />
+                  </button>
+                  <button type="button" className={darstellung === 'liste' ? 'chip an' : 'chip'} aria-pressed={darstellung === 'liste'} aria-label="Liste" title="Liste" onClick={() => setDarstellung('liste')}>
+                    <Icon name="liste" size={16} />
+                  </button>
+                </div>
+              )}
+              {!ohneText && (
+                <label className="auswahl">
+                  <span>Sortieren</span>
+                  <select aria-label="Sortieren" value={sortierung} onChange={(e) => setSortierung(e.target.value as Sortierung)}>
+                    <option value="relevanz">Beste Treffer</option>
+                    <option value="datum">Neueste zuerst</option>
+                  </select>
+                </label>
+              )}
+            </div>
+          </div>
           {gebuendelt ? (
             <ul className="kachel-raster">
               {stoebern.eintraege.map((e) => (

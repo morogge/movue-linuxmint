@@ -10,6 +10,12 @@ export interface TitelInfo {
   /** Produktionsjahr und -land, sofern der Sender sie nennt (Arte) */
   jahr?: string;
   land?: string;
+  /** Originaltitel (Wikidata) */
+  originaltitel?: string;
+  /** Wikidata-Kennung, wenn Angaben von dort stammen */
+  wikidata?: string;
+  /** Woher Besetzung und Stab stammen */
+  quelle?: 'sender' | 'wikidata';
 }
 
 /**

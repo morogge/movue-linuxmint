@@ -19,7 +19,8 @@ test.beforeAll(async () => {
       MOVUE_FILMLISTE_VOLL: join(__dirname, '../fixtures/filmliste-serie.json'),
       MOVUE_UPDATE_SIMULIEREN: '9.9.9',
       MOVUE_BILDER_AUS: '1',
-      MOVUE_KEINE_MELDUNG: '1'
+      MOVUE_KEINE_MELDUNG: '1',
+      MOVUE_METADATEN_DATEI: join(__dirname, '../fixtures/metadaten.json')
     }
   });
   win = await app.firstWindow();
@@ -44,6 +45,11 @@ test('Kachel öffnet die Detailseite mit weiteren Folgen, Alt+← führt zurück
   await expect(win.getByRole('heading', { name: 'Tatort: Der Fall Münster', level: 1 })).toBeVisible();
   await expect(win.getByRole('heading', { name: 'Weitere Folgen von „Tatort“' })).toBeVisible();
   await expect(win.getByRole('button', { name: /Tatort: Zweiter Fall/ })).toBeVisible();
+  // Besetzung aus dem Metadaten-Paket (Wikidata), weil die ARD keine nennt
+  const besetzung = win.getByRole('list', { name: 'Darsteller' });
+  await expect(besetzung).toContainText('Axel Prahl');
+  await expect(besetzung).toContainText('Frank Thiel');
+  await expect(win.getByRole('link', { name: 'Wikidata' })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/detail.png' });
   await win.keyboard.press('Alt+ArrowLeft');
   await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 2 })).toBeVisible();
@@ -55,6 +61,7 @@ test('Serien erscheinen als eine Kachel und öffnen die Serienseite mit Staffeln
   await expect(win.getByText('2 Staffeln · 3 Folgen')).toBeVisible();
   await expect(win.getByRole('button', { name: /Abspielen S27 · F40/ })).toBeVisible();
   await expect(win.getByRole('tab', { name: 'Staffel 27' })).toHaveAttribute('aria-selected', 'true');
+  await expect(win.getByRole('list', { name: 'Darsteller' })).toContainText('Thomas Rühmann');
   await win.getByRole('tab', { name: 'Staffel 28' }).click();
   await expect(win.getByRole('button', { name: 'Folge 1102: Alte Freunde (S28/E02) abspielen' })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/serie.png' });

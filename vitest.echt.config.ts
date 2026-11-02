@@ -5,7 +5,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: { alias: { '@shared': resolve(__dirname, 'src/shared') } },
   test: {
-    include: ['tests/echt/**/*.test.ts'],
+    // ECHT_NUR: einzelne Datei, z. B. eine Probe oder scripts/metadaten/baue.ts
+    include: [process.env.ECHT_NUR || 'tests/echt/**/*.test.ts'],
     environment: 'node',
     testTimeout: 15 * 60 * 1000
   }

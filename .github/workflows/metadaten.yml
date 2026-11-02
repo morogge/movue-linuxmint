@@ -1,0 +1,62 @@
+name: Metadaten
+
+# Baut einmal am Tag das Metadaten-Paket aus Wikidata (Besetzung, Regie, Jahr, Land) für alle Filme
+# und Serien im Sendungsverzeichnis und legt es als metadaten.json.gz in das Release „metadaten“.
+# Die App lädt die Datei als Ganzes – Wikidata erfährt so nie, was jemand ansieht.
+on:
+  schedule:
+    - cron: '41 2 * * *'
+  workflow_dispatch:
+    inputs:
+      minuten:
+        description: 'Zeitbudget für Wikidata-Abfragen (Minuten)'
+        required: false
+        default: '40'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: metadaten
+  cancel-in-progress: false
+
+jobs:
+  bauen:
+    name: Metadaten aus Wikidata
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Bisheriges Paket holen
+        run: |
+          mkdir -p meta
+          if gh release download metadaten -p metadaten.json.gz -D meta 2>/dev/null; then
+            gunzip -f meta/metadaten.json.gz
+          else
+            echo "Noch kein Paket – Neuaufbau"
+          fi
+
+      - name: Abgleich mit Wikidata
+        run: npx vitest run --config vitest.metadaten.config.ts
+        env:
+          MOVUE_META_ALT: meta/metadaten.json
+          MOVUE_META_NEU: meta/neu.json
+          MOVUE_META_MINUTEN: ${{ inputs.minuten || '40' }}
+
+      - name: Veröffentlichen
+        run: |
+          gzip -9 -c meta/neu.json > meta/metadaten.json.gz
+          ls -la meta
+          if ! gh release view metadaten >/dev/null 2>&1; then
+            gh release create metadaten --prerelease --title "Metadaten (Wikidata)" \
+              --notes "Wird täglich automatisch erneuert. Daten aus Wikidata (CC0). Keine App-Version – Movue lädt diese Datei selbst."
+          fi
+          gh release upload metadaten meta/metadaten.json.gz --clobber

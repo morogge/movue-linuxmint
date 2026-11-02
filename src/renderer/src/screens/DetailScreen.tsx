@@ -10,6 +10,7 @@ import { GRUPPEN } from '@shared/sender';
 import { SENDER_FARBE } from '../senderFarben';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Icon } from '../components/Icon';
+import { Besetzung } from '../components/Besetzung';
 
 /** „(S02/E05)“ im Titel → Staffel 2, sonst null */
 export function staffelVon(titel: string): number | null {
@@ -128,6 +129,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
             {film.thema && film.thema !== film.titel && <span>{film.thema}</span>}
           </div>
           <h1 id="detail-titel">{film.titel}</h1>
+          {info?.originaltitel && <p className="originaltitel">Originaltitel: {info.originaltitel}</p>}
           <div className="detail-tags">
             {film.genres
               .filter((g) => g !== 'sonstiges')
@@ -214,34 +216,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
         <FilmBild film={film} gross />
       </div>
 
-      {info && (info.darsteller.length > 0 || info.stab.length > 0) && (
-        <section className="besetzung" aria-labelledby="besetzung-titel">
-          <h2 id="besetzung-titel">Besetzung</h2>
-          {info.darsteller.length > 0 && (
-            <ul className="besetzung-liste" aria-label="Darsteller">
-              {info.darsteller.map((d, i) => (
-                <li key={`${d.name}-${i}`}>
-                  <span className="besetzung-name">{d.name}</span>
-                  {d.rolle && <span className="besetzung-rolle">{d.rolle}</span>}
-                </li>
-              ))}
-            </ul>
-          )}
-          {info.stab.length > 0 && (
-            <>
-              <h2>Stab</h2>
-              <ul className="besetzung-liste" aria-label="Stab">
-                {info.stab.map((d, i) => (
-                  <li key={`${d.name}-${i}`}>
-                    <span className="besetzung-name">{d.name}</span>
-                    {d.rolle && <span className="besetzung-rolle">{d.rolle}</span>}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </section>
-      )}
+      <Besetzung info={info} />
 
       {film.serieId !== null && (
         <section className="folgen zur-serie" aria-label="Serie">

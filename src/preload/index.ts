@@ -43,6 +43,8 @@ const api = {
     auchBei: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:auch-bei', id),
     /** Besetzung und Stab (ZDF, 3sat) – null, wenn der Sender nicht erreichbar war */
     titelInfo: (id: number): Promise<TitelInfo | null> => ipcRenderer.invoke('titel:info', id),
+    /** Besetzung einer Serie (Wikidata) */
+    serieInfo: (r: { gruppe: SenderGruppe; thema: string }): Promise<TitelInfo | null> => ipcRenderer.invoke('serie:info', r),
     /** Meldet jede Zustandsänderung; gibt eine Funktion zum Abmelden zurück. */
     beiAenderung: (callback: (z: IndexZustand) => void): (() => void) => {
       const listener = (_e: IpcRendererEvent, z: IndexZustand) => callback(z);

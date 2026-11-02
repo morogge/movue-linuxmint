@@ -9,7 +9,13 @@ export const SCREENS = {
   genres: { title: 'Genres', help: 'genres' },
   sender: { title: 'Sender', help: 'stoebern' },
   detail: { title: 'Sendung', help: 'stoebern' },
-  player: { title: 'Player', help: 'player' }
+  player: { title: 'Player', help: 'player' },
+  merkliste: { title: 'Merkliste', help: 'merkliste' },
+  ablauf: { title: 'Läuft bald ab', help: 'merkliste' }
 } as const;
 
 export type ScreenId = keyof typeof SCREENS;
+
+export function istScreen(x: unknown): x is ScreenId {
+  return typeof x === 'string' && Object.prototype.hasOwnProperty.call(SCREENS, x);
+}

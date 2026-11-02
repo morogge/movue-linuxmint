@@ -19,7 +19,8 @@ Unten in der Seitenleiste siehst du, wie viele Sendungen das Verzeichnis enthäl
 
 - Movue braucht kein Konto und sendet keine Nutzungsdaten.
 - Das Sendungsverzeichnis liegt im Ordner `~/.config/Movue` und belegt einige hundert MB.
-- Merkliste, Abspielfortschritt und Einstellungen liegen später ebenfalls nur dort.
+- Merkliste, Abos und Abspielfortschritt liegen ebenfalls nur dort (`nutzer.db`).
+- Für gemerkte und angefangene Sendungen fragt Movue bei den Sendern nach, bis wann sie abrufbar sind. Dabei geht nur die Adresse der Sendungsseite an den Sender, wie beim Öffnen im Browser.
 
 ## Nur in bestimmten Ländern verfügbar
 

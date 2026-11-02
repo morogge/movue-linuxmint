@@ -10,7 +10,10 @@ import {
   leseMeta,
   oeffneDb,
   reihe,
+  reihenStand,
+  istReihenThema,
   SCHEMA_VERSION,
+  type ReihenStand,
   suche,
   type Db,
   type ReihenAnfrage
@@ -73,6 +76,14 @@ export class IndexDienst {
 
   filmeNachUrl(urls: string[]): Map<string, Film> {
     return this.db ? filmeNachUrl(this.db, urls) : new Map();
+  }
+
+  istReihe(thema: string): boolean {
+    return istReihenThema(thema);
+  }
+
+  reihenStand(gruppe: string, thema: string, seit: number): ReihenStand | null {
+    return this.db ? reihenStand(this.db, gruppe, thema, seit) : null;
   }
 
   folgen(id: number): Film[] {

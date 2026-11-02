@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+### Neu
+
+- **Merkliste**: Sendungen mit „Merken“ für später ablegen; die Merkliste steht links in der Seitenleiste
+- **Reihen abonnieren**: Movue meldet neue Folgen mit einer Benachrichtigung; auf der Startseite erscheint „Neue Folgen deiner Abos“
+- **Läuft bald ab**: gemerkte und angefangene Sendungen, die in den nächsten 14 Tagen aus der Mediathek verschwinden
+- Auf der Seite einer Sendung steht jetzt, wie lange sie noch verfügbar ist (sofern der Sender es nennt)
+- Neue Hilfeseite „Merkliste und Abos“
+
 ## 0.6.0 – 2026-11-01
 
 ### Neu

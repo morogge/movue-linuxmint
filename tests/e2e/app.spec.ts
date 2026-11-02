@@ -18,7 +18,8 @@ test.beforeAll(async () => {
       MOVUE_DATEN: daten,
       MOVUE_FILMLISTE_VOLL: join(__dirname, '../fixtures/filmliste-mini.json'),
       MOVUE_UPDATE_SIMULIEREN: '9.9.9',
-      MOVUE_BILDER_AUS: '1'
+      MOVUE_BILDER_AUS: '1',
+      MOVUE_KEINE_MELDUNG: '1'
     }
   });
   win = await app.firstWindow();
@@ -57,6 +58,32 @@ test('Player öffnet sich und meldet nicht abspielbare Videos verständlich', as
   await expect(win.getByRole('alert')).toContainText('lässt sich nicht abspielen', { timeout: 20_000 });
   await expect(win.getByRole('heading', { name: /Als Nächstes|Weitere Folgen/ })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/player.png' });
+  await win.getByRole('button', { name: 'Start', exact: true }).click();
+});
+
+test('Merken und Reihe abonnieren landen in der Merkliste', async () => {
+  await win.getByRole('button', { name: /Tatort: Der Fall Münster/ }).first().click();
+  await expect(win.getByRole('heading', { name: 'Tatort: Der Fall Münster', level: 1 })).toBeVisible();
+  await win.getByRole('button', { name: 'Merken' }).click();
+  await expect(win.getByRole('button', { name: 'Gemerkt' })).toHaveAttribute('aria-pressed', 'true');
+  await win.getByRole('button', { name: 'Reihe abonnieren' }).click();
+  await expect(win.getByRole('button', { name: 'Abonniert' })).toBeVisible();
+
+  await win.getByRole('button', { name: 'Merkliste', exact: true }).click();
+  await expect(win.getByRole('heading', { name: 'Merkliste', level: 1 })).toBeVisible();
+  await expect(win.getByRole('heading', { name: 'Abos' })).toBeVisible();
+  await expect(win.getByRole('button', { name: 'Abo „Tatort“ beenden' })).toBeVisible();
+  await expect(win.getByRole('button', { name: /Tatort: Der Fall Münster/ })).toBeVisible();
+  await win.screenshot({ path: 'test-results/screens/merkliste.png' });
+
+  await win.getByRole('button', { name: '„Tatort: Der Fall Münster“ aus der Merkliste entfernen' }).click();
+  await expect(win.getByText('Noch nichts gemerkt.')).toBeVisible();
+  await win.getByRole('button', { name: 'Abo „Tatort“ beenden' }).click();
+  await expect(win.getByRole('heading', { name: 'Abos' })).toHaveCount(0);
+
+  await win.getByRole('button', { name: 'Läuft bald ab', exact: true }).click();
+  await expect(win.getByRole('heading', { name: 'Läuft bald ab', level: 1 })).toBeVisible();
+  await expect(win.getByText('Gerade läuft nichts davon ab.')).toBeVisible();
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 

@@ -8,8 +8,10 @@ import {
   filmNachId,
   folgen,
   genreAnzahlen,
+  istReihenThema,
   istVariante,
   reihe,
+  reihenStand,
   leseMeta,
   oeffneDb,
   schliesseAufbau,
@@ -206,5 +208,28 @@ describe('Startseite und Detailseite', () => {
     expect(filmNachId(db, erste.id)?.titel).toBe('Tatort: Der Fall Münster');
     expect(folgen(db, erste).map((f) => f.titel)).toEqual(['Tatort: Der Fall Münster', 'Tatort: Zweiter Fall']);
     expect(folgen(db, { gruppe: 'ZDF', thema: 'Filme' })).toEqual([]);
+  });
+});
+
+describe('Stand einer abonnierten Reihe', () => {
+  it('zählt Folgen und neue Folgen seit einem Datum', () => {
+    const alle = reihenStand(db, 'ARD', 'Tatort', 0);
+    expect(alle.anzahl).toBe(2);
+    expect(alle.neu).toBe(2);
+    expect(alle.neueste?.titel).toBe('Tatort: Der Fall Münster');
+    const zweiter = suche(db, { text: 'Zweiter Fall' }).treffer[0];
+    const seit = reihenStand(db, 'ARD', 'Tatort', zweiter.datum);
+    expect(seit.neu).toBe(1);
+  });
+
+  it('meldet eine verschwundene Reihe als leer', () => {
+    const weg = reihenStand(db, 'ZDF', 'Gibt es nicht', 0);
+    expect(weg).toEqual({ anzahl: 0, neu: 0, neueste: null });
+  });
+
+  it('lässt Sammelthemen nicht als Reihe gelten', () => {
+    expect(istReihenThema('Tatort')).toBe(true);
+    expect(istReihenThema('Beiträge')).toBe(false);
+    expect(istReihenThema(' ')).toBe(false);
   });
 });

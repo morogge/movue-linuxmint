@@ -6,6 +6,7 @@ import { GRUPPEN, type SenderGruppe } from '@shared/sender';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Reihe } from '../components/Reihe';
 import { Weiterschauen } from '../components/Weiterschauen';
+import { NeueFolgen } from '../components/NeueFolgen';
 
 /** Reihen auf der Startseite und den Sender-Seiten, in dieser Reihenfolge */
 export const START_REIHEN: GenreId[] = [
@@ -103,6 +104,7 @@ export function StartScreen({ zustand, gruppe = null, onOeffne, onGenre, onAbspi
       )}
       {hero && <Hero film={hero} onOeffne={onOeffne} onAbspielen={onAbspielen} />}
       {!gruppe && <Weiterschauen stand={zustand.stand} onAbspielen={onAbspielen} />}
+      {!gruppe && <NeueFolgen stand={zustand.stand} onOeffne={onOeffne} />}
       {START_REIHEN.map((g) => (
         <Reihe key={`${gruppe ?? 'alle'}-${g}`} genre={g} gruppe={gruppe} stand={zustand.stand} onOeffne={onOeffne} onAlle={onGenre} onGeladen={reiheGeladen} />
       ))}

@@ -8,6 +8,8 @@ import { BildDienst } from './bilder';
 import { NutzerDb } from './nutzer';
 import { AblaufDienst } from './ablauf';
 import { TitelInfoDienst } from './titelinfo';
+import { MetadatenDienst } from './metadaten';
+import { ergaenze } from '@shared/metadaten';
 import { aboMeldung, laeuftBaldAb, type Abo, type Ablauf, type MerkEintrag } from '@shared/nutzer';
 import type { Film } from '@shared/film';
 import { ladeUntertitel } from './untertitel';
@@ -24,6 +26,7 @@ let bilder: BildDienst | null = null;
 let nutzer: NutzerDb | null = null;
 let ablauf: AblaufDienst | null = null;
 let titelInfos: TitelInfoDienst | null = null;
+let metadaten: MetadatenDienst | null = null;
 /** Stand des Verzeichnisses, für den die Abos zuletzt geprüft wurden */
 let aboStand: number | null = null;
 
@@ -184,7 +187,18 @@ ipcMain.handle('index:auch-bei', (_event, id: unknown) => (index && typeof id ==
 ipcMain.handle('titel:info', async (_event, id: unknown) => {
   if (!index || !titelInfos || typeof id !== 'number') return null;
   const film = index.film(id);
-  return film ? titelInfos.hole(film.website) : null;
+  if (!film) return null;
+  const sender = await titelInfos.hole(film.website);
+  // Was der Sender nicht nennt, ergänzt das Metadaten-Paket (Wikidata): zuerst der Film, sonst die Serie
+  const wd = metadaten?.film(film) ?? (film.serieId !== null ? (metadaten?.serie(film.thema) ?? null) : null);
+  return ergaenze(sender, wd);
+});
+
+/** Besetzung einer Serie aus dem Metadaten-Paket */
+ipcMain.handle('serie:info', (_event, r: { thema?: unknown }) => {
+  if (!metadaten || typeof r?.thema !== 'string') return null;
+  const wd = metadaten.serie(r.thema);
+  return wd ? { ...wd, quelle: 'wikidata' } : null;
 });
 
 ipcMain.handle('index:folgen', (_event, id: unknown) => (index && typeof id === 'number' ? index.folgen(id) : []));
@@ -307,6 +321,11 @@ app.whenReady().then(() => {
   nutzer = new NutzerDb(join(app.getPath('userData'), 'nutzer.db'));
   // Für Tests: keine Abrufe bei den Sendern
   ablauf = new AblaufDienst(nutzer, process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined);
+  // Für Tests: eigene Datei statt Download (MOVUE_METADATEN_DATEI), ohne Netz bei MOVUE_BILDER_AUS
+  metadaten = process.env['MOVUE_METADATEN_DATEI']
+    ? new MetadatenDienst(process.env['MOVUE_METADATEN_DATEI'], null)
+    : new MetadatenDienst(join(app.getPath('userData'), 'metadaten.json'), process.env['MOVUE_BILDER_AUS'] ? null : undefined, userAgent);
+  metadaten.start();
   titelInfos = new TitelInfoDienst(
     join(app.getPath('userData'), 'infos.db'),
     process.env['MOVUE_BILDER_AUS'] ? async () => ({ darsteller: [], stab: [] }) : undefined
@@ -331,6 +350,7 @@ app.on('before-quit', () => {
   update?.stop();
   bilder?.schliessen();
   titelInfos?.schliessen();
+  metadaten?.stop();
   nutzer?.schliessen();
 });
 

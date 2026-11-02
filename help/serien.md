@@ -23,6 +23,7 @@ Ein Klick auf eine Serienkachel öffnet die Serienseite:
 - Oben Name, Sender, Genres und die Beschreibung der neuesten Folge.
 - Der große Knopf startet die passende Folge: **Weiterschauen S2 · F4**, wenn du eine Folge angefangen hast; **Nächste Folge**, wenn du die letzte zu Ende gesehen hast; sonst **Abspielen** ab der ersten Folge bzw. bei Sendereihen **Neueste Folge**.
 - **Abonnieren** meldet dir neue Folgen (siehe **Merkliste und Abos**).
+- **Besetzung** der Serie, sofern Wikidata sie kennt.
 - Die Reiter darunter teilen die Folgen ein: bei Serien nach **Staffel**, bei Sendereihen nach **Jahr**. Vorschauen, Making-of, Outtakes und Trailer stehen unter **Extras** und zählen nicht als Folge.
 - Ein Klick auf eine Folge spielt sie ab; **Details** öffnet ihre Seite. Gesehene Folgen sind blasser, angefangene zeigen einen Balken und die Restzeit.
 

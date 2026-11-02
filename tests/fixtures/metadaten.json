@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "stand": "2026-11-02T03:00:00.000Z",
+  "eintraege": {
+    "f:tatort der fall münster": {
+      "q": "Q999999001",
+      "j": "2026",
+      "l": "Deutschland",
+      "r": ["Erika Muster"],
+      "d": [["Axel Prahl", "Frank Thiel"], ["Jan Josef Liefers", "Karl-Friedrich Boerne"]],
+      "t": 1793000000000
+    },
+    "s:in aller freundschaft": {
+      "q": "Q999999002",
+      "j": "1998",
+      "d": [["Thomas Rühmann", "Dr. Roland Heilmann"]],
+      "t": 1793000000000
+    },
+    "f:panorama vom 30 oktober": { "t": 1793000000000 }
+  }
+}

@@ -7,6 +7,8 @@ import { folgenKennung, gruppenName, gruppeVon, serienUmfang, sortiereGruppen, s
 import { GESEHEN_ANTEIL } from '@shared/nutzer';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Icon } from '../components/Icon';
+import { Besetzung } from '../components/Besetzung';
+import type { TitelInfo } from '@shared/titelinfo';
 import { useSerienBild } from '../hooks/useBild';
 
 interface Props {
@@ -22,6 +24,7 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
   const [reiter, setReiter] = useState<string | null>(null);
   const [abonniert, setAbonniert] = useState(false);
   const [bannerFehler, setBannerFehler] = useState(false);
+  const [info, setInfo] = useState<TitelInfo | null>(null);
   const bannerFilm = detail ? (detail.serie.bild ?? detail.folgen[0] ?? null) : null;
   const banner = useSerienBild(bannerFilm, 'banner');
 
@@ -35,6 +38,7 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
       if (!aktiv) return;
       setStaende(new Map(liste.map((s) => [s.url, s])));
     });
+    void window.movue.index.serieInfo(ref).then((i) => aktiv && setInfo(i));
     void window.movue.abo.ist(ref).then((a) => {
       if (!aktiv) return;
       setAbonniert(a);
@@ -126,6 +130,8 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
         </div>
         {kopfFilm && !(banner && !bannerFehler) && <FilmBild film={kopfFilm} gross titelbild="serie" />}
       </div>
+
+      <Besetzung info={info} />
 
       <section className="folgen" aria-labelledby="serie-folgen-titel">
         <div className="reihe-kopf">

@@ -1946,3 +1946,18 @@ button {
   margin: 0;
   font-size: 20px;
 }
+
+.originaltitel {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.besetzung .quelle {
+  margin: 0;
+}
+
+.besetzung .quelle a {
+  color: var(--text-2);
+}

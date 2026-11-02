@@ -12,6 +12,7 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 - **Seitenleiste einklappbar** auf Symbole (Pfeil oben oder Strg+B); sie bleibt beim Scrollen stehen
 - **Titelbilder auch bei ZDF und 3sat** für Serien (z. B. „Under Salt Marsh“)
 - **Besetzung und Stab bei Arte**, dazu Land und Jahr auf der Seite der Sendung
+- **Zusatzangaben aus Wikidata** für alle Sender: Besetzung mit Rollen, Regie, Jahr, Land und Originaltitel, wo der Sender sie nicht nennt – auch für Serien. Movue lädt dafür einmal am Tag ein fertiges Paket; niemand erfährt, was du ansiehst
 
 ### Verbessert
 

@@ -4,6 +4,7 @@ import type { UpdateZustand } from '../shared/update';
 import type { GenreAnzahl, GenreId } from '../shared/genres';
 import type { SenderGruppe } from '../shared/sender';
 import type { Abo, Ablauf, MerkEintrag } from '../shared/nutzer';
+import type { Serie, SerieDetail } from '../shared/serie';
 
 export interface AppInfo {
   version: string;
@@ -22,6 +23,17 @@ const api = {
     reihe: (a: { genre: GenreId; gruppe?: SenderGruppe | null; limit?: number }): Promise<Film[]> =>
       ipcRenderer.invoke('index:reihe', a),
     film: (id: number): Promise<Film | null> => ipcRenderer.invoke('index:film', id),
+    /** Serie bzw. Sendereihe mit allen Folgen */
+    serie: (r: { gruppe: SenderGruppe; thema: string }): Promise<SerieDetail | null> => ipcRenderer.invoke('index:serie', r),
+    /** Genre-Seite: Serien als je ein Eintrag, Einzelsendungen dazwischen */
+    stoebern: (a: {
+      genre: GenreId;
+      gruppe?: SenderGruppe | null;
+      limit?: number;
+      offset?: number;
+    }): Promise<{ eintraege: ({ typ: 'serie'; serie: Serie; datum: number } | { typ: 'film'; film: Film; datum: number })[]; gesamt: number }> =>
+      ipcRenderer.invoke('index:stoebern', a),
+    serienSuche: (a: { text: string; gruppe?: SenderGruppe | null }): Promise<Serie[]> => ipcRenderer.invoke('index:serien-suche', a),
     folgen: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:folgen', id),
     /** Meldet jede Zustandsänderung; gibt eine Funktion zum Abmelden zurück. */
     beiAenderung: (callback: (z: IndexZustand) => void): (() => void) => {
@@ -42,6 +54,8 @@ const api = {
       ipcRenderer.invoke('fortschritt:setzen', url, position, dauer),
     fortschritt: (url: string): Promise<{ position: number; dauer: number } | null> => ipcRenderer.invoke('fortschritt:holen', url),
     vergessen: (url: string): Promise<void> => ipcRenderer.invoke('fortschritt:vergessen', url),
+    fortschritte: (urls: string[]): Promise<{ url: string; position: number; dauer: number; zeit: number }[]> =>
+      ipcRenderer.invoke('fortschritt:viele', urls),
     weiterschauen: (): Promise<{ film: Film; position: number; dauer: number }[]> => ipcRenderer.invoke('index:weiterschauen')
   },
   merkliste: {

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { Film } from '@shared/film';
 import type { Abo } from '@shared/nutzer';
+import type { SerieRef } from '@shared/serie';
 import { Kachel } from './Kachel';
 
 /** Reihe „Neue Folgen deiner Abos“ auf der Startseite; erscheint nur, wenn es neue Folgen gibt */
-export function NeueFolgen({ stand, onOeffne }: { stand: number | null; onOeffne: (f: Film) => void }) {
+export function NeueFolgen({ stand, onOeffne, onSerie }: { stand: number | null; onOeffne: (f: Film) => void; onSerie: (s: SerieRef) => void }) {
   const [abos, setAbos] = useState<Abo[]>([]);
 
   useEffect(() => {
@@ -33,7 +34,8 @@ export function NeueFolgen({ stand, onOeffne }: { stand: number | null; onOeffne
                 hinweis={a.neu === 1 ? '1 neue Folge' : `${a.neu} neue Folgen`}
                 onOeffne={(f) => {
                   void window.movue.abo.gesehen({ gruppe: a.gruppe, thema: a.thema });
-                  onOeffne(f);
+                  if (f.serieId !== null) onSerie({ gruppe: a.gruppe, thema: a.thema });
+                  else onOeffne(f);
                 }}
               />
             </li>

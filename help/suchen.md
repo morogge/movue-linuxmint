@@ -11,6 +11,10 @@ Die Suche durchsucht die Sendungen von ARD, ZDF, 3sat und Arte gleichzeitig – 
 - Groß- und Kleinschreibung spielen keine Rolle, Umlaute und Akzente auch nicht.
 - **Esc** leert das Suchfeld.
 
+## Serien in der Suche
+
+Passt dein Suchbegriff zum Namen einer Serie oder Sendereihe, steht sie über den Treffern unter **Serien und Sendereihen**. Ein Klick öffnet die Serienseite mit allen Folgen.
+
 ## Nach Sender filtern
 
 Mit den Knöpfen unter der Überschrift suchst du nur in einer Mediathek. **Alle Sender** hebt den Filter wieder auf.

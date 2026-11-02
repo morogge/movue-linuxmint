@@ -3,10 +3,12 @@ import type { Film } from '@shared/film';
 import { formatAblauf, laeuftBaldAb, type Abo, type MerkEintrag } from '@shared/nutzer';
 import { GRUPPEN } from '@shared/sender';
 import { Kachel } from '../components/Kachel';
+import type { SerieRef } from '@shared/serie';
 
 interface Props {
   stand: number | null;
   onOeffne: (f: Film) => void;
+  onSerie: (s: SerieRef) => void;
 }
 
 function aboHinweis(a: Abo): string {
@@ -16,7 +18,7 @@ function aboHinweis(a: Abo): string {
 }
 
 /** Merkliste: gemerkte Sendungen und abonnierte Reihen */
-export function MerklisteScreen({ stand, onOeffne }: Props) {
+export function MerklisteScreen({ stand, onOeffne, onSerie }: Props) {
   const [eintraege, setEintraege] = useState<MerkEintrag[] | null>(null);
   const [abos, setAbos] = useState<Abo[]>([]);
 
@@ -45,7 +47,8 @@ export function MerklisteScreen({ stand, onOeffne }: Props) {
   const aboOeffnen = (a: Abo) => {
     if (!a.neueste) return;
     void window.movue.abo.gesehen({ gruppe: a.gruppe, thema: a.thema });
-    onOeffne(a.neueste);
+    if (a.neueste.serieId !== null) onSerie({ gruppe: a.gruppe, thema: a.thema });
+    else onOeffne(a.neueste);
   };
 
   const weg = (e: MerkEintrag) => !e.verfuegbar || e.ablauf?.weg === true;

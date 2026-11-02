@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
+import { serienUmfang, type Serie, type SerieRef } from '@shared/serie';
 import { useBild } from '../hooks/useBild';
 import { SENDER_FARBE } from '../senderFarben';
 
@@ -31,19 +32,61 @@ export function SenderMarke({ film }: { film: Film }) {
   );
 }
 
+/** Kachel für eine ganze Serie bzw. Sendereihe: Bild der neuesten Folge, Name, Umfang */
+export function SerieKachel({ serie, onOeffne, hinweis }: { serie: Serie; onOeffne: (s: Serie) => void; hinweis?: string }) {
+  const bild: Film = serie.bild ?? {
+    id: -serie.id,
+    sender: serie.gruppe,
+    gruppe: serie.gruppe,
+    thema: serie.thema,
+    titel: serie.thema,
+    datum: serie.neueste,
+    dauer: 0,
+    beschreibung: '',
+    website: '',
+    url: '',
+    urlKlein: '',
+    urlHd: '',
+    urlUntertitel: '',
+    geo: '',
+    genres: serie.genres,
+    staffel: null,
+    folge: null,
+    extra: false,
+    serieId: serie.id
+  };
+  return (
+    <button type="button" className="kachel serie-kachel" onClick={() => onOeffne(serie)}>
+      <span className="kachel-bild">
+        <FilmBild film={bild} />
+        <SenderMarke film={bild} />
+        <span className="kachel-dauer">{hinweis ?? serienUmfang(serie)}</span>
+      </span>
+      <span className="kachel-titel">{serie.thema}</span>
+      <span className="kachel-meta">
+        {serie.art === 'serie' ? 'Serie' : serie.art === 'nachrichten' ? 'Nachrichten' : 'Sendereihe'} · neu: {formatDatum(serie.neueste)}
+      </span>
+    </button>
+  );
+}
+
 /** Kachel in einer Reihe: Bild, Sender, Titel, Reihe und Datum */
 export function Kachel({
   film,
   onOeffne,
   fortschritt,
-  hinweis
+  hinweis,
+  onSerie
 }: {
   film: Film;
   onOeffne: (f: Film) => void;
+  /** Gesetzt: Folgen einer Serie erscheinen als Serienkachel */
+  onSerie?: (s: SerieRef) => void;
   /** 0–1: wie weit schon gesehen (Weiterschauen) */
   fortschritt?: number;
   hinweis?: string;
 }) {
+  if (onSerie && film.serie) return <SerieKachel serie={film.serie} onOeffne={onSerie} />;
   return (
     <button type="button" className="kachel" onClick={() => onOeffne(film)}>
       <span className="kachel-bild">

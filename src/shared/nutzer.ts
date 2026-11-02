@@ -28,6 +28,9 @@ export interface Abo {
   neueste: Film | null;
 }
 
+/** Ab diesem Anteil gilt eine Folge als gesehen */
+export const GESEHEN_ANTEIL = 0.95;
+
 /** Ab so vielen Tagen vor dem Ende gilt ein Video als „läuft bald ab“ */
 export const BALD_TAGE = 14;
 const TAG = 86_400_000;

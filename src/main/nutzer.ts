@@ -72,6 +72,22 @@ export class NutzerDb {
     return (this.db.prepare('SELECT url, position, dauer, zeit FROM fortschritt WHERE url = ?').get(url) as Fortschritt) ?? null;
   }
 
+  /** Fortschritt mehrerer Videos (Serienseite) */
+  fortschritte(urls: string[]): Fortschritt[] {
+    if (urls.length === 0) return [];
+    const ergebnis: Fortschritt[] = [];
+    // In Blöcken, damit die Zahl der Parameter klein bleibt
+    for (let i = 0; i < urls.length; i += 500) {
+      const block = urls.slice(i, i + 500);
+      ergebnis.push(
+        ...(this.db
+          .prepare(`SELECT url, position, dauer, zeit FROM fortschritt WHERE url IN (${block.map(() => '?').join(',')})`)
+          .all(...block) as Fortschritt[])
+      );
+    }
+    return ergebnis;
+  }
+
   /** Angefangene, nicht zu Ende gesehene Videos, zuletzt gesehene zuerst */
   angefangen(limit = 30): Fortschritt[] {
     return this.db

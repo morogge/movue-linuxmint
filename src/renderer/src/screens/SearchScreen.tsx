@@ -4,7 +4,8 @@ import { formatDatum, formatDauer, formatZahl } from '@shared/format';
 import { GENRES, genreName, istGenre, type GenreId } from '@shared/genres';
 import { GRUPPEN, type SenderGruppe } from '@shared/sender';
 import { Icon } from '../components/Icon';
-import { FilmBild, Kachel } from '../components/Kachel';
+import { FilmBild, Kachel, SerieKachel } from '../components/Kachel';
+import type { Serie, SerieRef } from '@shared/serie';
 import { SENDER_FARBE } from '../senderFarben';
 
 const SEITE = 50;
@@ -80,7 +81,12 @@ interface Props {
   onGenre: (g: GenreId | null) => void;
   onOeffne: (f: Film) => void;
   onAbspielen: (f: Film) => void;
+  onSerie: (s: SerieRef) => void;
 }
+
+type StoebernEintrag = { typ: 'serie'; serie: Serie; datum: number } | { typ: 'film'; film: Film; datum: number };
+/** Genre-Seite: Serien gebündelt (Standard) oder jede Folge einzeln */
+type Buendelung = 'serien' | 'folgen';
 
 type Darstellung = 'kacheln' | 'liste';
 const DARSTELLUNG = 'movue.darstellung';
@@ -93,7 +99,7 @@ function leseDarstellung(): Darstellung {
   }
 }
 
-export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAbspielen }: Props) {
+export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAbspielen, onSerie }: Props) {
   const [darstellung, setDarstellungState] = useState<Darstellung>(leseDarstellung);
   const setDarstellung = (d: Darstellung) => {
     setDarstellungState(d);
@@ -107,6 +113,33 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
   const [sortierung, setSortierung] = useState<Sortierung>('relevanz');
   const [ergebnis, setErgebnis] = useState<SuchErgebnis>({ treffer: [], gesamt: 0 });
   const [laedtMehr, setLaedtMehr] = useState(false);
+  const [buendelung, setBuendelung] = useState<Buendelung>('serien');
+  const [stoebern, setStoebern] = useState<{ eintraege: StoebernEintrag[]; gesamt: number }>({ eintraege: [], gesamt: 0 });
+  const [serien, setSerien] = useState<Serie[]>([]);
+  const ohneText = !suchtext.trim();
+  /** Gebündelt nur beim Stöbern in einem Genre; bei einer Suche stehen passende Serien über den Treffern */
+  const gebuendelt = ohneText && genre !== null && buendelung === 'serien';
+
+  useEffect(() => {
+    if (!gebuendelt || !genre) return;
+    let aktiv = true;
+    void window.movue.index.stoebern({ genre, gruppe, limit: SEITE, offset: 0 }).then((e) => aktiv && setStoebern(e));
+    return () => {
+      aktiv = false;
+    };
+  }, [gebuendelt, genre, gruppe, zustand.anzahl, zustand.stand]);
+
+  useEffect(() => {
+    if (ohneText) return;
+    let aktiv = true;
+    const t = setTimeout(() => {
+      void window.movue.index.serienSuche({ text: suchtext, gruppe }).then((s) => aktiv && setSerien(s));
+    }, 200);
+    return () => {
+      aktiv = false;
+      clearTimeout(t);
+    };
+  }, [suchtext, ohneText, gruppe, zustand.stand]);
 
   // Bei jeder Änderung von Text, Filter oder Index neu suchen (kurz verzögert, während getippt wird)
   useEffect(() => {
@@ -124,6 +157,12 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
 
   const mehrLaden = async () => {
     setLaedtMehr(true);
+    if (gebuendelt && genre) {
+      const e = await window.movue.index.stoebern({ genre, gruppe, limit: SEITE, offset: stoebern.eintraege.length });
+      setStoebern((alt) => ({ gesamt: e.gesamt, eintraege: [...alt.eintraege, ...e.eintraege] }));
+      setLaedtMehr(false);
+      return;
+    }
     const e = await window.movue.index.suche({
       text: suchtext,
       gruppe,
@@ -137,7 +176,9 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
   };
 
   const indexFehlt = zustand.anzahl === 0;
-  const ohneText = !suchtext.trim();
+  const gesamt = gebuendelt ? stoebern.gesamt : ergebnis.gesamt;
+  const geladen = gebuendelt ? stoebern.eintraege.length : ergebnis.treffer.length;
+  const passendeSerien = ohneText ? [] : serien;
 
   return (
     <section className="suche" aria-labelledby="suche-titel">
@@ -163,6 +204,17 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
               </button>
             ))}
           </div>
+          {ohneText && genre !== null && (
+            <div className="chips" role="group" aria-label="Bündelung">
+              <button type="button" className={buendelung === 'serien' ? 'chip an' : 'chip'} aria-pressed={buendelung === 'serien'} onClick={() => setBuendelung('serien')}>
+                Serien
+              </button>
+              <button type="button" className={buendelung === 'folgen' ? 'chip an' : 'chip'} aria-pressed={buendelung === 'folgen'} onClick={() => setBuendelung('folgen')}>
+                Einzelne Folgen
+              </button>
+            </div>
+          )}
+          {!gebuendelt && (
           <div className="chips" role="group" aria-label="Darstellung">
             <button type="button" className={darstellung === 'kacheln' ? 'chip an' : 'chip'} aria-pressed={darstellung === 'kacheln'} onClick={() => setDarstellung('kacheln')}>
               <Icon name="grid" size={16} /> Kacheln
@@ -171,6 +223,7 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
               <Icon name="liste" size={16} /> Liste
             </button>
           </div>
+          )}
           <label className="sortierung">
             <span>Genre</span>
             <select value={genre ?? ''} onChange={(e) => onGenre(istGenre(e.target.value) ? e.target.value : null)}>
@@ -200,10 +253,31 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
         </p>
       ) : (
         <>
+          {passendeSerien.length > 0 && (
+            <section className="serien-treffer" aria-labelledby="serien-treffer-titel">
+              <h2 id="serien-treffer-titel">Serien und Sendereihen</h2>
+              <ul className="kachel-raster">
+                {passendeSerien.map((s) => (
+                  <li key={s.id}>
+                    <SerieKachel serie={s} onOeffne={onSerie} />
+                  </li>
+                ))}
+              </ul>
+              <h2>Einzelne Sendungen</h2>
+            </section>
+          )}
           <p className="anzahl" aria-live="polite">
-            {ergebnis.gesamt === 0 ? 'Keine Treffer.' : `${formatZahl(ergebnis.gesamt)} Treffer`}
+            {gesamt === 0 ? 'Keine Treffer.' : `${formatZahl(gesamt)} Treffer`}
           </p>
-          {darstellung === 'kacheln' ? (
+          {gebuendelt ? (
+            <ul className="kachel-raster">
+              {stoebern.eintraege.map((e) => (
+                <li key={e.typ === 'serie' ? `s${e.serie.id}` : e.film.id}>
+                  {e.typ === 'serie' ? <SerieKachel serie={e.serie} onOeffne={onSerie} /> : <Kachel film={e.film} onOeffne={onOeffne} />}
+                </li>
+              ))}
+            </ul>
+          ) : darstellung === 'kacheln' ? (
             <ul className="kachel-raster">
               {ergebnis.treffer.map((f) => (
                 <li key={f.id}>
@@ -218,7 +292,7 @@ export function SearchScreen({ suchtext, zustand, genre, onGenre, onOeffne, onAb
               ))}
             </ul>
           )}
-          {ergebnis.treffer.length < ergebnis.gesamt && (
+          {geladen < gesamt && (
             <button type="button" className="mehr" onClick={() => void mehrLaden()} disabled={laedtMehr}>
               {laedtMehr ? 'Lade …' : 'Mehr anzeigen'}
             </button>

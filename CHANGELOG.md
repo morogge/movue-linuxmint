@@ -6,6 +6,19 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ### Neu
 
+- **Serien und Sendereihen gebündelt**: Statt vieler einzelner Folgen steht eine Kachel je Serie – auf der Startseite, den Sender-Seiten, in den Genres und in der Suche
+- **Serienseite** mit Reitern für Staffeln bzw. Jahrgänge, Fortschritt je Folge und einem Knopf, der dort weitermacht, wo du aufgehört hast
+- Vorschauen, Making-of und Trailer stehen unter **Extras** und zählen nicht als Folge
+- Genre-Seiten zeigen Serien gebündelt; **Einzelne Folgen** schaltet zurück
+- Nachrichtensendungen erscheinen nicht mehr auf der Startseite, sondern unter „Nachrichten & Politik“ und in der Suche
+- Neue Hilfeseite „Serien und Sendereihen“
+
+### Hinweis
+
+- Beim ersten Start nach dem Update baut Movue das Sendungsverzeichnis einmal neu auf (ein bis zwei Minuten). Merkliste, Abos und Fortschritt bleiben erhalten.
+
+### Neu
+
 - **Merkliste**: Sendungen mit „Merken“ für später ablegen; die Merkliste steht links in der Seitenleiste
 - **Reihen abonnieren**: Movue meldet neue Folgen mit einer Benachrichtigung; auf der Startseite erscheint „Neue Folgen deiner Abos“
 - **Läuft bald ab**: gemerkte und angefangene Sendungen, die in den nächsten 14 Tagen aus der Mediathek verschwinden

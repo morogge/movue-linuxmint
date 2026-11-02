@@ -149,6 +149,28 @@ ipcMain.handle('index:reihe', (_event, a: { genre?: unknown; gruppe?: unknown; l
   });
 });
 
+ipcMain.handle('index:serie', (_event, r: { gruppe?: unknown; thema?: unknown }) =>
+  index && typeof r?.gruppe === 'string' && typeof r.thema === 'string' ? index.serie(r.gruppe, r.thema) : null
+);
+
+ipcMain.handle('index:stoebern', (_event, a: { genre?: unknown; gruppe?: unknown; limit?: unknown; offset?: unknown }) => {
+  if (!index || !istGenre(a?.genre)) return { eintraege: [], gesamt: 0 };
+  return index.stoebern({
+    genre: a.genre,
+    gruppe: istGruppe(a.gruppe) ? a.gruppe : null,
+    limit: typeof a.limit === 'number' ? a.limit : undefined,
+    offset: typeof a.offset === 'number' ? a.offset : undefined
+  });
+});
+
+ipcMain.handle('index:serien-suche', (_event, a: { text?: unknown; gruppe?: unknown }) =>
+  index && typeof a?.text === 'string' ? index.serienSuche(a.text, istGruppe(a.gruppe) ? a.gruppe : null) : []
+);
+
+ipcMain.handle('fortschritt:viele', (_event, urls: unknown) =>
+  Array.isArray(urls) ? (nutzer?.fortschritte(urls.filter((u): u is string => typeof u === 'string').slice(0, 3000)) ?? []) : []
+);
+
 ipcMain.handle('index:film', (_event, id: unknown) => (index && typeof id === 'number' ? index.film(id) : null));
 
 ipcMain.handle('index:folgen', (_event, id: unknown) => (index && typeof id === 'number' ? index.folgen(id) : []));

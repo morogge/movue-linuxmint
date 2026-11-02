@@ -9,6 +9,7 @@ export const SCREENS = {
   genres: { title: 'Genres', help: 'genres' },
   sender: { title: 'Sender', help: 'stoebern' },
   detail: { title: 'Sendung', help: 'stoebern' },
+  serie: { title: 'Serie', help: 'serien' },
   player: { title: 'Player', help: 'player' },
   merkliste: { title: 'Merkliste', help: 'merkliste' },
   ablauf: { title: 'Läuft bald ab', help: 'merkliste' }

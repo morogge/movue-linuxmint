@@ -24,7 +24,11 @@ const film = (url: string, titel = 'Titel'): Film => ({
   urlHd: '',
   urlUntertitel: '',
   geo: '',
-  genres: []
+  genres: [],
+  staffel: null,
+  folge: null,
+  extra: false,
+  serieId: null
 });
 
 let ordner: string;

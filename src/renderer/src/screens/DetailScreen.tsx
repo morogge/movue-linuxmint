@@ -217,21 +217,6 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
       </div>
 
       <Besetzung info={info} />
-          {info.stab.length > 0 && (
-            <>
-              <h2>Stab</h2>
-              <ul className="besetzung-liste" aria-label="Stab">
-                {info.stab.map((d, i) => (
-                  <li key={`${d.name}-${i}`}>
-                    <span className="besetzung-name">{d.name}</span>
-                    {d.rolle && <span className="besetzung-rolle">{d.rolle}</span>}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </section>
-      )}
 
       {film.serieId !== null && (
         <section className="folgen zur-serie" aria-label="Serie">

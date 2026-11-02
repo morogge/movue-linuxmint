@@ -133,7 +133,9 @@ export async function findeSerienBild(website: string, art: 'serie' | 'banner'):
     // ZDF/3sat haben kein Banner-Format; das Titelbild (16:9, oft mit Schriftzug) steht als og:image auf der Seite der Reihe
     const seite = art === 'serie' ? serienSeite(website) : null;
     const bild = seite ? await seitenBild(seite) : null;
-    return bild ? verkleinere(bild) : null;
+    // Ersatzbild der Mediathek (Senderlogo) ist kein Titelbild
+    if (!bild || /\/_next\/static\/|zdf_logo|3sat_logo/i.test(bild)) return null;
+    return verkleinere(bild);
   }
   const url = await ardSerie(id, art === 'banner' ? '16x7' : '16x9');
   return url ? url.replace(/\{width\}/g, art === 'banner' ? '1600' : '640') : null;

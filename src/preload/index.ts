@@ -3,6 +3,8 @@ import type { Film, IndexZustand, SuchAnfrage, SuchErgebnis } from '../shared/fi
 import type { UpdateZustand } from '../shared/update';
 import type { GenreAnzahl, GenreId } from '../shared/genres';
 import type { SenderGruppe } from '../shared/sender';
+import type { Abo, Ablauf, MerkEintrag } from '../shared/nutzer';
+import type { Serie, SerieDetail } from '../shared/serie';
 
 export interface AppInfo {
   version: string;
@@ -21,6 +23,17 @@ const api = {
     reihe: (a: { genre: GenreId; gruppe?: SenderGruppe | null; limit?: number }): Promise<Film[]> =>
       ipcRenderer.invoke('index:reihe', a),
     film: (id: number): Promise<Film | null> => ipcRenderer.invoke('index:film', id),
+    /** Serie bzw. Sendereihe mit allen Folgen */
+    serie: (r: { gruppe: SenderGruppe; thema: string }): Promise<SerieDetail | null> => ipcRenderer.invoke('index:serie', r),
+    /** Genre-Seite: Serien als je ein Eintrag, Einzelsendungen dazwischen */
+    stoebern: (a: {
+      genre: GenreId;
+      gruppe?: SenderGruppe | null;
+      limit?: number;
+      offset?: number;
+    }): Promise<{ eintraege: ({ typ: 'serie'; serie: Serie; datum: number } | { typ: 'film'; film: Film; datum: number })[]; gesamt: number }> =>
+      ipcRenderer.invoke('index:stoebern', a),
+    serienSuche: (a: { text: string; gruppe?: SenderGruppe | null }): Promise<Serie[]> => ipcRenderer.invoke('index:serien-suche', a),
     folgen: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:folgen', id),
     /** Meldet jede Zustandsänderung; gibt eine Funktion zum Abmelden zurück. */
     beiAenderung: (callback: (z: IndexZustand) => void): (() => void) => {
@@ -41,7 +54,40 @@ const api = {
       ipcRenderer.invoke('fortschritt:setzen', url, position, dauer),
     fortschritt: (url: string): Promise<{ position: number; dauer: number } | null> => ipcRenderer.invoke('fortschritt:holen', url),
     vergessen: (url: string): Promise<void> => ipcRenderer.invoke('fortschritt:vergessen', url),
+    fortschritte: (urls: string[]): Promise<{ url: string; position: number; dauer: number; zeit: number }[]> =>
+      ipcRenderer.invoke('fortschritt:viele', urls),
     weiterschauen: (): Promise<{ film: Film; position: number; dauer: number }[]> => ipcRenderer.invoke('index:weiterschauen')
+  },
+  merkliste: {
+    liste: (): Promise<MerkEintrag[]> => ipcRenderer.invoke('merkliste:liste'),
+    ist: (url: string): Promise<boolean> => ipcRenderer.invoke('merkliste:ist', url),
+    /** Merken (an = true, über die id) oder entfernen (an = false, über die Videoadresse); gibt den neuen Zustand zurück */
+    setzen: (film: { id: number; url: string }, an: boolean): Promise<boolean> =>
+      ipcRenderer.invoke('merkliste:setzen', { id: film.id, url: film.url }, an)
+  },
+  abo: {
+    liste: (): Promise<Abo[]> => ipcRenderer.invoke('abo:liste'),
+    ist: (r: { gruppe: SenderGruppe; thema: string }): Promise<boolean> => ipcRenderer.invoke('abo:ist', r),
+    setzen: (r: { gruppe: SenderGruppe; thema: string }, an: boolean): Promise<boolean> => ipcRenderer.invoke('abo:setzen', r, an),
+    /** Reihe angesehen: neue Folgen gelten als gesehen */
+    gesehen: (r: { gruppe: SenderGruppe; thema: string }): Promise<void> => ipcRenderer.invoke('abo:gesehen', r),
+    /** Meldet, wenn nach dem Laden des Verzeichnisses neue Folgen da sind */
+    beiNeuen: (callback: () => void): (() => void) => {
+      const listener = () => callback();
+      ipcRenderer.on('abo:neu', listener);
+      return () => ipcRenderer.removeListener('abo:neu', listener);
+    }
+  },
+  ablauf: {
+    /** Wie lange die Sendung noch abrufbar ist – fragt beim Sender nach (null = unbekannt) */
+    holen: (id: number): Promise<Ablauf | null> => ipcRenderer.invoke('ablauf:holen', id),
+    bald: (): Promise<{ film: Film; ablauf: Ablauf; gemerkt: boolean }[]> => ipcRenderer.invoke('ablauf:bald')
+  },
+  /** Der Hauptprozess bittet um einen Bildschirmwechsel (Klick auf eine Benachrichtigung) */
+  beiNavigation: (callback: (screen: string) => void): (() => void) => {
+    const listener = (_e: IpcRendererEvent, screen: string) => callback(screen);
+    ipcRenderer.on('navigation', listener);
+    return () => ipcRenderer.removeListener('navigation', listener);
   },
   bild: {
     /** Vorschaubild zur Sendungsseite (null = keins gefunden) */

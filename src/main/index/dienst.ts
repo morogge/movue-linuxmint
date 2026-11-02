@@ -10,7 +10,10 @@ import {
   leseMeta,
   oeffneDb,
   reihe,
+  reihenStand,
+  istReihenThema,
   SCHEMA_VERSION,
+  type ReihenStand,
   suche,
   type Db,
   type ReihenAnfrage
@@ -20,6 +23,10 @@ import type { GenreAnzahl } from '@shared/genres';
 import type { IndexerAuftrag, IndexerNachricht } from './indexer.worker';
 import { naechsteAktion } from './plan';
 import createIndexer from './indexer.worker?nodeWorker';
+import { mitSerien, serieDetail, serienSuche, stoebern, type StoebernEintrag } from './serien';
+import type { SerieDetail, Serie } from '@shared/serie';
+import type { GenreId } from '@shared/genres';
+import type { SenderGruppe } from '@shared/sender';
 
 const PRUEF_INTERVALL = 10 * 60 * 1000;
 
@@ -63,8 +70,33 @@ export class IndexDienst {
     return this.genreCache;
   }
 
+  /** Neueste Sendungen eines Genres; Folgen einer Serie tragen ihr Bündel mit. Nachrichten nur im Genre Nachrichten. */
   reihe(anfrage: ReihenAnfrage): Film[] {
-    return this.db ? reihe(this.db, anfrage) : [];
+    if (!this.db) return [];
+    const roh = reihe(this.db, anfrage);
+    // Spielfilme stehen immer einzeln, auch wenn sie in einer Rubrik wie „Filme im Ersten“ laufen
+    if (anfrage.genre === 'film') return roh;
+    const gesehen = new Set<number>();
+    return mitSerien(this.db, roh).filter((f) => {
+      if (f.serie?.art === 'nachrichten' && anfrage.genre !== 'nachrichten') return false;
+      // Jede Serie nur einmal je Reihe
+      if (f.serieId === null) return true;
+      if (gesehen.has(f.serieId)) return false;
+      gesehen.add(f.serieId);
+      return true;
+    });
+  }
+
+  serie(gruppe: string, thema: string): SerieDetail | null {
+    return this.db ? serieDetail(this.db, gruppe, thema) : null;
+  }
+
+  stoebern(a: { genre: GenreId; gruppe?: SenderGruppe | null; limit?: number; offset?: number }): { eintraege: StoebernEintrag[]; gesamt: number } {
+    return this.db ? stoebern(this.db, a) : { eintraege: [], gesamt: 0 };
+  }
+
+  serienSuche(text: string, gruppe?: SenderGruppe | null): Serie[] {
+    return this.db ? serienSuche(this.db, text, gruppe) : [];
   }
 
   film(id: number): Film | null {
@@ -73,6 +105,14 @@ export class IndexDienst {
 
   filmeNachUrl(urls: string[]): Map<string, Film> {
     return this.db ? filmeNachUrl(this.db, urls) : new Map();
+  }
+
+  istReihe(thema: string): boolean {
+    return istReihenThema(thema);
+  }
+
+  reihenStand(gruppe: string, thema: string, seit: number): ReihenStand | null {
+    return this.db ? reihenStand(this.db, gruppe, thema, seit) : null;
   }
 
   folgen(id: number): Film[] {

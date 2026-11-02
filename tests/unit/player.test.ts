@@ -24,6 +24,10 @@ const film = (id: number, titel: string, datum: number, extra: Partial<Film> = {
   urlUntertitel: '',
   geo: '',
   genres: [],
+  staffel: null,
+  folge: null,
+  extra: false,
+  serieId: null,
   ...extra
 });
 

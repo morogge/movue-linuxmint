@@ -3,6 +3,8 @@ import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
 import { genreName } from '@shared/genres';
 import { formatZeit } from '@shared/player';
+import { formatAblauf, laeuftBaldAb, type Ablauf } from '@shared/nutzer';
+import { folgenKennung, type SerieRef } from '@shared/serie';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Icon } from '../components/Icon';
 
@@ -22,14 +24,18 @@ interface Props {
   onOeffne: (f: Film) => void;
   onZurueck: () => void;
   onAbspielen: (f: Film) => void;
+  onSerie: (s: SerieRef) => void;
 }
 
-export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen }: Props) {
+export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie }: Props) {
   const [position, setPosition] = useState<number | null>(null);
   const [film, setFilm] = useState<Film | null>(null);
   const [folgen, setFolgen] = useState<Film[]>([]);
   const [staffel, setStaffel] = useState<number | null>(null);
   const [seite, setSeite] = useState<'bereit' | 'pruefe' | 'suche'>('bereit');
+  const [gemerkt, setGemerkt] = useState(false);
+  const [abonniert, setAbonniert] = useState(false);
+  const [ablauf, setAblauf] = useState<Ablauf | null>(null);
 
   useEffect(() => {
     let aktiv = true;
@@ -41,6 +47,16 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen }: Props
       if (f) void window.movue.player.fortschritt(f.url).then((p) => aktiv && setPosition(p && p.position >= 30 && p.position < p.dauer * 0.95 ? p.position : null));
       setStaffel(f ? staffelVon(f.titel) : null);
       setSeite('bereit');
+      setAblauf(null);
+      if (!f) return;
+      void window.movue.merkliste.ist(f.url).then((g) => aktiv && setGemerkt(g));
+      void window.movue.abo.ist({ gruppe: f.gruppe, thema: f.thema }).then((a) => {
+        if (!aktiv) return;
+        setAbonniert(a);
+        if (a) void window.movue.abo.gesehen({ gruppe: f.gruppe, thema: f.thema });
+      });
+      // Beim Sender nachfragen, wie lange die Sendung noch abrufbar ist – kommt später oder gar nicht
+      void window.movue.ablauf.holen(f.id).then((x) => aktiv && setAblauf(x));
     });
     return () => {
       aktiv = false;
@@ -72,6 +88,9 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen }: Props
   }
 
   const video = videoDatei(film);
+  const ablaufText = formatAblauf(ablauf);
+  const merkenUmschalten = async () => setGemerkt(await window.movue.merkliste.setzen(film, !gemerkt));
+  const aboUmschalten = async () => setAbonniert(await window.movue.abo.setzen({ gruppe: film.gruppe, thema: film.thema }, !abonniert));
   const seiteOeffnen = async () => {
     setSeite('pruefe');
     const art = await window.movue.film.seiteOeffnen({ website: film.website, gruppe: film.gruppe, titel: film.titel });
@@ -108,6 +127,12 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen }: Props
           <p className="detail-info">
             {formatDatum(film.datum)}
             {film.dauer > 0 && ` · ${formatDauer(film.dauer)}`}
+            {ablaufText && (
+              <span className={laeuftBaldAb(ablauf) || ablauf?.weg ? 'ablauf bald' : 'ablauf'}>
+                {' · '}
+                {ablauf?.weg || ablaufText === 'abgelaufen' ? ablaufText : `verfügbar ${ablaufText}`}
+              </span>
+            )}
           </p>
           <div className="hero-actions">
             <button type="button" className="primary" onClick={() => onAbspielen(film)}>
@@ -117,6 +142,20 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen }: Props
               <a className="text-button" href={video} target="_blank" rel="noreferrer" title="Videodatei im Browser oder Videoprogramm öffnen">
                 Extern öffnen
               </a>
+            )}
+            <button type="button" className={gemerkt ? 'secondary an' : 'secondary'} aria-pressed={gemerkt} onClick={() => void merkenUmschalten()}>
+              <Icon name="bookmark" size={16} /> {gemerkt ? 'Gemerkt' : 'Merken'}
+            </button>
+            {folgen.length > 0 && (
+              <button
+                type="button"
+                className={abonniert ? 'secondary an' : 'secondary'}
+                aria-pressed={abonniert}
+                title={abonniert ? 'Abo beenden' : `Neue Folgen von „${film.thema}“ melden`}
+                onClick={() => void aboUmschalten()}
+              >
+                <Icon name="glocke" size={16} /> {abonniert ? 'Abonniert' : 'Reihe abonnieren'}
+              </button>
             )}
             <button type="button" className="secondary" onClick={() => void seiteOeffnen()} disabled={seite === 'pruefe'}>
               {seite === 'pruefe' ? 'Prüfe Seite …' : 'Beim Sender ansehen'} <Icon name="external" size={14} />
@@ -131,7 +170,16 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen }: Props
         <FilmBild film={film} gross />
       </div>
 
-      {sichtbareFolgen.length > 0 && (
+      {film.serieId !== null && (
+        <section className="folgen zur-serie" aria-label="Serie">
+          <button type="button" className="secondary" onClick={() => onSerie({ gruppe: film.gruppe, thema: film.thema })}>
+            <Icon name="liste" size={16} /> Alle Folgen von „{film.thema}“
+          </button>
+          {folgenKennung(film) && <span className="klein">Diese Sendung: {folgenKennung(film)}</span>}
+        </section>
+      )}
+
+      {film.serieId === null && sichtbareFolgen.length > 0 && (
         <section className="folgen" aria-labelledby="folgen-titel">
           <div className="reihe-kopf">
             <h2 id="folgen-titel">Weitere Folgen von „{film.thema}“</h2>

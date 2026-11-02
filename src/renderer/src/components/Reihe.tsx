@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Film } from '@shared/film';
 import { genreName, type GenreId } from '@shared/genres';
 import type { SenderGruppe } from '@shared/sender';
+import type { SerieRef } from '@shared/serie';
 import { Icon } from './Icon';
 import { Kachel } from './Kachel';
 
@@ -12,11 +13,12 @@ interface Props {
   stand: number | null;
   onOeffne: (f: Film) => void;
   onAlle: (g: GenreId) => void;
+  onSerie?: (s: SerieRef) => void;
   onGeladen?: (genre: GenreId, filme: Film[]) => void;
 }
 
 /** Waagerechte Reihe mit den neuesten Sendungen eines Genres; Pfeile links und rechts statt Scrollbalken */
-export function Reihe({ genre, gruppe, stand, onOeffne, onAlle, onGeladen }: Props) {
+export function Reihe({ genre, gruppe, stand, onOeffne, onAlle, onGeladen, onSerie }: Props) {
   const [filme, setFilme] = useState<Film[] | null>(null);
   const liste = useRef<HTMLUListElement>(null);
   const [kannLinks, setKannLinks] = useState(false);
@@ -75,7 +77,7 @@ export function Reihe({ genre, gruppe, stand, onOeffne, onAlle, onGeladen }: Pro
         <ul className="reihe-liste" ref={liste} onScroll={pruefe}>
           {(filme ?? []).map((f) => (
             <li key={f.id}>
-              <Kachel film={f} onOeffne={onOeffne} />
+              <Kachel film={f} onOeffne={onOeffne} onSerie={onSerie} />
             </li>
           ))}
           {filme === null &&

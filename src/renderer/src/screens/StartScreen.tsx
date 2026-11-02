@@ -6,6 +6,8 @@ import { GRUPPEN, type SenderGruppe } from '@shared/sender';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Reihe } from '../components/Reihe';
 import { Weiterschauen } from '../components/Weiterschauen';
+import { NeueFolgen } from '../components/NeueFolgen';
+import type { SerieRef } from '@shared/serie';
 
 /** Reihen auf der Startseite und den Sender-Seiten, in dieser Reihenfolge */
 export const START_REIHEN: GenreId[] = [
@@ -32,6 +34,7 @@ interface Props {
   onOeffne: (f: Film) => void;
   onGenre: (g: GenreId) => void;
   onAbspielen: (f: Film) => void;
+  onSerie: (s: SerieRef) => void;
 }
 
 function Hero({ film, onOeffne, onAbspielen }: { film: Film; onOeffne: (f: Film) => void; onAbspielen: (f: Film) => void }) {
@@ -66,7 +69,7 @@ function Hero({ film, onOeffne, onAbspielen }: { film: Film; onOeffne: (f: Film)
   );
 }
 
-export function StartScreen({ zustand, gruppe = null, onOeffne, onGenre, onAbspielen }: Props) {
+export function StartScreen({ zustand, gruppe = null, onOeffne, onGenre, onAbspielen, onSerie }: Props) {
   const [hero, setHero] = useState<Film | null>(null);
 
   // Die Empfehlung oben: der neueste Spielfilm (oder sonst die neueste Doku) mit Beschreibung
@@ -103,8 +106,9 @@ export function StartScreen({ zustand, gruppe = null, onOeffne, onGenre, onAbspi
       )}
       {hero && <Hero film={hero} onOeffne={onOeffne} onAbspielen={onAbspielen} />}
       {!gruppe && <Weiterschauen stand={zustand.stand} onAbspielen={onAbspielen} />}
+      {!gruppe && <NeueFolgen stand={zustand.stand} onOeffne={onOeffne} onSerie={onSerie} />}
       {START_REIHEN.map((g) => (
-        <Reihe key={`${gruppe ?? 'alle'}-${g}`} genre={g} gruppe={gruppe} stand={zustand.stand} onOeffne={onOeffne} onAlle={onGenre} onGeladen={reiheGeladen} />
+        <Reihe key={`${gruppe ?? 'alle'}-${g}`} genre={g} gruppe={gruppe} stand={zustand.stand} onOeffne={onOeffne} onAlle={onGenre} onGeladen={reiheGeladen} onSerie={onSerie} />
       ))}
     </section>
   );

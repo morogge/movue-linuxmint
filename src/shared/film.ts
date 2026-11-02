@@ -1,5 +1,6 @@
 import type { GenreId } from './genres';
 import type { SenderGruppe } from './sender';
+import type { Serie } from './serie';
 
 /** Eine Sendung aus dem Index. Zeiten in Sekunden seit 1970 (UTC), Dauer in Sekunden. */
 export interface Film {
@@ -18,6 +19,14 @@ export interface Film {
   urlUntertitel: string;
   geo: string;
   genres: GenreId[];
+  /** Aus dem Titel gelesen (siehe serie.ts) */
+  staffel: number | null;
+  folge: number | null;
+  extra: boolean;
+  /** Bündel, zu dem die Folge gehört (null = Einzelsendung) */
+  serieId: number | null;
+  /** Bei Reihen und Stöbern mitgeliefert: das Bündel, als Kachel statt der Folge */
+  serie?: Serie;
 }
 
 export type Sortierung = 'relevanz' | 'datum';

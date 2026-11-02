@@ -6,6 +6,7 @@ import { listenAdresse, oeffneListe } from '../../src/main/filmliste/quelle';
 import { anzahl, folgen, genreAnzahlen, oeffneDb, reihe, schliesseAufbau, suche } from '../../src/main/index/datenbank';
 import type { GenreId } from '../../src/shared/genres';
 import { importiere } from '../../src/main/index/import';
+import { baueSerien, mitSerien, serieDetail, serienSuche, stoebern } from '../../src/main/index/serien';
 import { GRUPPEN } from '../../src/shared/sender';
 
 const UA = 'Movue-CI (+https://github.com/morogge/movue-linuxmint)';
@@ -62,6 +63,45 @@ describe('Echte Filmliste', () => {
       const tatortFolgen = folgen(lese, tatort.treffer.find((f) => f.thema === 'Tatort') ?? tatort.treffer[0]);
       console.log(`FOLGEN Tatort: ${tatortFolgen.length}`);
       expect(reihenMs).toBeLessThan(3000);
+
+      // Serien: Aufbau (noch einmal, zum Messen), Arten, Abfragezeiten
+      const bau = baueSerien(lese);
+      const arten = lese.prepare('SELECT art, COUNT(*) AS n, SUM(folgen) AS f FROM serie GROUP BY art').all();
+      const s0 = Date.now();
+      const mit = reihen.map(({ filme }) => mitSerien(lese, filme));
+      const s1 = Date.now();
+      const stoebernSerie = stoebern(lese, { genre: 'serie' });
+      const stoebernKrimi = stoebern(lese, { genre: 'krimi' });
+      const s2 = Date.now();
+      const gefunden = serienSuche(lese, 'rosenheim');
+      const s3 = Date.now();
+      const iaf = serieDetail(lese, 'ARD', 'In aller Freundschaft');
+      const s4 = Date.now();
+      console.log(
+        'SERIEN ' +
+          JSON.stringify({
+            aufbauMs: bau.ms,
+            serien: bau.serien,
+            arten,
+            mitSerienMs: s1 - s0,
+            stoebernMs: Math.round((s2 - s1) / 2),
+            sucheMs: s3 - s2,
+            detailMs: s4 - s3,
+            dbMB: Math.round(statSync(pfad).size / 1e6),
+            serieGenre: stoebernSerie.gesamt,
+            krimi: stoebernKrimi.gesamt,
+            suche: gefunden.map((x) => `${x.gruppe}/${x.thema} (${x.art}, ${x.folgen})`),
+            iaf: iaf ? { ...iaf.serie, bild: undefined, folgen: iaf.folgen.length, erste: iaf.folgen.slice(0, 3).map((f) => f.titel) } : null
+          })
+      );
+      for (const r of mit) console.log('SERIENREIHE ' + r.slice(0, 10).map((f) => (f.serie ? `[${f.serie.thema} · ${f.serie.art} · ${f.serie.folgen}]` : f.titel.slice(0, 30))).join(' | '));
+      console.log('SERIEN Krimi: ' + stoebernKrimi.eintraege.slice(0, 20).map((e) => (e.typ === 'serie' ? `[${e.serie.thema} ${e.serie.folgen}]` : e.film.titel.slice(0, 30))).join(' | '));
+      const proben = lese.prepare(`SELECT gruppe, thema, art, folgen, staffeln, extras FROM serie ORDER BY folgen DESC LIMIT 40`).all();
+      console.log('SERIEN groesste: ' + JSON.stringify(proben));
+      const zufall = lese.prepare(`SELECT gruppe, thema, art, folgen, staffeln, extras FROM serie ORDER BY (id * 2654435761) % 1000003 LIMIT 40`).all();
+      console.log('SERIEN zufall: ' + JSON.stringify(zufall));
+      expect(bau.ms).toBeLessThan(20_000);
+      expect(s2 - s1).toBeLessThan(2000);
       for (const { filme } of reihen) expect(filme.length).toBeGreaterThan(5);
 
       // Genre-Bericht: Abdeckung, häufigste nicht zugeordnete Themen, Stichproben je Genre

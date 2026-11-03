@@ -42,6 +42,17 @@ export function istRubrik(z: ThemaStatistik): boolean {
   return z.filme >= z.n * 0.4 || (z.filme >= z.n * 0.2 && z.kurz >= z.n * 0.2);
 }
 
+/**
+ * Ob ein gemeinsamer Titelanfang eine Reihe ist: ab drei Sendungen. Ein einzelnes Wort („Brasilien: …“,
+ * „Israel - …“, „Finale - …“) ist meist nur das Thema einzelner Beiträge – das zählt erst bei sehr vielen
+ * Sendungen als Reihe (Arte „Re: …“).
+ */
+export function istReihenAnfang(anfang: string, anzahl: number): boolean {
+  if (anzahl < MIN_FOLGEN) return false;
+  const einWort = !/\s/.test(anfang.trim()) && !/\d/.test(anfang);
+  return !einWort || anzahl >= 50;
+}
+
 /** Gemeinsamer Anfang eines Titels („360° Reportage - Mongolei“ → „360° Reportage“), sonst null */
 export function titelAnfang(titel: string): string | null {
   const m = /^(.{2,60}?)(?:\s[-–|]\s|:\s)/.exec(titel);
@@ -124,8 +135,8 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
     }
     const setze = db.prepare('UPDATE film SET buendel = ? WHERE id = ?');
     for (const [k, ids] of anfaenge) {
-      if (ids.length < MIN_FOLGEN) continue;
       const name = k.slice(k.indexOf('\u0001') + 1);
+      if (!istReihenAnfang(name, ids.length)) continue;
       for (const id of ids) setze.run(name, id);
     }
 
@@ -247,7 +258,7 @@ function zuSerien(db: Db, zeilen: SerieZeile[]): Serie[] {
     id: z.id,
     gruppe: (istGruppe(z.gruppe) ? z.gruppe : 'ARD') as SenderGruppe,
     thema: z.thema,
-    art: z.art === 'serie' || z.art === 'nachrichten' ? z.art : 'reihe',
+    art: z.art === 'serie' || z.art === 'nachrichten' || z.art === 'filmreihe' ? z.art : 'reihe',
     folgen: z.folgen,
     extras: z.extras,
     staffeln: z.staffeln,

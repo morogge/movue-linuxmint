@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { serieAusTitel, serienArt } from '@shared/serie';
 import { baueFassungen, oeffneDb, reihe, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
-import { baueSerien, istRubrik, serieNachThema, titelAnfang } from '../../src/main/index/serien';
+import { baueSerien, istReihenAnfang, istRubrik, serieNachThema, titelAnfang } from '../../src/main/index/serien';
 import type { FilmEintrag } from '../../src/main/filmliste/eintrag';
 import type { GenreId } from '../../src/shared/genres';
 
@@ -15,6 +15,13 @@ describe('Serien aus Titeln', () => {
     expect(serieAusTitel('Wilder: Sau, Staffel 4, Folge 1')).toEqual({ name: 'Wilder', staffel: 4, folge: 1 });
     expect(serieAusTitel('Malawi - das grüne Herz Afrikas (2/2) (Audiodeskription)')?.name).toBe('Malawi - das grüne Herz Afrikas');
     expect(serieAusTitel('Sommer auf Asphalt')).toBeNull();
+  });
+
+  it('nimmt einzelne Wörter erst bei sehr vielen Sendungen als Reihe', () => {
+    expect(istReihenAnfang('360° Reportage', 3)).toBe(true);
+    expect(istReihenAnfang('Brasilien', 13)).toBe(false);
+    expect(istReihenAnfang('Re', 461)).toBe(true);
+    expect(istReihenAnfang('Küchen der Welt', 2)).toBe(false);
   });
 
   it('findet gemeinsame Titelanfänge', () => {

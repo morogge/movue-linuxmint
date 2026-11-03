@@ -28,6 +28,7 @@ const film = (id: number, titel: string, datum: number, extra: Partial<Film> = {
   folge: null,
   extra: false,
   serieId: null,
+  buendel: null,
   ...extra
 });
 

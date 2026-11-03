@@ -28,7 +28,8 @@ const film = (url: string, titel = 'Titel'): Film => ({
   staffel: null,
   folge: null,
   extra: false,
-  serieId: null
+  serieId: null,
+  buendel: null
 });
 
 let ordner: string;

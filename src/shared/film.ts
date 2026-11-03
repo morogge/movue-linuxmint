@@ -25,6 +25,8 @@ export interface Film {
   extra: boolean;
   /** Bündel, zu dem die Folge gehört (null = Einzelsendung) */
   serieId: number | null;
+  /** Name des Bündels (Serie bzw. Reihe), unter dem Abos und Serienseite laufen; null bei Einzelsendungen */
+  buendel: string | null;
   /** Bei Reihen und Stöbern mitgeliefert: das Bündel, als Kachel statt der Folge */
   serie?: Serie;
 }

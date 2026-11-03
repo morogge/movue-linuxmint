@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
-import { serienUmfang, type Serie, type SerieRef } from '@shared/serie';
+import { artName, serienUmfang, type Serie, type SerieRef } from '@shared/serie';
 import { useBild, useSerienBild } from '../hooks/useBild';
 import { SENDER_FARBE } from '../senderFarben';
 
@@ -58,7 +58,8 @@ export function SerieKachel({ serie, onOeffne, hinweis }: { serie: Serie; onOeff
     staffel: null,
     folge: null,
     extra: false,
-    serieId: serie.id
+    serieId: serie.id,
+    buendel: serie.thema
   };
   return (
     <button type="button" className="kachel serie-kachel" onClick={() => onOeffne(serie)}>
@@ -69,7 +70,7 @@ export function SerieKachel({ serie, onOeffne, hinweis }: { serie: Serie; onOeff
       </span>
       <span className="kachel-titel">{serie.thema}</span>
       <span className="kachel-meta">
-        {serie.art === 'serie' ? 'Serie' : serie.art === 'nachrichten' ? 'Nachrichten' : 'Sendereihe'} · neu: {formatDatum(serie.neueste)}
+        {artName(serie.art)} · neu: {formatDatum(serie.neueste)}
       </span>
     </button>
   );

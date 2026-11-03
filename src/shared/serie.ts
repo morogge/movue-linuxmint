@@ -8,8 +8,15 @@ import { GESEHEN_ANTEIL } from './nutzer';
  * Die Regeln hier nutzen Import (Hauptprozess) und Oberfläche gemeinsam.
  */
 
-/** serie = Staffeln/Folgennummern; reihe = fortlaufend (Magazine, Dokureihen); nachrichten = viele kurze Ausgaben */
-export type SerienArt = 'serie' | 'reihe' | 'nachrichten';
+/**
+ * serie = Staffeln/Folgennummern; reihe = fortlaufend (Magazine, Dokureihen);
+ * filmreihe = eigenständige Filme unter einer Marke (Tatort, Polizeiruf); nachrichten = viele kurze Ausgaben
+ */
+export type SerienArt = 'serie' | 'reihe' | 'filmreihe' | 'nachrichten';
+
+export function artName(art: SerienArt): string {
+  return { serie: 'Serie', reihe: 'Sendereihe', filmreihe: 'Filmreihe', nachrichten: 'Nachrichten' }[art];
+}
 
 /** Ab so vielen Folgen wird ein Thema gebündelt */
 export const MIN_FOLGEN = 3;
@@ -51,7 +58,8 @@ export interface FolgenInfo {
 /** Staffelnummern ab hier sind Jahrgänge (ZDF: „(S2025/E343)“) */
 export const JAHRGANG_AB = 1900;
 
-const EXTRA = /\b(vorschau|making[- ]of|outtakes?|trailer|teaser|bonusmaterial)\b/i;
+// „Kinotrailer“, „Serientrailer“: Trailer auch am Wortende; Podcast-Folgen und Clips sind Beiwerk
+const EXTRA = /(\bvorschau\b|\bmaking[- ]of\b|\bouttakes?\b|trailer\b|\bteaser\b|\bbonusmaterial\b|\bpodcast\b|\bhinter den kulissen\b|\bsneak peek\b)/i;
 
 /** Liest Staffel, Folge und „Extra“ aus einem Titel */
 export function folgenInfo(titel: string): FolgenInfo {
@@ -73,10 +81,35 @@ export function hatNummer(info: Pick<FolgenInfo, 'staffel' | 'folge'>): boolean 
  * Art eines Bündels: Serie, wenn mindestens die Hälfte der Folgen nummeriert ist oder die Folgen
  * überwiegend als Serie gelten; Nachrichten bei kurzen Ausgaben im Genre Nachrichten; sonst Sendereihe.
  */
-export function serienArt(z: { folgen: number; nummeriert: number; dauer: number; genres: GenreId[] }): SerienArt {
+export function serienArt(z: { folgen: number; nummeriert: number; dauer: number; genres: GenreId[]; filme?: number }): SerienArt {
   if (z.genres.includes('nachrichten') && z.dauer < 15 * 60) return 'nachrichten';
-  if (z.nummeriert * 2 >= z.folgen || z.genres.includes('serie')) return 'serie';
+  // Mindestens die Hälfte nummeriert – oder als Serie eingeordnet und kein Film-Format (Episoden unter 75 Min.)
+  if (z.nummeriert * 2 >= z.folgen) return 'serie';
+  if ((z.filme ?? 0) * 10 >= z.folgen * 7) return 'filmreihe';
+  if (z.genres.includes('serie') && z.dauer < 75 * 60) return 'serie';
   return 'reihe';
+}
+
+export interface AusTitel {
+  name: string;
+  staffel: number | null;
+  folge: number | null;
+}
+
+/**
+ * Serienname aus dem Titel – für Sendungen, deren Thema nur eine Rubrik ist (Arte „Fernsehfilme und Serien“,
+ * ZDF „Der Fernsehfilm der Woche“): „Twin Peaks - Staffel 1 (3/8) - Zen …“, „The Hack (4/7)“,
+ * „Wilder: Sau, Staffel 4, Folge 1“. null, wenn der Titel nach einem einzelnen Film aussieht.
+ */
+export function serieAusTitel(titel: string): AusTitel | null {
+  const t = titel.replace(/\s*\((?:audiodeskription|originalversion[^)]*|gebärdensprache|mit untertitel[^)]*)\)\s*/gi, ' ').trim();
+  const staffelTeil = /^(.+?)\s[-–:]\s(?:Staffel|Saison)\s(\d{1,2})\s\((\d{1,3})\/\d{1,3}\)/i.exec(t);
+  if (staffelTeil) return { name: staffelTeil[1].trim(), staffel: Number(staffelTeil[2]), folge: Number(staffelTeil[3]) };
+  const staffelFolge = /^(.+?)(?::\s[^,]+)?,\sStaffel\s(\d{1,2}),\s(?:Folge|Episode)\s(\d{1,3})\s*$/i.exec(t);
+  if (staffelFolge) return { name: staffelFolge[1].trim(), staffel: Number(staffelFolge[2]), folge: Number(staffelFolge[3]) };
+  const teil = /^(.+?)\s\((\d{1,3})\/(\d{1,3})\)(?:\s*[-–:].*)?$/.exec(t);
+  if (teil && Number(teil[3]) >= 2 && Number(teil[2]) <= Number(teil[3])) return { name: teil[1].replace(/\s[-–:]\s*$/, '').trim(), staffel: null, folge: Number(teil[2]) };
+  return null;
 }
 
 /** Gruppe einer Folge auf der Serienseite (Reiter) */

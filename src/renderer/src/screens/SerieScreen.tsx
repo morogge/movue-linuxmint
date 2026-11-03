@@ -3,7 +3,7 @@ import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
 import { genreName } from '@shared/genres';
 import { formatZeit } from '@shared/player';
-import { folgenKennung, gruppenName, gruppeVon, serienUmfang, sortiereGruppen, startFolge, type FolgenStand, type SerieDetail, type SerieRef } from '@shared/serie';
+import { artName, folgenKennung, gruppenName, gruppeVon, serienUmfang, sortiereGruppen, startFolge, type FolgenStand, type SerieDetail, type SerieRef } from '@shared/serie';
 import { GESEHEN_ANTEIL } from '@shared/nutzer';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Icon } from '../components/Icon';
@@ -94,7 +94,7 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
         <div className="detail-text">
           <div className="hero-meta">
             {kopfFilm && <SenderMarke film={kopfFilm} />}
-            <span>{serie.art === 'serie' ? 'Serie' : serie.art === 'nachrichten' ? 'Nachrichten' : 'Sendereihe'}</span>
+            <span>{artName(serie.art)}</span>
           </div>
           <h1 id="serie-titel">{serie.thema}</h1>
           <div className="detail-tags">

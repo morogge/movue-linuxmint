@@ -23,6 +23,8 @@ jobs:
   import:
     name: Echte Filmliste importieren
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,3 +44,16 @@ jobs:
           path: test-results/audit
           if-no-files-found: ignore
           retention-days: 14
+      # Artefakte sind von manchen Arbeitsumgebungen aus nicht erreichbar: Audit-Dumps zusätzlich als Zweig audit/daten
+      - name: Audit-Dumps in Zweig audit/daten
+        if: always() && inputs.nur == 'tests/echt/audit.test.ts'
+        run: |
+          mkdir -p /tmp/daten
+          cd test-results/audit
+          split -b 40m filme.jsonl.gz /tmp/daten/filme.jsonl.gz.teil-
+          cp buendel.json buendel.csv meta.json /tmp/daten/
+          cd /tmp/daten
+          git init -q -b daten
+          git add .
+          git -c user.name=movue-ci -c user.email=ci@example.invalid commit -qm "Audit-Dumps ${{ github.run_id }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" HEAD:refs/heads/audit/daten

@@ -34,3 +34,11 @@ jobs:
         env:
           ECHT_NUR: ${{ inputs.nur || '' }}
           MOVUE_META_MINUTEN: '12'
+      - name: Audit-Dumps hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit
+          path: test-results/audit
+          if-no-files-found: ignore
+          retention-days: 14

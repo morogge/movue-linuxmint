@@ -83,6 +83,8 @@ export function hatNummer(info: Pick<FolgenInfo, 'staffel' | 'folge'>): boolean 
  */
 export function serienArt(z: { folgen: number; nummeriert: number; dauer: number; genres: GenreId[]; filme?: number }): SerienArt {
   if (z.genres.includes('nachrichten') && z.dauer < 15 * 60) return 'nachrichten';
+  // Sport und Nachrichten zählen ihre Ausgaben oft durch (Spieltage, „S2026/E40“) – das macht sie nicht zur Serie
+  if (z.genres.includes('sport') || z.genres.includes('nachrichten')) return 'reihe';
   // Mindestens die Hälfte nummeriert – oder als Serie eingeordnet und kein Film-Format (Episoden unter 75 Min.)
   if (z.nummeriert * 2 >= z.folgen) return 'serie';
   if ((z.filme ?? 0) * 10 >= z.folgen * 7) return 'filmreihe';

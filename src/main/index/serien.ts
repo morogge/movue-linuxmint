@@ -9,28 +9,47 @@ const FILM_DAUER = 75 * 60;
 
 export interface ThemaStatistik {
   gruppe: string;
+  thema: string;
   n: number;
   nummeriert: number;
   /** Folgen ab 75 Minuten */
   filme: number;
   /** Folgen unter 10 Minuten (Trailer, Clips) */
   kurz: number;
+  /** Titel, die das Thema oder ein Datum nennen („Volle Kanne vom 3. November“) – typisch für Magazine */
+  wiederkehrend: number;
   /** Anteil des häufigsten inhaltlichen Genres (ohne Film/Serie/Sonstiges) */
   topGenre: number;
 }
 
+/** Sendeplätze und Rubriken nach ihrem Namen: „Dokumentarfilm“, „ZDFinfo Doku“, „Spielfilm-Highlights“, „Filme im Ersten“ … */
+const RUBRIK_NAME = /\bdokus?\b|dokumentarfilm|einzeldoku|dokumentation(en)?$|^spielfilm|^fernsehfilm|^filme?\b|highlights|^kino\b|^comedy\b|kabarett\b.*comedy|comedy.*kabarett|^märchen$/i;
+
 /**
  * Rubrik statt Reihe: Unter dem Thema stehen verschiedene Filme oder Serien, keine Folgen eines Formats.
  * - Arte führt als Thema nur Rubriken („Fernsehfilme und Serien - Serien“).
- * - Überwiegend Filme ohne Folgennummern und ohne gemeinsames Genre („Filme im Ersten“, „Das kleine Fernsehspiel“) –
- *   anders als Filmreihen wie „Tatort“, deren Filme alle Krimis sind.
- * - Lange Filme gemischt mit vielen kurzen Trailern und Clips.
+ * - Nummerierte Folgen oder Titel, die das Thema bzw. ein Datum nennen, sprechen für eine Reihe oder ein Magazin.
+ * - Sendeplätze mit Rubriken-Namen („Dokumentarfilm“, „Spielfilm-Highlights“).
+ * - Überwiegend Filme ohne gemeinsames Genre („Filme im Ersten“, „Das kleine Fernsehspiel“) – anders als
+ *   Filmreihen wie „Tatort“, deren Filme alle Krimis sind; ebenso lange Filme gemischt mit vielen Trailern.
  */
 export function istRubrik(z: ThemaStatistik): boolean {
   if (z.gruppe === 'Arte') return true;
   if (z.nummeriert >= z.n * 0.2) return false;
-  if (z.filme >= z.n * 0.4 && z.topGenre < 0.6) return true;
-  return z.filme >= z.n * 0.2 && z.kurz >= z.n * 0.2;
+  if (z.wiederkehrend >= z.n * 0.3) return false;
+  if (RUBRIK_NAME.test(z.thema)) return true;
+  if (z.topGenre >= 0.6) return false;
+  return z.filme >= z.n * 0.4 || (z.filme >= z.n * 0.2 && z.kurz >= z.n * 0.2);
+}
+
+/** Gemeinsamer Anfang eines Titels („360° Reportage - Mongolei“ → „360° Reportage“), sonst null */
+export function titelAnfang(titel: string): string | null {
+  const m = /^(.{2,60}?)(?:\s[-–|]\s|:\s)/.exec(titel);
+  if (!m) return null;
+  const anfang = m[1].trim();
+  // Kein Anfang: reine Zahlen, Datumsangaben oder einzelne Buchstaben
+  if (!/\p{L}{2}/u.test(anfang) || /^\d+\.?$/.test(anfang)) return null;
+  return anfang;
 }
 
 /**
@@ -56,11 +75,13 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
         `SELECT gruppe, thema, COUNT(*) AS n,
                 SUM(extra = 0 AND folge IS NOT NULL AND (staffel IS NULL OR staffel < ${JAHRGANG_AB})) AS nummeriert,
                 SUM(extra = 0 AND dauer >= ${FILM_DAUER}) AS filme,
-                SUM(dauer < 600) AS kurz
+                SUM(dauer < 600) AS kurz,
+                SUM(instr(lower(titel), lower(thema)) > 0 OR titel GLOB '*[0-9].[0-9][0-9].[0-9][0-9]*'
+                    OR titel GLOB '*[0-9][0-9].[0-9][0-9].*' OR lower(titel) LIKE '% vom %' OR lower(titel) LIKE 'sendung vom%') AS wiederkehrend
          FROM film WHERE variante = 0 AND ist_reihe(thema) = 1
          GROUP BY gruppe, thema HAVING COUNT(*) >= ${MIN_FOLGEN}`
       )
-      .all() as { gruppe: string; thema: string; n: number; nummeriert: number; filme: number; kurz: number }[];
+      .all() as { gruppe: string; thema: string; n: number; nummeriert: number; filme: number; kurz: number; wiederkehrend: number }[];
     const genreAnteil = db.prepare(
       `SELECT MAX(c) AS top FROM (SELECT COUNT(*) AS c FROM film f JOIN film_genre g ON g.film_id = f.id
        WHERE f.gruppe = ? AND f.thema = ? AND f.variante = 0 AND g.genre NOT IN ('film', 'serie', 'sonstiges') GROUP BY g.genre)`
@@ -68,10 +89,10 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
     const rubrik = db.prepare('INSERT OR IGNORE INTO temp.rubrik (gruppe, thema) VALUES (?, ?)');
     let rubriken = 0;
     for (const z of themen) {
-      // Das Genre zählt nur, wo es die Entscheidung trifft (viele Filme, kaum Nummern)
-      const kandidat = z.gruppe === 'Arte' || (z.nummeriert < z.n * 0.2 && z.filme >= z.n * 0.2);
+      // Das Genre zählt nur, wo es die Entscheidung treffen kann (kaum Nummern, kein Magazin)
+      const kandidat = z.gruppe === 'Arte' || (z.nummeriert < z.n * 0.2 && z.wiederkehrend < z.n * 0.3);
       if (!kandidat) continue;
-      const top = z.gruppe === 'Arte' ? 0 : ((genreAnteil.get(z.gruppe, z.thema) as { top: number | null }).top ?? 0) / z.n;
+      const top = z.gruppe === 'Arte' || RUBRIK_NAME.test(z.thema) ? 0 : ((genreAnteil.get(z.gruppe, z.thema) as { top: number | null }).top ?? 0) / z.n;
       if (istRubrik({ ...z, topGenre: top })) {
         rubrik.run(z.gruppe, z.thema);
         rubriken++;
@@ -86,6 +107,27 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
         WHEN ist_reihe(thema) = 1 AND NOT EXISTS (SELECT 1 FROM temp.rubrik r WHERE r.gruppe = film.gruppe AND r.thema = film.thema) THEN thema
         ELSE NULLIF(reihe_titel, '') END;
     `);
+
+    // 2b. Was in Rubriken und Sammelthemen noch einzeln steht, aber denselben Titelanfang hat, ist eine Reihe:
+    //     „360° Reportage - Mongolei“, „Re: Quallen-Flut“, „Berlin erleben – Der Ku'damm“ (ab drei Sendungen)
+    const einzeln = db
+      .prepare(`SELECT id, gruppe, titel FROM film WHERE variante = 0 AND buendel IS NULL`)
+      .all() as { id: number; gruppe: string; titel: string }[];
+    const anfaenge = new Map<string, number[]>();
+    for (const f of einzeln) {
+      const a = titelAnfang(f.titel);
+      if (!a || !istReihenThema(a)) continue;
+      const k = `${f.gruppe}\u0001${a}`;
+      const liste = anfaenge.get(k);
+      if (liste) liste.push(f.id);
+      else anfaenge.set(k, [f.id]);
+    }
+    const setze = db.prepare('UPDATE film SET buendel = ? WHERE id = ?');
+    for (const [k, ids] of anfaenge) {
+      if (ids.length < MIN_FOLGEN) continue;
+      const name = k.slice(k.indexOf('\u0001') + 1);
+      for (const id of ids) setze.run(name, id);
+    }
 
     // 3. Bündel zählen: ab drei Folgen; Serien aus Titeln (Mehrteiler, Arte-Serien) ab zwei
     const zeilen = db

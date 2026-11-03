@@ -446,6 +446,8 @@ export function reihe(db: Db, anfrage: ReihenAnfrage): Film[] {
       FROM film_genre g JOIN film f ON f.id = g.film_id
       WHERE g.genre = @genre AND g.datum >= @seit AND g.datum <= @bis
         AND f.dauer >= @minDauer AND f.variante = 0 ${filter}
+        -- Spielfilme: keine Folgen von Serien und Magazinen, nur Einzelfilme und Filmreihen (Tatort)
+        AND (@genre != 'film' OR f.serie_id IS NULL OR EXISTS (SELECT 1 FROM serie s WHERE s.id = f.serie_id AND s.art = 'filmreihe'))
     ), r AS (
       SELECT id, datum, ROW_NUMBER() OVER (PARTITION BY schluessel ORDER BY datum DESC) AS rn FROM k
     )

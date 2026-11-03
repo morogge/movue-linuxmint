@@ -277,6 +277,13 @@ export function bestimmeGenres(e: GenreQuelle): GenreId[] {
     genres.add('serie');
   }
 
+  // Kein Spielfilm: kurze Beiträge (außer Kurzfilmen) und Arte-Sendungen „rund um den Film“ (Porträts, Making-of)
+  if (genres.has('film') && e.dauer > 0 && e.dauer < 50 * 60 && !/kurzfilm/i.test(text)) genres.delete('film');
+  if (/rund um den film/i.test(e.thema)) {
+    genres.delete('film');
+    genres.add('kultur');
+  }
+
   if (genres.size === 0) genres.add('sonstiges');
   return [...genres];
 }

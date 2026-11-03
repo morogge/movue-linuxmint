@@ -54,8 +54,9 @@ export function istReihenAnfang(anfang: string, anzahl: number): boolean {
 }
 
 /** Gemeinsamer Anfang eines Titels („360° Reportage - Mongolei“ → „360° Reportage“), sonst null */
-export function titelAnfang(titel: string): string | null {
-  const m = /^(.{2,60}?)(?:\s[-–|]\s|:\s)/.exec(titel);
+export function titelAnfang(titel: string, teile = 1): string | null {
+  const muster = teile === 1 ? /^(.{2,60}?)(?:\s[-–|]\s|:\s)/ : /^(.{2,60}?(?:\s[-–|]\s|:\s).{2,60}?)(?:\s[-–|]\s|:\s)/;
+  const m = muster.exec(titel);
   if (!m) return null;
   const anfang = m[1].trim();
   // Kein Anfang: reine Zahlen, Datumsangaben oder einzelne Buchstaben
@@ -134,7 +135,27 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
       else anfaenge.set(k, [f.id]);
     }
     const setze = db.prepare('UPDATE film SET buendel = ? WHERE id = ?');
+    const vergeben = new Set<number>();
     for (const [k, ids] of anfaenge) {
+      const name = k.slice(k.indexOf('\u0001') + 1);
+      if (!istReihenAnfang(name, ids.length)) continue;
+      for (const id of ids) {
+        setze.run(name, id);
+        vergeben.add(id);
+      }
+    }
+    // Zweiter Versuch mit zwei Titelteilen: „Konfliktzone - Globale Krisen kurz erklärt - Sudan“
+    const zweiteilig = new Map<string, number[]>();
+    for (const f of einzeln) {
+      if (vergeben.has(f.id)) continue;
+      const a = titelAnfang(f.titel, 2);
+      if (!a) continue;
+      const k = `${f.gruppe}\u0001${a}`;
+      const liste = zweiteilig.get(k);
+      if (liste) liste.push(f.id);
+      else zweiteilig.set(k, [f.id]);
+    }
+    for (const [k, ids] of zweiteilig) {
       const name = k.slice(k.indexOf('\u0001') + 1);
       if (!istReihenAnfang(name, ids.length)) continue;
       for (const id of ids) setze.run(name, id);

@@ -4,6 +4,21 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+### Verbessert
+
+- **Ordnung in Serien und Rubriken**: Arte-Serien heißen jetzt wie die Serie („Mord im Mittsommer“, „Haus aus Glas“) statt „Fernsehfilme und Serien“; Reihen wie „360° Reportage“ oder „Re:“ stehen gebündelt, Filme einzeln
+- Rubriken mit ganz verschiedenen Filmen und Trailern (z. B. „Das kleine Fernsehspiel“) erscheinen nicht mehr als Serie
+- Magazine wie „Volle Kanne“, „Kaffee oder Tee“ oder „Hier und heute“ stehen wieder als eine Kachel statt vieler einzelner Ausgaben
+- Folgen tragen die Genres ihrer Reihe: Kulturzeit steht nicht mehr unter Krimi, die Sportschau nicht unter Kultur
+- „Tatort“, „Polizeiruf 110“ und ähnliche heißen jetzt **Filmreihe**; die Reihe „Spielfilme“ zeigt nur noch Filme, keine Magazin- oder Märchenfolgen
+- Sportsendungen mit Spieltag-Nummern sind keine „Serie“ mehr
+- Trailer, Kinotrailer und Podcast-Folgen zählen als Extras
+- Arte-Porträts von Schauspielern und Filmemachern stehen unter Kultur statt unter Spielfilme
+
+### Hinweis
+
+- Beim ersten Start nach dem Update baut Movue das Sendungsverzeichnis einmal neu auf (ein bis zwei Minuten).
+
 ### Neu
 
 - **Fassungen zusammengefasst**: Audiodeskription, Gebärdensprache und Originalfassungen stehen als Auswahl auf der Seite der Sendung; Listen zeigen nur noch die Standardfassung

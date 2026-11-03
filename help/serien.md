@@ -5,7 +5,10 @@ Movue fasst alle Folgen einer Serie oder Sendereihe zusammen. Statt zehn einzeln
 ## Woran du eine Serie erkennst
 
 - Die **Serienkachel** zeigt den Namen der Serie, ihr Titelbild und ihren Umfang, z. B. **2 Staffeln · 24 Folgen**. Darunter steht **Serie** oder **Sendereihe** und das Datum der neuesten Folge.
-- Movue bündelt, wenn ein Sender mindestens drei Folgen unter demselben Namen führt. Sammelrubriken wie „Beiträge“ oder „Fernsehfilm“ bleiben einzelne Sendungen.
+- Movue bündelt, wenn ein Sender mindestens drei Folgen unter demselben Namen führt.
+- **Rubriken** sind keine Serie: Unter „Fernsehfilme und Serien“ (Arte), „Das kleine Fernsehspiel“ oder „Filme im Ersten“ stehen ganz verschiedene Filme und Serien. Dort bündelt Movue nach dem Namen im Titel – „Twin Peaks - Staffel 1 (3/8)“ gehört zur Serie **Twin Peaks**, „360° Reportage - Mongolei“ zur Reihe **360° Reportage**. Alles andere bleibt ein einzelner Film.
+- Arte nennt in seinen Themen nur Rubriken; dort zählt immer der Name im Titel.
+- Mehrteiler wie „Preis der Freiheit (1/3)“ werden schon ab zwei Teilen gebündelt.
 - Läuft dieselbe Sendung bei zwei Sendern (z. B. „Kulturzeit“ bei 3sat und ZDF), bekommt jeder Sender seine eigene Kachel.
 
 ## Titelbilder
@@ -15,6 +18,17 @@ Movue zeigt das Titelbild, das die Mediathek für die Serie verwendet – oft mi
 - **ARD**: auf der Kachel und auf der Serienseite als breites Banner.
 - **ZDF und 3sat**: auf der Kachel und neben dem Titel der Serienseite (ein Banner bieten sie nicht an).
 - **Arte**: liefert kein eigenes Serienbild; dort steht das Bild der neuesten Folge.
+
+## Serie, Sendereihe, Filmreihe
+
+Unter dem Namen steht, was für ein Bündel es ist:
+
+- **Serie**: Folgen mit Staffel- oder Folgennummer, etwa „Die Rosenheim-Cops“.
+- **Filmreihe**: eigenständige Filme unter einer Marke, etwa „Tatort“ oder „Polizeiruf 110“. In der Reihe **Spielfilme** stehen sie einzeln.
+- **Sendereihe**: Magazine und Dokureihen, etwa „Kulturzeit“, „Terra X“ oder „Volle Kanne“.
+- **Nachrichten**: viele kurze Ausgaben; sie erscheinen nicht auf der Startseite.
+
+Ein Bündel steht in den Genres, die zu mindestens einem Drittel seiner Folgen passen. Einzelne Folgen ziehen es nicht in ein fremdes Genre – eine Kulturzeit-Ausgabe über einen Krimi macht das Kulturmagazin nicht zum Krimi.
 
 ## Die Serienseite
 

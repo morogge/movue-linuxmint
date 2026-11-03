@@ -29,6 +29,8 @@ describe('Serien aus Titeln', () => {
     expect(titelAnfang('Re: Quallen-Flut im Mittelmeer')).toBe('Re');
     expect(titelAnfang('Berlin erleben – Der Ku’damm')).toBe('Berlin erleben');
     expect(titelAnfang('Sommer auf Asphalt')).toBeNull();
+    expect(titelAnfang('Konfliktzone - Globale Krisen kurz erklärt - Sudan', 2)).toBe('Konfliktzone - Globale Krisen kurz erklärt');
+    expect(titelAnfang('Israel - Welches Land wollen wir?', 2)).toBeNull();
     expect(titelAnfang('12: Die Zahl')).toBeNull();
   });
 });

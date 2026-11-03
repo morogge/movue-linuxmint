@@ -277,6 +277,14 @@ export function bestimmeGenres(e: GenreQuelle): GenreId[] {
     genres.add('serie');
   }
 
+  // Kein Spielfilm: kurze Beiträge (außer Kurzfilmen) und Arte-Sendungen „rund um den Film“ (Porträts, Making-of)
+  if (genres.has('film') && e.dauer > 0 && e.dauer < 50 * 60 && !/kurzfilm/i.test(text)) genres.delete('film');
+  // Arte „Kino - …“: nur „Filme“ und „Kurzfilme“ sind Filme, der Rest ist Kino-Kultur (Porträts, Festivals)
+  if (/rund um den film/i.test(e.thema) || (e.sender.startsWith('ARTE') && /^kino\s*[-–]/i.test(e.thema) && !/[-–]\s*(kurz)?filme\s*$/i.test(e.thema))) {
+    genres.delete('film');
+    genres.add('kultur');
+  }
+
   if (genres.size === 0) genres.add('sonstiges');
   return [...genres];
 }

@@ -63,10 +63,10 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
       void window.movue.index.auchBei(f.id).then((a) => aktiv && setAuchBei(a));
       void window.movue.index.titelInfo(f.id).then((i) => aktiv && setInfo(i));
       void window.movue.merkliste.ist(f.url).then((g) => aktiv && setGemerkt(g));
-      void window.movue.abo.ist({ gruppe: f.gruppe, thema: f.thema }).then((a) => {
+      void window.movue.abo.ist({ gruppe: f.gruppe, thema: f.buendel ?? f.thema }).then((a) => {
         if (!aktiv) return;
         setAbonniert(a);
-        if (a) void window.movue.abo.gesehen({ gruppe: f.gruppe, thema: f.thema });
+        if (a) void window.movue.abo.gesehen({ gruppe: f.gruppe, thema: f.buendel ?? f.thema });
       });
       // Beim Sender nachfragen, wie lange die Sendung noch abrufbar ist – kommt später oder gar nicht
       void window.movue.ablauf.holen(f.id).then((x) => aktiv && setAblauf(x));
@@ -108,7 +108,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
   const jahr = info?.jahr ?? h?.jahr;
   const herkunftText = [land, jahr].filter(Boolean).join(' ');
   const merkenUmschalten = async () => setGemerkt(await window.movue.merkliste.setzen(film, !gemerkt));
-  const aboUmschalten = async () => setAbonniert(await window.movue.abo.setzen({ gruppe: film.gruppe, thema: film.thema }, !abonniert));
+  const aboUmschalten = async () => setAbonniert(await window.movue.abo.setzen({ gruppe: film.gruppe, thema: film.buendel ?? film.thema }, !abonniert));
   const seiteOeffnen = async () => {
     setSeite('pruefe');
     const art = await window.movue.film.seiteOeffnen({ website: film.website, gruppe: film.gruppe, titel: film.titel });
@@ -197,7 +197,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
                 type="button"
                 className={abonniert ? 'secondary an' : 'secondary'}
                 aria-pressed={abonniert}
-                title={abonniert ? 'Abo beenden' : `Neue Folgen von „${film.thema}“ melden`}
+                title={abonniert ? 'Abo beenden' : `Neue Folgen von „${film.buendel ?? film.thema}“ melden`}
                 onClick={() => void aboUmschalten()}
               >
                 <Icon name="glocke" size={16} /> {abonniert ? 'Abonniert' : 'Reihe abonnieren'}
@@ -220,8 +220,8 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
 
       {film.serieId !== null && (
         <section className="folgen zur-serie" aria-label="Serie">
-          <button type="button" className="secondary" onClick={() => onSerie({ gruppe: film.gruppe, thema: film.thema })}>
-            <Icon name="liste" size={16} /> Alle Folgen von „{film.thema}“
+          <button type="button" className="secondary" onClick={() => onSerie({ gruppe: film.gruppe, thema: film.buendel ?? film.thema })}>
+            <Icon name="liste" size={16} /> Alle Folgen von „{film.buendel ?? film.thema}“
           </button>
           {folgenKennung(film) && <span className="klein">Diese Sendung: {folgenKennung(film)}</span>}
         </section>
@@ -230,7 +230,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
       {film.serieId === null && sichtbareFolgen.length > 0 && (
         <section className="folgen" aria-labelledby="folgen-titel">
           <div className="reihe-kopf">
-            <h2 id="folgen-titel">Weitere Folgen von „{film.thema}“</h2>
+            <h2 id="folgen-titel">Weitere Folgen von „{film.buendel ?? film.thema}“</h2>
             {staffeln.length > 1 && (
               <div className="chips" role="group" aria-label="Staffel">
                 {staffeln.map((n) => (

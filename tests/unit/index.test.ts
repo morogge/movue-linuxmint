@@ -207,7 +207,7 @@ describe('Startseite und Detailseite', () => {
     const erste = suche(db, { text: 'münster' }).treffer[0];
     expect(filmNachId(db, erste.id)?.titel).toBe('Tatort: Der Fall Münster');
     expect(folgen(db, erste).map((f) => f.titel)).toEqual(['Tatort: Der Fall Münster', 'Tatort: Zweiter Fall']);
-    expect(folgen(db, { gruppe: 'ZDF', thema: 'Filme' })).toEqual([]);
+    expect(folgen(db, { gruppe: 'ZDF', thema: 'Filme', buendel: null })).toEqual([]);
   });
 });
 

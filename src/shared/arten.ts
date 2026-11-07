@@ -143,8 +143,12 @@ export function artSeite(id: string | undefined): ArtSeite | undefined {
 
 /** Überschrift der Reihe mit den neuesten Einträgen */
 export function neuTitel(seite: ArtSeite): string {
-  return seite.genre ? `Neu für ${seite.titel}` : `Neu bei ${seite.titel}`;
+  if (seite.genre) return `Neu für ${seite.titel}`;
+  // Dativ: „Neu bei Filmen“, nicht „Neu bei Filme“
+  return `Neu bei ${DATIV[seite.titel] ?? seite.titel}`;
 }
+
+const DATIV: Record<string, string> = { Filme: 'Filmen', Magazine: 'Magazinen' };
 
 /** Die Seite einer Art (für Kacheln unter „Alle Kategorien“) */
 export function seiteFuerFormat(format: Format): ArtSeite | undefined {

@@ -32,5 +32,7 @@ describe('Seiten je Art', () => {
     expect([...KATEGORIE_GENRES, ...KATEGORIE_THEMEN]).not.toContain('sonstiges');
     expect(neuTitel(artSeite('serien')!)).toBe('Neu bei Serien');
     expect(neuTitel(artSeite('kinder')!)).toBe('Neu für Kinder');
+    expect(neuTitel(artSeite('filme')!)).toBe('Neu bei Filmen');
+    expect(neuTitel(artSeite('magazine')!)).toBe('Neu bei Magazinen');
   });
 });

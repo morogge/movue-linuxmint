@@ -231,6 +231,9 @@ describe('Bündel im Index', () => {
     expect(titel(stoebern(db, {}))).not.toContain('Kurzmeldung aus Kiel');
     expect(titel(stoebern(db, { gruppe: 'ZDF' }))).toContain('Kurzmeldung aus Kiel');
     expect(titel(stoebern(db, { format: 'magazin' }))).toEqual(['Kulturzeit']);
+    // Nur Filme bzw. nur Kurzbeiträge: liefert die Filme selbst (früher leer)
+    expect(titel(stoebern(db, { format: 'film' }))).toContain('Sommer auf Asphalt');
+    expect(titel(stoebern(db, { format: 'kurz', gruppe: 'ZDF' }))).toContain('Kurzmeldung aus Kiel');
   });
 
   it('zählt je Art so, wie die Seiten sie zeigen', () => {

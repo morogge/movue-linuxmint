@@ -1,3 +1,4 @@
+import { dirname, join } from 'node:path';
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import type { IndexZustand, SuchAnfrage, SuchErgebnis } from '@shared/film';
 import type { ListenArt } from '../filmliste/quelle';
@@ -194,7 +195,8 @@ export class IndexDienst {
     this.setze({ phase: this.db ? 'bereit' : 'laedt', fortschritt: 0, meldung: undefined });
 
     try {
-      const ergebnis = await this.imWorker({ art, dbPfad: ziel, userAgent: this.userAgent });
+      // Das Wikidata-Paket liegt neben dem Verzeichnis (siehe MetadatenDienst)
+      const ergebnis = await this.imWorker({ art, dbPfad: ziel, userAgent: this.userAgent, metaPfad: join(dirname(this.dbPfad), 'metadaten.json') });
       if (art === 'voll') {
         this.db?.close();
         this.db = null;

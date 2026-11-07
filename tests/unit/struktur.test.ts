@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { folgenInfo, gruppeVon, serieAusTitel, serienArt } from '@shared/serie';
+import { genresAusWikidata, serienSchluessel } from '@shared/metadaten';
 import { baueFassungen, istLive, oeffneDb, reihe, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
 import { baueSerien, istReihenAnfang, istRubrik, serieDetail, serieNachThema, stoebern, titelAnfang } from '../../src/main/index/serien';
 import type { FilmEintrag } from '../../src/main/filmliste/eintrag';
@@ -64,6 +65,14 @@ describe('Rubriken und Arten', () => {
     expect(serienArt({ folgen: 100, nummeriert: 100, dauer: 1800, genres: g(['doku']) })).toBe('reihe');
     // ZDF nummeriert Filmreihen („Die Toten vom Bodensee (S04/E03)“): überwiegend Filme → Filmreihe
     expect(serienArt({ folgen: 30, nummeriert: 30, dauer: 5300, genres: g(['krimi', 'serie']), filme: 30 })).toBe('filmreihe');
+  });
+
+  it('übersetzt Wikidata-Genres', () => {
+    expect(genresAusWikidata(['Kriminalfilm', 'Thriller'])).toEqual(['krimi']);
+    expect(genresAusWikidata(['Tragikomödie', 'Filmdrama'])).toEqual(['comedy', 'drama']);
+    expect(genresAusWikidata(['Dokumentarfilm', 'True Crime', 'Kriminalfilm'])).toEqual(['doku']);
+    expect(genresAusWikidata(['Science-Fiction-Serie', 'Liebesfilm', 'Historienfilm'])).toEqual(['fantasy', 'liebe', 'historisch']);
+    expect(genresAusWikidata(['Fernsehserie'])).toEqual([]);
   });
 
   it('bestimmt die Art eines Bündels', () => {
@@ -153,14 +162,14 @@ describe('Bündel im Index', () => {
     w(e({ ...sport, titel: 'Trailer: Sport am Sonntag', dauer: 40 }));
     w(e({ ...sport, titel: 'Basketball live: Gladiators Trier – Trepca', dauer: 11_100, url: 'https://event.example.org/hls/live/1/master.m3u8' }));
     w(e({ ...sport, titel: 'Vorab: Sport am Montag', datum: 1_893_000_000 }));
-    w(e({ sender: 'ZDF', gruppe: 'ZDF', thema: 'Panorama', titel: 'Kurzer Clip über Kiel', dauer: 90, genres: ['gesellschaft'] }));
+    w(e({ sender: 'ZDF', gruppe: 'ZDF', thema: 'Panorama', titel: 'Kurzmeldung aus Kiel', dauer: 90, genres: ['gesellschaft'] }));
     // Eine Krimi-Folge von dreien macht keine Krimireihe
     const raetsel = { sender: 'ARD', gruppe: 'ARD' as const, thema: 'History or Mystery', genres: ['geschichte'] as GenreId[] };
     w(e({ ...raetsel, titel: 'Burg A (S01/E01)' }));
     w(e({ ...raetsel, titel: 'Burg B (S01/E02)', genres: ['geschichte', 'krimi'] }));
     w(e({ ...raetsel, titel: 'Burg C (S01/E03)' }));
     baueFassungen(aufbau);
-    baueSerien(aufbau);
+    baueSerien(aufbau, { [serienSchluessel('Twin Peaks')]: { q: 'Q2085', g: ['Mysteryserie', 'Dramaserie', 'Fernsehserie'], t: 0 } });
     schliesseAufbau(aufbau);
     aufbau.close();
     db = oeffneDb(pfad);
@@ -169,6 +178,11 @@ describe('Bündel im Index', () => {
   afterAll(() => {
     db.close();
     rmSync(ordner, { recursive: true, force: true });
+  });
+
+  it('übernimmt Genres aus dem Wikidata-Paket für alle Folgen', () => {
+    expect(serieNachThema(db, 'Arte', 'Twin Peaks')?.genres).toEqual(expect.arrayContaining(['fantasy', 'drama', 'serie']));
+    expect(suche(db, { text: 'Twin Peaks', genre: 'drama' }).gesamt).toBe(3);
   });
 
   it('bündelt Arte nach Serienname statt Rubrik', () => {
@@ -208,10 +222,10 @@ describe('Bündel im Index', () => {
     expect(suche(db, { text: 'Sommer auf Asphalt' }).treffer[0].format).toBe('film');
     expect(suche(db, { text: 'Kinotrailer' }).gesamt).toBe(0);
     // Kurzbeitrag ohne Reihe: in der Suche ja, beim Stöbern nur auf der Seite des Senders
-    expect(suche(db, { text: 'Kurzer Clip' }).treffer[0].format).toBe('kurz');
+    expect(suche(db, { text: 'Kurzmeldung' }).treffer[0].format).toBe('kurz');
     const titel = (r: ReturnType<typeof stoebern>) => r.eintraege.map((x) => (x.typ === 'film' ? x.film.titel : x.serie.thema));
-    expect(titel(stoebern(db, {}))).not.toContain('Kurzer Clip über Kiel');
-    expect(titel(stoebern(db, { gruppe: 'ZDF' }))).toContain('Kurzer Clip über Kiel');
+    expect(titel(stoebern(db, {}))).not.toContain('Kurzmeldung aus Kiel');
+    expect(titel(stoebern(db, { gruppe: 'ZDF' }))).toContain('Kurzmeldung aus Kiel');
     expect(titel(stoebern(db, { format: 'magazin' }))).toEqual(['Kulturzeit']);
   });
 

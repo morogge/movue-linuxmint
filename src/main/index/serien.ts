@@ -1,4 +1,5 @@
 import type { Film } from '@shared/film';
+import { filmSchluessel, genresAusWikidata, serienSchluessel, type MetaEintrag } from '@shared/metadaten';
 import { buendelFormat, istFormat, istGenre, KONZERT, type Format, type GenreId } from '@shared/genres';
 import { istGruppe, type SenderGruppe } from '@shared/sender';
 import { JAHRGANG_AB, MIN_FOLGEN, serienArt, sortiereFolgen, type Serie, type SerieDetail } from '@shared/serie';
@@ -70,7 +71,35 @@ export function titelAnfang(titel: string, teile = 1): string | null {
  * Bündelt die Folgen zu Serien bzw. Sendereihen (Tabelle `serie`): je Sender und Thema – bei Rubriken je
  * Serienname aus dem Titel. Läuft nach jedem Import im Index-Thread; die Oberfläche fragt die fertigen Bündel nur ab.
  */
-export function baueSerien(db: Db): { serien: number; rubriken: number; ms: number } {
+/**
+ * Genres aus dem Wikidata-Paket (Drama, Komödie, Krimi …): für Filme über ihren Titel, für Serien und Filmreihen über
+ * den Namen des Bündels – alle Folgen bekommen sie. Läuft im Aufbau nach dem Bündeln der Namen, vor den Genres der Bündel.
+ */
+function wikidataGenres(db: Db, eintraege: Record<string, MetaEintrag>): void {
+  const neu = db.prepare('INSERT OR IGNORE INTO film_genre (genre, film_id, datum) VALUES (?, ?, ?)');
+  const keinKrimi = db.prepare("DELETE FROM film_genre WHERE film_id = ? AND genre = 'krimi'");
+  const setze = (id: number, datum: number, genres: GenreId[]) => {
+    for (const g of genres) neu.run(g, id, datum);
+    if (genres.includes('doku')) keinKrimi.run(id);
+  };
+  const filme = db
+    .prepare(`SELECT f.id, f.titel, f.datum FROM film f JOIN film_genre g ON g.film_id = f.id AND g.genre = 'film' WHERE f.variante = 0`)
+    .all() as { id: number; titel: string; datum: number }[];
+  for (const f of filme) {
+    const e = eintraege[filmSchluessel(f.titel)];
+    if (e?.g) setze(f.id, f.datum, genresAusWikidata(e.g));
+  }
+  const folgen = db.prepare('SELECT id, datum FROM film WHERE gruppe = ? AND buendel = ?');
+  for (const b of db.prepare('SELECT DISTINCT gruppe, buendel FROM film WHERE buendel IS NOT NULL').all() as { gruppe: string; buendel: string }[]) {
+    const e = eintraege[serienSchluessel(b.buendel)];
+    if (!e?.g) continue;
+    const genres = genresAusWikidata(e.g);
+    if (genres.length === 0) continue;
+    for (const f of folgen.all(b.gruppe, b.buendel) as { id: number; datum: number }[]) setze(f.id, f.datum, genres);
+  }
+}
+
+export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): { serien: number; rubriken: number; ms: number } {
   const t0 = Date.now();
   db.function('ist_reihe', { deterministic: true }, (thema: unknown) => (typeof thema === 'string' && istReihenThema(thema) ? 1 : 0));
   const lauf = db.transaction(() => {
@@ -163,6 +192,9 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
       if (!istReihenAnfang(name, ids.length)) continue;
       for (const id of ids) setze.run(name, id);
     }
+
+    // 2c. Genres aus Wikidata, solange die Bündel-Genres noch nicht gezählt sind
+    if (meta) wikidataGenres(db, meta);
 
     // 3. Bündel zählen: ab drei Folgen; Serien aus Titeln (Mehrteiler, Arte-Serien) ab zwei
     const zeilen = db

@@ -5,6 +5,11 @@
 
 export const GENRES = [
   { id: 'krimi', name: 'Krimi & Thriller' },
+  { id: 'drama', name: 'Drama' },
+  { id: 'comedy', name: 'Comedy & Satire' },
+  { id: 'liebe', name: 'Liebe & Familie' },
+  { id: 'fantasy', name: 'Fantasy & Science-Fiction' },
+  { id: 'historisch', name: 'Historienfilme & -serien' },
   { id: 'film', name: 'Spielfilme' },
   { id: 'serie', name: 'Serien' },
   { id: 'doku', name: 'Dokus & Reportagen' },
@@ -12,7 +17,6 @@ export const GENRES = [
   { id: 'geschichte', name: 'Geschichte' },
   { id: 'reise', name: 'Reisen & Länder' },
   { id: 'kultur', name: 'Kultur & Musik' },
-  { id: 'comedy', name: 'Comedy & Satire' },
   { id: 'unterhaltung', name: 'Shows & Unterhaltung' },
   { id: 'nachrichten', name: 'Nachrichten & Politik' },
   { id: 'gesellschaft', name: 'Gesellschaft & Talk' },

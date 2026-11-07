@@ -58,12 +58,15 @@ export interface FolgenInfo {
 /** Staffelnummern ab hier sind Jahrgänge (ZDF: „(S2025/E343)“) */
 export const JAHRGANG_AB = 1900;
 
-// „Kinotrailer“, „Serientrailer“: Trailer auch am Wortende; Podcast-Folgen und Clips sind Beiwerk
-const EXTRA = /(\bvorschau\b|\bmaking[- ]of\b|\bouttakes?\b|trailer\b|\bteaser\b|\bbonusmaterial\b|\bpodcast\b|\bhinter den kulissen\b|\bsneak peek\b)/i;
+// „Kinotrailer“, „Serientrailer“: Trailer auch am Wortende; Podcast-Folgen, Clips und Vorschauen sind Beiwerk
+const EXTRA = /(\bvorschau\b|\bmaking[- ]of\b|\bouttakes?\b|trailer\b|\bteaser\b|\bbonusmaterial\b|\bpodcast\b|\bhinter den kulissen\b|\bsneak peek\b|\bpreview\b|(?:\bweb-|\bonline-|\b)clip\b)/i;
 
-/** Liest Staffel, Folge und „Extra“ aus einem Titel */
-export function folgenInfo(titel: string): FolgenInfo {
-  const extra = EXTRA.test(titel);
+/** Ab dieser Länge ist es eine eigene Sendung, auch wenn der Titel nach Beiwerk klingt („Hinter den Kulissen der Macht“) */
+export const EXTRA_BIS = 20 * 60;
+
+/** Liest Staffel, Folge und „Extra“ aus einem Titel; dauer in Sekunden (0 = unbekannt) */
+export function folgenInfo(titel: string, dauer = 0): FolgenInfo {
+  const extra = EXTRA.test(titel) && (dauer <= 0 || dauer < EXTRA_BIS);
   const se = /\(S(\d{1,4})\/E(\d{1,4})\)/.exec(titel);
   if (se) return { staffel: Number(se[1]), folge: Number(se[2]), extra };
   // „Folge 1237: …“, „3. Folge“ oder eine Nummer am Ende wie „Erinnerungen (958)“
@@ -77,17 +80,24 @@ export function hatNummer(info: Pick<FolgenInfo, 'staffel' | 'folge'>): boolean 
   return info.folge !== null && (info.staffel === null || info.staffel < JAHRGANG_AB);
 }
 
+/** Genres, die für erzählte Fiktion sprechen – nur dann machen Folgennummern ein Bündel zur Serie */
+const FIKTION: GenreId[] = ['serie', 'krimi', 'film', 'comedy', 'kinder'];
+
 /**
- * Art eines Bündels: Serie, wenn mindestens die Hälfte der Folgen nummeriert ist oder die Folgen
- * überwiegend als Serie gelten; Nachrichten bei kurzen Ausgaben im Genre Nachrichten; sonst Sendereihe.
+ * Art eines Bündels: Nachrichten bei kurzen Ausgaben im Genre Nachrichten; Filmreihe, wenn überwiegend Filme
+ * (auch mit ZDF-Nummern wie „Die Toten vom Bodensee (S04/E03)“); Serie, wenn mindestens die Hälfte der Folgen
+ * nummeriert ist und es Fiktion ist; sonst Sendereihe – auch Doku-Serien mit Staffeln („Mittendrin“).
  */
 export function serienArt(z: { folgen: number; nummeriert: number; dauer: number; genres: GenreId[]; filme?: number }): SerienArt {
   if (z.genres.includes('nachrichten') && z.dauer < 15 * 60) return 'nachrichten';
   // Sport und Nachrichten zählen ihre Ausgaben oft durch (Spieltage, „S2026/E40“) – das macht sie nicht zur Serie
   if (z.genres.includes('sport') || z.genres.includes('nachrichten')) return 'reihe';
+  if ((z.filme ?? 0) * 10 >= z.folgen * 7) return 'filmreihe';
+  // Sachsendungen (Doku, Wissen …) ohne Hinweis auf Fiktion bleiben Sendereihen, auch nummeriert
+  const fiktion = z.genres.length === 0 || z.genres.some((g) => FIKTION.includes(g));
+  if (!fiktion) return 'reihe';
   // Mindestens die Hälfte nummeriert – oder als Serie eingeordnet und kein Film-Format (Episoden unter 75 Min.)
   if (z.nummeriert * 2 >= z.folgen) return 'serie';
-  if ((z.filme ?? 0) * 10 >= z.folgen * 7) return 'filmreihe';
   if (z.genres.includes('serie') && z.dauer < 75 * 60) return 'serie';
   return 'reihe';
 }
@@ -114,10 +124,11 @@ export function serieAusTitel(titel: string): AusTitel | null {
   return null;
 }
 
-/** Gruppe einer Folge auf der Serienseite (Reiter) */
+/** Gruppe einer Folge auf der Serienseite (Reiter): Staffeln auch bei Sendereihen (Doku-Serien wie „Mittendrin“) */
 export function gruppeVon(f: Pick<Film, 'staffel' | 'extra' | 'datum'>, art: SerienArt): string {
   if (f.extra) return 'extras';
-  if (art === 'serie') return f.staffel !== null && f.staffel < JAHRGANG_AB ? `s${f.staffel}` : 'folgen';
+  if (f.staffel !== null && f.staffel < JAHRGANG_AB) return `s${f.staffel}`;
+  if (art === 'serie') return 'folgen';
   const jahr = f.staffel !== null && f.staffel >= JAHRGANG_AB ? f.staffel : new Date(f.datum * 1000).getFullYear();
   return `j${jahr}`;
 }

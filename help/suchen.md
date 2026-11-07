@@ -60,6 +60,8 @@ Movue merkt sich deine Wahl. Ein Klick auf eine Kachel, ein Bild oder einen Tite
 - **Abspielen** startet die Sendung im Player von Movue (siehe Hilfe „Player“).
 - **Beim Sender ansehen** öffnet die Seite der Sendung in der Mediathek.
 
+Nicht in der Trefferliste stehen Trailer und Extras (sie findest du auf der Seite ihrer Sendung), Livestreams und Sendungen, die erst angekündigt sind.
+
 ## Wenn die Seite beim Sender fehlt
 
 Die Sender bauen ihre Mediatheken immer wieder um und entfernen Seiten – die Videos selbst bleiben oft noch eine Weile abrufbar. Movue prüft deshalb vor dem Öffnen kurz, ob es die Seite noch gibt. Fehlt sie, öffnet Movue stattdessen die Suche der jeweiligen Mediathek mit dem Titel der Sendung und zeigt unter dem Treffer einen Hinweis. **Abspielen** funktioniert in diesen Fällen meistens trotzdem.

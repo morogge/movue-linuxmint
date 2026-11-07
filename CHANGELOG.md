@@ -4,6 +4,37 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.12.0 – 2026-11-04
+
+### Verbessert
+
+- **Genauere Genres**: Wörter wie „Krimi“, „Mord“, „Garten“ oder „Krieg“ zählen nur noch im Namen einer Sendung, nicht im Titel einer Folge. Ein „Elfmeter-Krimi“ ist damit ein Spielbericht, das Merz-Zitat zum „Ende dieses Krieges“ steht nicht mehr unter Geschichte, „Ridley“ nicht mehr unter Ratgeber
+- Eine Reihe bekommt ein Genre erst, wenn die Mehrheit ihrer Folgen es trägt – eine Folge mit „ermittelt“ macht „History or Mystery“ nicht mehr zum Krimi
+- Dokus über echte Verbrechen stehen unter Dokus statt unter Krimi & Thriller; Spielberichte und Nachrichten nie unter Krimi
+- Krimis vom Bodensee oder aus dem Schwarzwald stehen nicht mehr unter Reisen & Länder; „Die Toten vom Bodensee“ ist eine Filmreihe
+- Doku-Serien wie „Mittendrin – Flughafen Frankfurt“ sind Dokus mit Staffel-Reitern statt „Serie“
+- Viele Krimiserien werden jetzt erkannt, etwa „Death in Paradise“, „The Rookie“ oder „Der letzte Zeuge“
+- Sport und Nachrichten erkennt Movue auch an der Adresse beim Sender (Sportschau, tagesschau, zdfheute)
+- **„Weitere Sendungen“ halb so groß**: Regionale Kurzmeldungen, Musik-, Sport-, Comedy- und Ratgeberformate haben jetzt ihr Genre
+- Mittagsmagazin und Brisant stehen nicht mehr unter Ratgeber & Service
+
+### Behoben
+
+- **Trailer, Clips und Vorschauen** erscheinen nicht mehr als eigene Sendung in Listen, Suche und Genres – nur noch auf der Seite ihrer Reihe unter **Extras**
+- **Livestreams** und angekündigte Übertragungen (z. B. „Basketball live: Gladiators Trier“) stehen nicht mehr zwischen den Videos; Sendungen mit Datum in der Zukunft erscheinen erst, wenn sie zu sehen sind
+- Lange Sendungen wie „Hinter den Kulissen der Macht“ oder Podcast-Aufzeichnungen zählen nicht mehr als Extra
+
+### Geändert
+
+- Auf der Seite einer Sendung gibt es nur noch **Beim Sender ansehen**; „Extern öffnen“ entfällt, Movue hat seinen eigenen Player
+- Auf der Serienseite führt **Beim Sender ansehen** zur Seite der Serie beim Sender
+
+### Hinweis
+
+- Beim ersten Start nach dem Update baut Movue das Sendungsverzeichnis einmal neu auf (ein bis zwei Minuten). Merkliste, Abos und Fortschritt bleiben erhalten.
+
+## 0.11.0 – 2026-11-03
+
 ### Verbessert
 
 - **Ordnung in Serien und Rubriken**: Arte-Serien heißen jetzt wie die Serie („Mord im Mittsommer“, „Haus aus Glas“) statt „Fernsehfilme und Serien“; Reihen wie „360° Reportage“ oder „Re:“ stehen gebündelt, Filme einzeln
@@ -18,6 +49,8 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 ### Hinweis
 
 - Beim ersten Start nach dem Update baut Movue das Sendungsverzeichnis einmal neu auf (ein bis zwei Minuten).
+
+## 0.10.0 – 2026-11-02
 
 ### Neu
 
@@ -39,6 +72,8 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 - Im Vollbild ragte das Video über den Bildschirm hinaus; jetzt ist immer das ganze Bild zu sehen
 - Beim ZDF landeten Links aus dem Seitenfuß unter „Stab“
 
+## 0.9.0 – 2026-11-02
+
 ### Hinweis
 
 - Beim ersten Start nach dem Update baut Movue das Sendungsverzeichnis einmal neu auf (ein bis zwei Minuten).
@@ -49,6 +84,8 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 - **Auch bei …**: Läuft eine Sendung auch bei einem anderen Sender, steht das auf ihrer Seite – ein Klick führt zur anderen Fassung
 - **Besetzung**: Darsteller mit Rollen und der Stab auf der Seite einer Sendung (bei ZDF und 3sat)
 - Alle Angaben stammen von den Sendern selbst; Movue fragt keine fremden Dienste
+
+## 0.8.0 – 2026-11-02
 
 ### Neu
 
@@ -62,6 +99,8 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 ### Hinweis
 
 - Beim ersten Start nach dem Update baut Movue das Sendungsverzeichnis einmal neu auf (ein bis zwei Minuten). Merkliste, Abos und Fortschritt bleiben erhalten.
+
+## 0.7.0 – 2026-11-02
 
 ### Neu
 

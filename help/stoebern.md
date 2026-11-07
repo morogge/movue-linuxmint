@@ -27,7 +27,7 @@ Ein Klick auf eine Kachel oder einen Titel in der Suche öffnet die Detailseite:
 - **Herkunft**: Land und Jahr, sofern Sender oder Titel sie nennen (z. B. „Italien 2015“).
 - **Auch bei …**: Läuft dieselbe Sendung auch bei einem anderen Sender (oft ein Fernsehfilm in der ARD und bei 3sat), führt ein Klick auf den Sender zu dessen Fassung – praktisch, wenn eine Fassung bald abläuft oder nicht abspielbar ist.
 - **Besetzung**: Darsteller mit ihren Rollen und der Stab (Regie, Drehbuch …). ZDF, 3sat und Arte nennen sie selbst; was fehlt – etwa bei der ARD –, ergänzt Movue aus **Wikidata**, der freien Wissensdatenbank. Unter der Liste steht dann „Angaben aus Wikidata“ mit einem Link zum Eintrag. Weicht der Originaltitel ab, steht er unter dem Titel.
-- **Abspielen** startet den Player (bei angefangenen Sendungen: **Weiterschauen ab …**), **Beim Sender ansehen** öffnet die Seite der Mediathek. **Extern öffnen** gibt die Videodatei an den Browser oder dein Videoprogramm.
+- **Abspielen** startet den Player (bei angefangenen Sendungen: **Weiterschauen ab …**), **Beim Sender ansehen** öffnet die Seite der Mediathek.
 - Gehört die Sendung zu einer Serie, führt **Alle Folgen von …** zur Serienseite mit Staffeln und Folgen. Bei Reihen mit nur zwei Folgen stehen die **weiteren Folgen** direkt darunter.
 
 **Zurück** oben links – oder **Alt + ←** – bringt dich zur vorigen Seite.

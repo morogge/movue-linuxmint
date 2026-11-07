@@ -27,6 +27,14 @@ Eine Sendung kann in mehreren Genres stehen. Ein Tatort ist zum Beispiel ein **K
 
 ## Wie Movue die Genres bestimmt
 
-Die Sender liefern keine einheitlichen Genres. Movue leitet sie deshalb selbst ab – aus dem Namen der Reihe (z. B. „Tatort“, „Terra X“, „heute-show“), aus Begriffen im Titel und bei ZDF und 3sat aus der Rubrik der Sendung. Das klappt für rund 95 % aller Sendungen. Was sich keinem Genre zuordnen lässt, steht unter **Weitere Sendungen**.
+Die Sender liefern keine einheitlichen Genres. Movue leitet sie deshalb selbst ab:
+
+- aus dem **Namen der Sendung** (z. B. „Tatort“, „Terra X“, „heute-show“). Allgemeine Wörter wie „Krimi“, „Mord“, „Garten“ oder „Krieg“ zählen nur hier, nicht im Titel einer einzelnen Folge – ein „Elfmeter-Krimi“ ist ein Spielbericht, kein Krimi;
+- aus der **Adresse beim Sender**: Rubriken bei ZDF und 3sat, zdfheute, bei der ARD die Herkunft (Sportschau, tagesschau);
+- aus **Formatangaben** wie „– Spielfilm, USA 1993“ im Titel oder „Fernsehfilm Deutschland 2021“ am Anfang der Beschreibung.
+
+Dazu kommen Ausschlüsse: Sport, Nachrichten und Dokus über echte Verbrechen stehen nie unter **Krimi & Thriller**, Krimis nie unter **Reisen & Länder**. Folgen einer Reihe tragen deren Genres (siehe **Serien und Sendereihen**).
+
+Das klappt für rund 98 % aller Sendungen. Was sich keinem Genre zuordnen lässt, steht unter **Weitere Sendungen**. Trailer, Extras und Livestreams erscheinen in keinem Genre.
 
 Liegt Movue bei einer Sendung daneben? Gib gern Bescheid – die Regeln werden laufend verbessert.

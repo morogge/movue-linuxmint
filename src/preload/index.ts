@@ -54,7 +54,7 @@ const api = {
   },
   film: {
     /** Öffnet die Sendungsseite im Browser – oder die Suche beim Sender, wenn die Seite nicht mehr existiert. */
-    seiteOeffnen: (film: { website: string; gruppe: string; titel: string }): Promise<'seite' | 'suche' | null> =>
+    seiteOeffnen: (film: { website: string; gruppe: string; titel: string; serie?: boolean }): Promise<'seite' | 'suche' | null> =>
       ipcRenderer.invoke('film:seite-oeffnen', film)
   },
   player: {

@@ -2,9 +2,9 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { serieAusTitel, serienArt } from '@shared/serie';
-import { baueFassungen, oeffneDb, reihe, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
-import { baueSerien, istReihenAnfang, istRubrik, serieNachThema, titelAnfang } from '../../src/main/index/serien';
+import { folgenInfo, gruppeVon, serieAusTitel, serienArt } from '@shared/serie';
+import { baueFassungen, istLive, oeffneDb, reihe, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
+import { baueSerien, istReihenAnfang, istRubrik, serieDetail, serieNachThema, stoebern, titelAnfang } from '../../src/main/index/serien';
 import type { FilmEintrag } from '../../src/main/filmliste/eintrag';
 import type { GenreId } from '../../src/shared/genres';
 
@@ -60,6 +60,30 @@ describe('Rubriken und Arten', () => {
     expect(serienArt({ folgen: 50, nummeriert: 40, dauer: 2700, genres: g(['krimi']) })).toBe('serie');
     expect(serienArt({ folgen: 50, nummeriert: 0, dauer: 2700, genres: g(['serie']) })).toBe('serie');
     expect(serienArt({ folgen: 50, nummeriert: 0, dauer: 6000, genres: g(['serie']) })).toBe('reihe');
+    // Doku-Serie mit Staffeln („Mittendrin – Flughafen Frankfurt“) bleibt Sendereihe
+    expect(serienArt({ folgen: 100, nummeriert: 100, dauer: 1800, genres: g(['doku']) })).toBe('reihe');
+    // ZDF nummeriert Filmreihen („Die Toten vom Bodensee (S04/E03)“): überwiegend Filme → Filmreihe
+    expect(serienArt({ folgen: 30, nummeriert: 30, dauer: 5300, genres: g(['krimi', 'serie']), filme: 30 })).toBe('filmreihe');
+  });
+
+  it('führt Staffeln auch bei Sendereihen als Reiter', () => {
+    expect(gruppeVon({ staffel: 12, extra: false, datum: 1_793_000_000 }, 'reihe')).toBe('s12');
+    expect(gruppeVon({ staffel: null, extra: false, datum: 1_793_000_000 }, 'reihe')).toMatch(/^j20/);
+  });
+
+  it('hält lange Sendungen mit Beiwerk-Wörtern im Titel nicht für Extras', () => {
+    expect(folgenInfo('Macron – Merz: Hinter den Kulissen der Macht (1/2)', 2700).extra).toBe(false);
+    expect(folgenInfo('Trailer Tatort Mittelalter', 38).extra).toBe(true);
+    expect(folgenInfo('Der Schneeberg – Web-Clip', 90).extra).toBe(true);
+    expect(folgenInfo('DRUCK – Clip 34', 120).extra).toBe(true);
+  });
+
+  it('erkennt Livestreams', () => {
+    const live = { thema: 'SWR Sport', datum: 1_793_000_000, dauer: 11_100 };
+    expect(istLive({ ...live, url: 'https://event14cloudhls.akamaized.net/hls/live/2017/swr/master.m3u8' })).toBe(true);
+    expect(istLive({ ...live, thema: 'Livestream', url: 'https://x/y.m3u8' })).toBe(true);
+    expect(istLive({ thema: 'Das Erste', datum: 0, dauer: 0, url: 'https://x/y.m3u8' })).toBe(true);
+    expect(istLive({ ...live, url: 'https://cdn.example.org/a.mp4' })).toBe(false);
   });
 });
 
@@ -107,6 +131,17 @@ describe('Bündel im Index', () => {
     w(e({ ...fernsehspiel, titel: 'Film C', dauer: 5400, genres: ['film', 'comedy'] }));
     w(e({ ...fernsehspiel, titel: 'Kinotrailer: Film D', dauer: 120, genres: ['film'] }));
     w(e({ ...fernsehspiel, titel: 'Film E', dauer: 5400, genres: ['film', 'doku'] }));
+    // Trailer, Livestream und Sendung mit Datum in der Zukunft
+    const sport = { sender: 'SWR', gruppe: 'ARD' as const, thema: 'SWR Sport', dauer: 1800, genres: ['sport'] as GenreId[] };
+    for (let i = 1; i <= 3; i++) w(e({ ...sport, titel: `Sport am Sonntag ${i}` }));
+    w(e({ ...sport, titel: 'Trailer: Sport am Sonntag', dauer: 40 }));
+    w(e({ ...sport, titel: 'Basketball live: Gladiators Trier – Trepca', dauer: 11_100, url: 'https://event.example.org/hls/live/1/master.m3u8' }));
+    w(e({ ...sport, titel: 'Vorab: Sport am Montag', datum: 1_893_000_000 }));
+    // Eine Krimi-Folge von dreien macht keine Krimireihe
+    const raetsel = { sender: 'ARD', gruppe: 'ARD' as const, thema: 'History or Mystery', genres: ['geschichte'] as GenreId[] };
+    w(e({ ...raetsel, titel: 'Burg A (S01/E01)' }));
+    w(e({ ...raetsel, titel: 'Burg B (S01/E02)', genres: ['geschichte', 'krimi'] }));
+    w(e({ ...raetsel, titel: 'Burg C (S01/E03)' }));
     baueFassungen(aufbau);
     baueSerien(aufbau);
     schliesseAufbau(aufbau);
@@ -133,6 +168,26 @@ describe('Bündel im Index', () => {
     expect(s?.genres).toEqual(['kultur']);
     expect(suche(db, { text: '', genre: 'krimi', gruppe: '3sat' }).gesamt).toBe(0);
     expect(reihe(db, { genre: 'krimi', gruppe: '3sat', minDauer: 0, jetzt: 1_793_100_000_000 })).toEqual([]);
+  });
+
+  it('zeigt Trailer, Livestreams und Angekündigtes nicht in Listen', () => {
+    const titel = suche(db, { text: 'sport' }).treffer.map((f) => f.titel);
+    expect(titel).toContain('Sport am Sonntag 1');
+    expect(titel).not.toContain('Trailer: Sport am Sonntag');
+    expect(titel.some((t) => t.startsWith('Basketball live'))).toBe(false);
+    expect(titel).not.toContain('Vorab: Sport am Montag');
+    const einzeln = stoebern(db, { genre: 'sport' }).eintraege.map((x) => (x.typ === 'film' ? x.film.titel : x.serie.thema));
+    expect(einzeln.some((t) => t.startsWith('Basketball live') || t.startsWith('Trailer'))).toBe(false);
+    // Der Trailer steht auf der Seite seiner Reihe unter „Extras“, das Bündel endet mit der neuesten sichtbaren Folge
+    const detail = serieDetail(db, 'ARD', 'SWR Sport');
+    expect(detail?.folgen.find((f) => f.titel.startsWith('Trailer'))?.extra).toBe(true);
+    expect(detail?.folgen.some((f) => f.titel.startsWith('Basketball live'))).toBe(false);
+    expect(detail!.serie.neueste).toBeLessThan(1_893_000_000);
+  });
+
+  it('nimmt für ein Bündel die Genres der Mehrheit', () => {
+    expect(serieNachThema(db, 'ARD', 'History or Mystery')?.genres).toEqual(['geschichte']);
+    expect(suche(db, { text: 'Burg B' }).treffer[0].genres).toEqual(['geschichte']);
   });
 
   it('führt eine gemischte Rubrik nicht als Serie', () => {

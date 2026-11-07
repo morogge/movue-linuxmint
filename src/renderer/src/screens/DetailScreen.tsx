@@ -18,11 +18,6 @@ export function staffelVon(titel: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
-function videoDatei(film: Film): string | null {
-  const url = film.urlHd || film.url;
-  return /^https?:\/\/.+\.mp4(\?|$)/i.test(url) ? url : null;
-}
-
 interface Props {
   filmId: number;
   onOeffne: (f: Film) => void;
@@ -100,7 +95,6 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
     );
   }
 
-  const video = videoDatei(film);
   const ablaufText = formatAblauf(ablauf);
   // Land und Jahr: vom Sender (Arte, Wikidata) oder aus Titel/Beschreibung („Spielfilm, Italien 2015“)
   const h = herkunft(film.titel, film.beschreibung);
@@ -184,11 +178,6 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
             <button type="button" className="primary" onClick={() => onAbspielen(film)}>
               <Icon name="play" size={16} /> {position !== null ? `Weiterschauen ab ${formatZeit(position)}` : 'Abspielen'}
             </button>
-            {video && (
-              <a className="text-button" href={video} target="_blank" rel="noreferrer" title="Videodatei im Browser oder Videoprogramm öffnen">
-                Extern öffnen
-              </a>
-            )}
             <button type="button" className={gemerkt ? 'secondary an' : 'secondary'} aria-pressed={gemerkt} onClick={() => void merkenUmschalten()}>
               <Icon name="bookmark" size={16} /> {gemerkt ? 'Gemerkt' : 'Merken'}
             </button>

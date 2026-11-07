@@ -14,6 +14,9 @@ export interface ImportErgebnis {
 
 const BLOCK = 5000;
 
+/** Weiter in der Zukunft liegt kein echtes Sendedatum (Sekunden) */
+const MAX_VORAUS = 365 * 86400;
+
 /**
  * Liest eine Filmliste (entpackter JSON-Strom) und schreibt alle passenden Einträge in die Datenbank.
  * Schreibt blockweise in Transaktionen; vorhandene Einträge (gleiche Adresse) werden aktualisiert.
@@ -44,6 +47,9 @@ export async function importiere(
     verarbeitet++;
     const e = leser.lies(werte);
     if (e) {
+      // Daten mehr als ein Jahr nach dem Listenstand sind Fehler der Quelle („13.12.2204“)
+      const bezug = Math.floor((stand ?? Date.now()) / 1000);
+      if (e.datum > bezug + MAX_VORAUS) e.datum = bezug;
       e.genres = bestimmeGenres(e);
       puffer.push(e);
       anzahl++;

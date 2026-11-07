@@ -61,6 +61,8 @@ export interface Details {
   land: string[];
   jahr?: string;
   original?: string;
+  /** Genres und Typen (deutsche Bezeichnungen), z. B. „Kriminalfilm“, „Dokumentarfilm“ */
+  genres: string[];
 }
 
 /** Besetzung (mit Rolle, wo eingetragen), Regie, Land, Jahr, Originaltitel für mehrere Items */
@@ -68,7 +70,7 @@ export async function details(items: string[]): Promise<Map<string, Details>> {
   const map = new Map<string, Details>();
   if (items.length === 0) return map;
   const werte = items.map((q) => `wd:${q}`).join(' ');
-  const leer = (): Details => ({ darsteller: [], regie: [], land: [] });
+  const leer = (): Details => ({ darsteller: [], regie: [], land: [], genres: [] });
   const hole = (q: string) => {
     let d = map.get(q);
     if (!d) map.set(q, (d = leer()));
@@ -104,13 +106,15 @@ export async function details(items: string[]): Promise<Map<string, Details>> {
     if (d.darsteller.length < 25) d.darsteller.push([name, rolle]);
   }
 
-  const meta = await sparql(`SELECT ?item ?regie ?land ?jahr ?original WHERE {
+  const meta = await sparql(`SELECT ?item ?regie ?land ?jahr ?original ?genre ?typ WHERE {
     VALUES ?item { ${werte} }
     OPTIONAL { ?item wdt:P57 ?r }
     OPTIONAL { ?item wdt:P495 ?l }
     OPTIONAL { ?item wdt:P577 ?jahr }
     OPTIONAL { ?item wdt:P1476 ?original }
-    SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en". ?r rdfs:label ?regie . ?l rdfs:label ?land . }
+    OPTIONAL { ?item wdt:P136 ?g }
+    OPTIONAL { ?item wdt:P31 ?t }
+    SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en". ?r rdfs:label ?regie . ?l rdfs:label ?land . ?g rdfs:label ?genre . ?t rdfs:label ?typ . }
   }`);
   for (const b of meta) {
     const q = qid(b.item?.value);
@@ -123,6 +127,7 @@ export async function details(items: string[]): Promise<Map<string, Details>> {
     const jahr = b.jahr?.value.slice(0, 4);
     if (jahr && (!d.jahr || jahr < d.jahr)) d.jahr = jahr;
     if (b.original?.value && !d.original) d.original = b.original.value;
+    for (const g of [b.genre?.value, b.typ?.value]) if (g && !/^Q\d+$/.test(g) && !d.genres.includes(g) && d.genres.length < 12) d.genres.push(g);
   }
   return map;
 }

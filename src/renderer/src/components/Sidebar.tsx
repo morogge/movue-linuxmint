@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { IndexZustand } from '@shared/film';
 import { formatStand, formatZahl } from '@shared/format';
-import type { ScreenId } from '@shared/screens';
+import { ART_SEITEN } from '@shared/arten';
 import { GRUPPEN } from '@shared/sender';
 import type { Ansicht } from '../App';
 import { SENDER_FARBE } from '../senderFarben';
@@ -9,20 +9,49 @@ import type { UpdateZustand } from '@shared/update';
 import { Icon, type IconName } from './Icon';
 
 interface NavItem {
-  id: ScreenId | null;
+  /** Bildschirm oder Art-Seite; null = folgt in einer späteren Version */
+  ziel: Ansicht | null;
   label: string;
   icon: IconName;
+  leise?: boolean;
 }
 
-// Einträge ohne id folgen in späteren Versionen und sind noch deaktiviert
-const NAV: NavItem[] = [
-  { id: 'start', label: 'Start', icon: 'home' },
-  { id: 'suche', label: 'Suche', icon: 'search' },
-  { id: 'genres', label: 'Genres', icon: 'grid' },
-  { id: 'merkliste', label: 'Merkliste', icon: 'bookmark' },
-  { id: 'ablauf', label: 'Läuft bald ab', icon: 'clock' },
-  { id: null, label: 'Live-TV', icon: 'tv' }
+const ART_ICON: Record<string, IconName> = {
+  serien: 'tv',
+  filme: 'film',
+  dokus: 'doku',
+  shows: 'show',
+  nachrichten: 'nachrichten',
+  sport: 'sport',
+  kinder: 'kinder'
+};
+
+const art = (seite: string): Ansicht => ({ screen: 'art', seite });
+
+// Gruppen, durch Linien getrennt: Start | Arten | Live, Merkliste, Suche
+const NAV: NavItem[][] = [
+  [{ ziel: { screen: 'start' }, label: 'Start', icon: 'home' }],
+  [
+    ...ART_SEITEN.filter((s) => s.seitenleiste).map((s): NavItem => ({ ziel: art(s.id), label: s.titel, icon: ART_ICON[s.id] ?? 'grid' })),
+    { ziel: { screen: 'kategorien' }, label: 'Alle Kategorien', icon: 'grid', leise: true }
+  ],
+  [
+    { ziel: null, label: 'Live & demnächst', icon: 'live' },
+    { ziel: { screen: 'merkliste' }, label: 'Merkliste', icon: 'bookmark' },
+    { ziel: { screen: 'suche' }, label: 'Suche', icon: 'search' }
+  ]
 ];
+
+/** Ist dieser Eintrag die aktuelle Seite? Genre-Seiten und Seiten ohne eigenen Eintrag gehören zu „Alle Kategorien“ */
+function aktivBei(ziel: Ansicht | null, ansicht: Ansicht): boolean {
+  if (!ziel) return false;
+  if (ziel.screen === 'art') return ansicht.screen === 'art' && ansicht.seite === ziel.seite;
+  if (ziel.screen === 'kategorien') {
+    if (ansicht.screen === 'genre' || ansicht.screen === 'ablauf') return true;
+    if (ansicht.screen === 'art') return !ART_SEITEN.find((s) => s.id === ansicht.seite)?.seitenleiste;
+  }
+  return ziel.screen === ansicht.screen;
+}
 
 function IndexStatus({ zustand }: { zustand: IndexZustand }) {
   const laedt = zustand.fortschritt !== undefined;
@@ -93,24 +122,29 @@ export function Sidebar({
           <Icon name={eingeklappt ? 'rechts' : 'links'} size={18} />
         </button>
       </div>
-      <ul className="nav">
-        {NAV.map((item) => (
-          <li key={item.label}>
-            <button
-              type="button"
-              className={item.id === ansicht.screen ? 'nav-item active' : 'nav-item'}
-              disabled={item.id === null}
-              aria-current={item.id === ansicht.screen ? 'page' : undefined}
-              aria-label={item.label}
-              title={item.id === null ? 'Folgt in einer späteren Version' : eingeklappt ? item.label : undefined}
-              onClick={() => item.id && onNavigate({ screen: item.id })}
-            >
-              <Icon name={item.icon} />
-              <span className="nav-text">{item.label}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {NAV.map((gruppe, i) => (
+        <ul className={i === 0 ? 'nav' : 'nav getrennt'} key={i}>
+          {gruppe.map((item) => {
+            const aktiv = aktivBei(item.ziel, ansicht);
+            return (
+              <li key={item.label}>
+                <button
+                  type="button"
+                  className={['nav-item', aktiv && 'active', item.leise && 'leise'].filter(Boolean).join(' ')}
+                  disabled={item.ziel === null}
+                  aria-current={aktiv ? 'page' : undefined}
+                  aria-label={item.label}
+                  title={item.ziel === null ? 'Folgt in Version 0.14' : eingeklappt ? item.label : undefined}
+                  onClick={() => item.ziel && onNavigate(item.ziel)}
+                >
+                  <Icon name={item.icon} size={item.leise ? 18 : 20} />
+                  <span className="nav-text">{item.label}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ))}
       <div className="nav-gruppe">
         <span className="nav-ueberschrift">Sender</span>
         <ul className="nav">

@@ -1961,3 +1961,264 @@ button {
 .besetzung .quelle a {
   color: var(--text-2);
 }
+
+/* 0.13: Seitenleiste nach Art */
+.nav.getrennt {
+  margin-top: -12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.nav-item.leise {
+  min-height: 40px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.nav-item.leise.active {
+  color: #fff;
+}
+
+/* Kopf von Art-, Genre- und Kategorie-Seiten */
+.art-seite,
+.genre-seite,
+.kategorien {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.seiten-kopf {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seiten-kopf h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.seiten-text {
+  margin: 0;
+  max-width: 720px;
+  color: var(--text-2);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.brotkrumen {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.brotkrumen .text-button {
+  padding: 0;
+  font-size: 13px;
+}
+
+.genre-kopf {
+  min-height: 180px;
+  justify-content: flex-end;
+  padding: 32px 36px;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #20242a 0%, #16191d 100%);
+}
+
+.genre-kopf h1 {
+  font-size: 38px;
+}
+
+.ueberzeile {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* Reiter je Art auf einer Genre-Seite */
+.reiter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.reiter-knopf {
+  height: 44px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.reiter-knopf.an {
+  color: #fff;
+  font-weight: 600;
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+
+.reiter-zahl {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.mehr-laden {
+  display: flex;
+  justify-content: center;
+}
+
+/* Alle Kategorien */
+.kategorie-gruppe {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kategorie-gruppe h2 {
+  margin: 8px 0 0;
+  font-size: 22px;
+}
+
+.kategorie-gruppe .anzahl {
+  margin: -6px 0 0;
+}
+
+.kategorie-unter {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.kategorie-raster {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.kategorie-raster.gross {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.kategorie-raster > li {
+  display: flex;
+}
+
+.kategorie-kachel,
+.art-kachel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-height: 76px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.kategorie-kachel:hover,
+.art-kachel:hover {
+  border-color: var(--accent);
+}
+
+.kategorie-kachel.mit-icon {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.kategorie-kachel.mit-icon > svg {
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.kategorie-kachel.mit-icon > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.art-kachel {
+  position: relative;
+  min-height: 132px;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 20px;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #20242a 0%, #16191d 100%);
+}
+
+.art-icon {
+  display: flex;
+  color: var(--accent);
+}
+
+.art-kachel .kategorie-name {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.nur-hier {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.kategorie-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.kategorie-zahl {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dot.gross {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+
+/* Serien und Reihen als eine Kachel: angedeuteter Stapel über dem Bild */
+.serie-kachel .kachel-bild {
+  margin-top: 5px;
+}
+
+.serie-kachel .kachel-bild::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 10px;
+  right: 10px;
+  height: 5px;
+  border-radius: 6px 6px 0 0;
+  background: var(--border-strong);
+}

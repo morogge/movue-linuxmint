@@ -1,38 +1,24 @@
 import { useCallback, useState } from 'react';
 import type { Film, IndexZustand } from '@shared/film';
 import { formatDatum, formatDauer, formatZahl } from '@shared/format';
-import { genreName, type GenreId } from '@shared/genres';
+import { genreName } from '@shared/genres';
+import { artSeite, neuTitel, type ArtSeite } from '@shared/arten';
 import { GRUPPEN, type SenderGruppe } from '@shared/sender';
 import { FilmBild, SenderMarke } from '../components/Kachel';
-import { Reihe } from '../components/Reihe';
+import { Reihe, type StoebernEintrag } from '../components/Reihe';
 import { Weiterschauen } from '../components/Weiterschauen';
 import { NeueFolgen } from '../components/NeueFolgen';
 import type { SerieRef } from '@shared/serie';
 
-/** Reihen auf der Startseite und den Sender-Seiten, in dieser Reihenfolge */
-export const START_REIHEN: GenreId[] = [
-  'film',
-  'krimi',
-  'doku',
-  'serie',
-  'wissen',
-  'geschichte',
-  'reise',
-  'kultur',
-  'comedy',
-  'unterhaltung',
-  'gesellschaft',
-  'ratgeber',
-  'kinder',
-  'sport'
-];
+/** Reihen auf der Startseite und den Sender-Seiten: je Art die neuesten, Serien als eine Kachel */
+export const START_REIHEN = ['serien', 'filme', 'dokus', 'shows', 'kinder', 'magazine', 'sport', 'konzert', 'nachrichten'] as const;
 
 interface Props {
   zustand: IndexZustand;
   /** Gesetzt auf einer Sender-Seite: nur Sendungen dieser Mediathek */
   gruppe?: SenderGruppe | null;
   onOeffne: (f: Film) => void;
-  onGenre: (g: GenreId) => void;
+  onArt: (s: ArtSeite, gruppe: SenderGruppe | null) => void;
   onAbspielen: (f: Film) => void;
   onSerie: (s: SerieRef) => void;
 }
@@ -69,15 +55,15 @@ function Hero({ film, onOeffne, onAbspielen }: { film: Film; onOeffne: (f: Film)
   );
 }
 
-export function StartScreen({ zustand, gruppe = null, onOeffne, onGenre, onAbspielen, onSerie }: Props) {
+export function StartScreen({ zustand, gruppe = null, onOeffne, onArt, onAbspielen, onSerie }: Props) {
   const [hero, setHero] = useState<Film | null>(null);
 
   // Die Empfehlung oben: der neueste Spielfilm (oder sonst die neueste Doku) mit Beschreibung
-  const reiheGeladen = useCallback((genre: GenreId, filme: Film[]) => {
-    if (genre !== 'film' && genre !== 'doku') return;
-    const kandidat = filme.find((f) => f.beschreibung.length > 40 && f.dauer >= 40 * 60);
+  const reiheGeladen = useCallback((seite: string, eintraege: StoebernEintrag[]) => {
+    if (seite !== 'filme' && seite !== 'dokus') return;
+    const kandidat = eintraege.flatMap((e) => (e.typ === 'film' ? [e.film] : [])).find((f) => f.beschreibung.length > 40 && f.dauer >= 40 * 60);
     if (!kandidat) return;
-    setHero((alt) => (alt && (genre === 'doku' || alt.genres.includes('film')) ? alt : kandidat));
+    setHero((alt) => (alt && (seite === 'dokus' || alt.format === 'film') ? alt : kandidat));
   }, []);
 
   const name = gruppe ? GRUPPEN.find((g) => g.id === gruppe)?.name : null;
@@ -107,9 +93,24 @@ export function StartScreen({ zustand, gruppe = null, onOeffne, onGenre, onAbspi
       {hero && <Hero film={hero} onOeffne={onOeffne} onAbspielen={onAbspielen} />}
       {!gruppe && <Weiterschauen stand={zustand.stand} onAbspielen={onAbspielen} />}
       {!gruppe && <NeueFolgen stand={zustand.stand} onOeffne={onOeffne} onSerie={onSerie} />}
-      {START_REIHEN.map((g) => (
-        <Reihe key={`${gruppe ?? 'alle'}-${g}`} genre={g} gruppe={gruppe} stand={zustand.stand} onOeffne={onOeffne} onAlle={onGenre} onGeladen={reiheGeladen} onSerie={onSerie} />
-      ))}
+      {START_REIHEN.map((id) => {
+        const seite = artSeite(id);
+        if (!seite) return null;
+        return (
+          <Reihe
+            key={`${gruppe ?? 'alle'}-${id}`}
+            titel={neuTitel(seite)}
+            anfrage={{ format: seite.format ?? null, genre: seite.genre ?? null, gruppe }}
+            stand={zustand.stand}
+            onOeffne={onOeffne}
+            onSerie={onSerie}
+            onAlle={() => onArt(seite, gruppe)}
+            onGeladen={(e) => reiheGeladen(id, e)}
+          />
+        );
+      })}
+      {/* Kurzbeiträge nur auf der Seite eines Senders */}
+      {gruppe && <Reihe key={`${gruppe}-kurz`} titel="Kurzbeiträge" anfrage={{ format: 'kurz', gruppe }} stand={zustand.stand} onOeffne={onOeffne} onSerie={onSerie} />}
     </section>
   );
 }

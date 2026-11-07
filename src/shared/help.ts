@@ -3,7 +3,7 @@
  * „Was ist neu“ wird nicht aus help/, sondern aus CHANGELOG.md erzeugt.
  */
 
-export const HELP_ORDER = ['erste-schritte', 'stoebern', 'serien', 'player', 'merkliste', 'suchen', 'genres', 'tastenkuerzel', 'aktualisierungen', 'datenquellen', 'was-ist-neu'] as const;
+export const HELP_ORDER = ['erste-schritte', 'stoebern', 'serien', 'player', 'merkliste', 'suchen', 'kategorien', 'tastenkuerzel', 'aktualisierungen', 'datenquellen', 'was-ist-neu'] as const;
 
 export const CHANGELOG_PAGE_ID = 'was-ist-neu';
 

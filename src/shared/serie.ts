@@ -1,5 +1,5 @@
 import type { Film } from './film';
-import type { GenreId } from './genres';
+import type { Format, GenreId } from './genres';
 import type { SenderGruppe } from './sender';
 import { GESEHEN_ANTEIL } from './nutzer';
 
@@ -26,6 +26,8 @@ export interface Serie {
   gruppe: SenderGruppe;
   thema: string;
   art: SerienArt;
+  /** Art der Sendung (Serie, Doku, Magazin …) */
+  format: Format;
   /** Folgen ohne Extras und Varianten */
   folgen: number;
   extras: number;
@@ -81,7 +83,7 @@ export function hatNummer(info: Pick<FolgenInfo, 'staffel' | 'folge'>): boolean 
 }
 
 /** Genres, die für erzählte Fiktion sprechen – nur dann machen Folgennummern ein Bündel zur Serie */
-const FIKTION: GenreId[] = ['serie', 'krimi', 'film', 'comedy', 'kinder'];
+const FIKTION: GenreId[] = ['serie', 'krimi', 'film', 'comedy', 'kinder', 'drama', 'liebe', 'fantasy', 'historisch'];
 
 /**
  * Art eines Bündels: Nachrichten bei kurzen Ausgaben im Genre Nachrichten; Filmreihe, wenn überwiegend Filme

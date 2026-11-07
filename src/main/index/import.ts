@@ -4,6 +4,7 @@ import { bestimmeGenres } from '../genre/regeln';
 import { FilmlistenParser } from '../filmliste/parser';
 import { baueFassungen, schreiber, schreibeMeta, type Db } from './datenbank';
 import { baueSerien } from './serien';
+import type { MetaEintrag } from '@shared/metadaten';
 
 export interface ImportErgebnis {
   /** Anzahl übernommener Sendungen (nur Sender, die Movue anzeigt) */
@@ -24,7 +25,9 @@ const MAX_VORAUS = 365 * 86400;
 export async function importiere(
   quelle: Readable,
   db: Db,
-  onFortschritt?: (verarbeitet: number) => void
+  onFortschritt?: (verarbeitet: number) => void,
+  /** Einträge des Wikidata-Pakets: liefern Genres für Filme und Serien (Drama, Komödie …) */
+  meta?: Record<string, MetaEintrag> | null
 ): Promise<ImportErgebnis> {
   const schreibe = schreiber(db);
   const leser = new EintragsLeser();
@@ -71,6 +74,6 @@ export async function importiere(
   if (stand !== null) schreibeMeta(db, 'stand', stand);
   // Fassungen zuordnen, dann Serien und Sendereihen bündeln – nach jedem Import neu, auch nach einem Diff
   baueFassungen(db);
-  baueSerien(db);
+  baueSerien(db, meta);
   return { anzahl, stand };
 }

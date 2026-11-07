@@ -3,10 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { folgenInfo, gruppeVon, serieAusTitel, serienArt } from '@shared/serie';
+import { genresAusWikidata, serienSchluessel } from '@shared/metadaten';
 import { baueFassungen, istLive, oeffneDb, reihe, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
-import { baueSerien, istReihenAnfang, istRubrik, serieDetail, serieNachThema, stoebern, titelAnfang } from '../../src/main/index/serien';
+import { artAnzahlen, baueSerien, istReihenAnfang, istRubrik, serieDetail, serieNachThema, stoebern, titelAnfang } from '../../src/main/index/serien';
 import type { FilmEintrag } from '../../src/main/filmliste/eintrag';
-import type { GenreId } from '../../src/shared/genres';
+import { buendelFormat, type GenreId } from '../../src/shared/genres';
 
 describe('Serien aus Titeln', () => {
   it('liest Arte- und 3sat-Muster', () => {
@@ -64,6 +65,39 @@ describe('Rubriken und Arten', () => {
     expect(serienArt({ folgen: 100, nummeriert: 100, dauer: 1800, genres: g(['doku']) })).toBe('reihe');
     // ZDF nummeriert Filmreihen („Die Toten vom Bodensee (S04/E03)“): überwiegend Filme → Filmreihe
     expect(serienArt({ folgen: 30, nummeriert: 30, dauer: 5300, genres: g(['krimi', 'serie']), filme: 30 })).toBe('filmreihe');
+  });
+
+  it('übersetzt Wikidata-Genres', () => {
+    expect(genresAusWikidata(['Kriminalfilm', 'Thriller'])).toEqual(['krimi']);
+    expect(genresAusWikidata(['Tragikomödie', 'Filmdrama'])).toEqual(['comedy', 'drama']);
+    expect(genresAusWikidata(['Dokumentarfilm', 'True Crime', 'Kriminalfilm'])).toEqual(['doku']);
+    expect(genresAusWikidata(['Science-Fiction-Serie', 'Liebesfilm', 'Historienfilm'])).toEqual(['fantasy', 'liebe', 'historisch']);
+    expect(genresAusWikidata(['Fernsehserie'])).toEqual([]);
+    expect(genresAusWikidata(['Mysteryserie', 'Kriminal-Fernsehserie'])).toEqual(['krimi']);
+  });
+
+  it('bestimmt die Art eines Bündels', () => {
+    const b = (art: 'serie' | 'reihe' | 'filmreihe' | 'nachrichten', genres: GenreId[], thema = 'X', datiert = 0, dauer = 1800) =>
+      buendelFormat({ art, genres, thema, dauer, datiert });
+    expect(b('nachrichten', ['nachrichten'])).toBe('nachrichten');
+    expect(b('filmreihe', ['krimi'], 'Tatort')).toBe('film');
+    expect(b('serie', ['serie'])).toBe('serie');
+    expect(b('reihe', ['sport'], 'Sportschau')).toBe('sport');
+    expect(b('reihe', ['doku'], 'Mittendrin - Flughafen Frankfurt')).toBe('doku');
+    expect(b('reihe', ['kultur'], 'Kulturzeit', 0.9)).toBe('magazin');
+    expect(b('reihe', ['ratgeber'], 'Garten-Doc')).toBe('magazin');
+    expect(b('reihe', ['comedy'], 'heute-show')).toBe('show');
+    // Satire und Talk über Politik sind Shows, keine Nachrichten
+    expect(b('reihe', ['comedy', 'nachrichten', 'unterhaltung'], 'heute-show')).toBe('show');
+    expect(b('reihe', ['nachrichten'], 'Markus Lanz', 0, 75 * 60)).toBe('show');
+    expect(b('reihe', ['nachrichten'], 'maischberger')).toBe('show');
+    expect(b('reihe', ['gesellschaft'], 'maischberger')).toBe('show');
+    expect(b('reihe', ['kultur'], 'ARTE Concert')).toBe('konzert');
+    expect(b('reihe', ['wissen'], 'Terra X')).toBe('doku');
+    // Fiktion ohne Staffeln: lange Folgen sind Filme, kurze eine Serie
+    expect(b('reihe', ['krimi'], 'Tatort', 0, 88 * 60)).toBe('film');
+    expect(b('reihe', ['krimi'], 'SOKO Köln', 0, 45 * 60)).toBe('serie');
+    expect(b('reihe', ['krimi', 'doku'], 'Killer, Kühe, Kommissare', 0, 88 * 60)).toBe('doku');
   });
 
   it('führt Staffeln auch bei Sendereihen als Reiter', () => {
@@ -137,13 +171,14 @@ describe('Bündel im Index', () => {
     w(e({ ...sport, titel: 'Trailer: Sport am Sonntag', dauer: 40 }));
     w(e({ ...sport, titel: 'Basketball live: Gladiators Trier – Trepca', dauer: 11_100, url: 'https://event.example.org/hls/live/1/master.m3u8' }));
     w(e({ ...sport, titel: 'Vorab: Sport am Montag', datum: 1_893_000_000 }));
+    w(e({ sender: 'ZDF', gruppe: 'ZDF', thema: 'Panorama', titel: 'Kurzmeldung aus Kiel', dauer: 90, genres: ['gesellschaft'] }));
     // Eine Krimi-Folge von dreien macht keine Krimireihe
     const raetsel = { sender: 'ARD', gruppe: 'ARD' as const, thema: 'History or Mystery', genres: ['geschichte'] as GenreId[] };
     w(e({ ...raetsel, titel: 'Burg A (S01/E01)' }));
     w(e({ ...raetsel, titel: 'Burg B (S01/E02)', genres: ['geschichte', 'krimi'] }));
     w(e({ ...raetsel, titel: 'Burg C (S01/E03)' }));
     baueFassungen(aufbau);
-    baueSerien(aufbau);
+    baueSerien(aufbau, { [serienSchluessel('Twin Peaks')]: { q: 'Q2085', g: ['Mysteryserie', 'Fantasyserie', 'Dramaserie', 'Fernsehserie'], t: 0 } });
     schliesseAufbau(aufbau);
     aufbau.close();
     db = oeffneDb(pfad);
@@ -152,6 +187,11 @@ describe('Bündel im Index', () => {
   afterAll(() => {
     db.close();
     rmSync(ordner, { recursive: true, force: true });
+  });
+
+  it('übernimmt Genres aus dem Wikidata-Paket für alle Folgen', () => {
+    expect(serieNachThema(db, 'Arte', 'Twin Peaks')?.genres).toEqual(expect.arrayContaining(['fantasy', 'drama', 'serie']));
+    expect(suche(db, { text: 'Twin Peaks', genre: 'drama' }).gesamt).toBe(3);
   });
 
   it('bündelt Arte nach Serienname statt Rubrik', () => {
@@ -183,6 +223,31 @@ describe('Bündel im Index', () => {
     expect(detail?.folgen.find((f) => f.titel.startsWith('Trailer'))?.extra).toBe(true);
     expect(detail?.folgen.some((f) => f.titel.startsWith('Basketball live'))).toBe(false);
     expect(detail!.serie.neueste).toBeLessThan(1_893_000_000);
+  });
+
+  it('gibt jeder Sendung eine Art und blendet Kurzbeiträge beim Stöbern aus', () => {
+    expect(serieNachThema(db, 'Arte', 'Twin Peaks')?.format).toBe('serie');
+    expect(serieNachThema(db, '3sat', 'Kulturzeit')?.format).toBe('magazin');
+    expect(suche(db, { text: 'Sommer auf Asphalt' }).treffer[0].format).toBe('film');
+    expect(suche(db, { text: 'Kinotrailer' }).gesamt).toBe(0);
+    // Kurzbeitrag ohne Reihe: in der Suche ja, beim Stöbern nur auf der Seite des Senders
+    expect(suche(db, { text: 'Kurzmeldung' }).treffer[0].format).toBe('kurz');
+    const titel = (r: ReturnType<typeof stoebern>) => r.eintraege.map((x) => (x.typ === 'film' ? x.film.titel : x.serie.thema));
+    expect(titel(stoebern(db, {}))).not.toContain('Kurzmeldung aus Kiel');
+    expect(titel(stoebern(db, { gruppe: 'ZDF' }))).toContain('Kurzmeldung aus Kiel');
+    expect(titel(stoebern(db, { format: 'magazin' }))).toEqual(['Kulturzeit']);
+    // Nur Filme bzw. nur Kurzbeiträge: liefert die Filme selbst (früher leer)
+    expect(titel(stoebern(db, { format: 'film' }))).toContain('Sommer auf Asphalt');
+    expect(titel(stoebern(db, { format: 'kurz', gruppe: 'ZDF' }))).toContain('Kurzmeldung aus Kiel');
+  });
+
+  it('zählt je Art so, wie die Seiten sie zeigen', () => {
+    const anzahl = artAnzahlen(db);
+    for (const format of ['serie', 'doku', 'magazin', 'film', 'sport'] as const) {
+      expect(anzahl[format] ?? 0, format).toBe(stoebern(db, { format, limit: 200 }).gesamt);
+    }
+    const sport = artAnzahlen(db, { genre: 'sport' });
+    expect(Object.values(sport).reduce((a, b) => a + (b ?? 0), 0)).toBeGreaterThan(0);
   });
 
   it('nimmt für ein Bündel die Genres der Mehrheit', () => {

@@ -1,3 +1,4 @@
+import { GENRES } from '../../src/shared/genres';
 import { createReadStream, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -152,7 +153,7 @@ describe('Genres im Index', () => {
     const anzahlen = Object.fromEntries(genreAnzahlen(db).map((g) => [g.id, g.anzahl]));
     expect(anzahlen.krimi).toBe(2);
     expect(anzahlen.wissen).toBeGreaterThanOrEqual(1);
-    expect(Object.keys(anzahlen)).toHaveLength(16);
+    expect(Object.keys(anzahlen)).toHaveLength(GENRES.length);
   });
 
   it('liefert die Genres mit jedem Treffer', () => {

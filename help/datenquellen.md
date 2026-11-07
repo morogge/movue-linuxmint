@@ -30,9 +30,10 @@ Manche Sendungen dürfen die Sender nur in bestimmten Ländern zeigen, etwa nur 
 
 ## Zusatzangaben aus Wikidata
 
-Nicht jeder Sender nennt Besetzung, Regie, Jahr oder Land. Diese Angaben ergänzt Movue aus [Wikidata](https://www.wikidata.org), der freien Wissensdatenbank der Wikimedia (Daten frei nutzbar, CC0).
+Nicht jeder Sender nennt Besetzung, Regie, Jahr, Land oder Genre. Diese Angaben ergänzt Movue aus [Wikidata](https://www.wikidata.org), der freien Wissensdatenbank der Wikimedia (Daten frei nutzbar, CC0).
 
 - Einmal am Tag gleicht eine automatische Aufgabe im Movue-Projekt alle Filme und Serien des Sendungsverzeichnisses mit Wikidata ab und legt das Ergebnis als eine Datei ab (`metadaten.json`, rund ein bis zwei MB).
 - Movue lädt diese Datei als Ganzes von GitHub, höchstens einmal am Tag. Weil alle dieselbe Datei laden, erfährt weder Wikidata noch GitHub, welche Sendungen du dir ansiehst.
 - Gefunden werden Titel über ihren deutschen Namen; bei gleichnamigen Filmen entscheidet das Jahr. Findet Movue keinen eindeutigen Eintrag, bleibt der Abschnitt leer – lieber nichts als etwas Falsches.
+- Aus den Genres bei Wikidata (etwa „Filmdrama“ oder „Science-Fiction-Serie“) ergeben sich die Genres Drama, Liebe & Familie, Fantasy & Science-Fiction und Historienfilme & -serien (siehe **Kategorien und Genres**).
 - Fehler korrigierst du am besten direkt bei Wikidata; die Korrektur erscheint spätestens nach dem nächsten Abgleich in Movue.

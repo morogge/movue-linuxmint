@@ -75,9 +75,9 @@ export function KategorienScreen({ zustand, onArt, onGenre, onSender, onAblauf }
                 <span className="art-icon">
                   <Icon name={ART_ICON[s.id] ?? 'grid'} size={28} />
                 </span>
-                {!s.seitenleiste && <span className="nur-hier">nur hier</span>}
                 <span className="kategorie-name">{s.titel}</span>
                 <span className="kategorie-zahl">{titelZahl(s.format ? (arten[s.format] ?? 0) : 0)}</span>
+                {!s.seitenleiste && <span className="nur-hier">nur hier</span>}
               </button>
             </li>
           ))}

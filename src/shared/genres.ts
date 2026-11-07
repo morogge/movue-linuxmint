@@ -73,6 +73,9 @@ export function formatName(id: Format): string {
 export const KONZERT = /konzert|concert|\boper\b|opern|ballett|theater|philharmon|orchester|sinfoni|symphon|festival|bühne|tanz\b/i;
 const TALK = /\btalk|maischberger|markus lanz|illner|hart aber fair|caren miosga|3nach9|nachtcafé|kölner treff|riverboat|tietjen|zur person/i;
 
+/** Genres, die nur Erfundenes tragen – Comedy fehlt, weil Satire und Shows sie auch haben */
+const FIKTION_GENRES: GenreId[] = ['krimi', 'drama', 'liebe', 'fantasy', 'historisch', 'film'];
+
 /**
  * Art eines Bündels aus seinem Typ (Serie, Filmreihe, Nachrichten …), seinen Genres und seinen Titeln.
  * datiert = Anteil der Folgen mit Datum im Titel („Volle Kanne vom 3. November“) – typisch für Magazine.
@@ -89,6 +92,8 @@ export function buendelFormat(z: {
   if (g('sport')) return 'sport';
   if (z.art === 'filmreihe') return 'film';
   if (z.art === 'serie') return 'serie';
+  // Fiktion ohne Nummerierung (z. B. „Tatort“ ohne Staffeln): lang = Filme, kurz = Serie
+  if (!g('doku') && FIKTION_GENRES.some(g)) return z.dauer >= 60 * 60 ? 'film' : 'serie';
   if (g('nachrichten') && !(g('doku') && z.dauer >= 20 * 60)) return 'nachrichten';
   if (g('kultur') && KONZERT.test(z.thema)) return 'konzert';
   if (g('comedy') || g('unterhaltung') || TALK.test(z.thema)) return 'show';

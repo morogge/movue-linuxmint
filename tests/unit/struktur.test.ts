@@ -89,6 +89,10 @@ describe('Rubriken und Arten', () => {
     expect(b('reihe', ['gesellschaft'], 'maischberger')).toBe('show');
     expect(b('reihe', ['kultur'], 'ARTE Concert')).toBe('konzert');
     expect(b('reihe', ['wissen'], 'Terra X')).toBe('doku');
+    // Fiktion ohne Staffeln: lange Folgen sind Filme, kurze eine Serie
+    expect(b('reihe', ['krimi'], 'Tatort', 0, 88 * 60)).toBe('film');
+    expect(b('reihe', ['krimi'], 'SOKO Köln', 0, 45 * 60)).toBe('serie');
+    expect(b('reihe', ['krimi', 'doku'], 'Killer, Kühe, Kommissare', 0, 88 * 60)).toBe('doku');
   });
 
   it('führt Staffeln auch bei Sendereihen als Reiter', () => {

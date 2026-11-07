@@ -73,6 +73,7 @@ describe('Rubriken und Arten', () => {
     expect(genresAusWikidata(['Dokumentarfilm', 'True Crime', 'Kriminalfilm'])).toEqual(['doku']);
     expect(genresAusWikidata(['Science-Fiction-Serie', 'Liebesfilm', 'Historienfilm'])).toEqual(['fantasy', 'liebe', 'historisch']);
     expect(genresAusWikidata(['Fernsehserie'])).toEqual([]);
+    expect(genresAusWikidata(['Mysteryserie', 'Kriminal-Fernsehserie'])).toEqual(['krimi']);
   });
 
   it('bestimmt die Art eines Bündels', () => {
@@ -86,6 +87,10 @@ describe('Rubriken und Arten', () => {
     expect(b('reihe', ['kultur'], 'Kulturzeit', 0.9)).toBe('magazin');
     expect(b('reihe', ['ratgeber'], 'Garten-Doc')).toBe('magazin');
     expect(b('reihe', ['comedy'], 'heute-show')).toBe('show');
+    // Satire und Talk über Politik sind Shows, keine Nachrichten
+    expect(b('reihe', ['comedy', 'nachrichten', 'unterhaltung'], 'heute-show')).toBe('show');
+    expect(b('reihe', ['nachrichten'], 'Markus Lanz', 0, 75 * 60)).toBe('show');
+    expect(b('reihe', ['nachrichten'], 'maischberger')).toBe('show');
     expect(b('reihe', ['gesellschaft'], 'maischberger')).toBe('show');
     expect(b('reihe', ['kultur'], 'ARTE Concert')).toBe('konzert');
     expect(b('reihe', ['wissen'], 'Terra X')).toBe('doku');
@@ -173,7 +178,7 @@ describe('Bündel im Index', () => {
     w(e({ ...raetsel, titel: 'Burg B (S01/E02)', genres: ['geschichte', 'krimi'] }));
     w(e({ ...raetsel, titel: 'Burg C (S01/E03)' }));
     baueFassungen(aufbau);
-    baueSerien(aufbau, { [serienSchluessel('Twin Peaks')]: { q: 'Q2085', g: ['Mysteryserie', 'Dramaserie', 'Fernsehserie'], t: 0 } });
+    baueSerien(aufbau, { [serienSchluessel('Twin Peaks')]: { q: 'Q2085', g: ['Mysteryserie', 'Fantasyserie', 'Dramaserie', 'Fernsehserie'], t: 0 } });
     schliesseAufbau(aufbau);
     aufbau.close();
     db = oeffneDb(pfad);

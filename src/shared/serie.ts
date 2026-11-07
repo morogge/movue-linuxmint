@@ -83,11 +83,7 @@ export function hatNummer(info: Pick<FolgenInfo, 'staffel' | 'folge'>): boolean 
 }
 
 /** Genres, die für erzählte Fiktion sprechen – nur dann machen Folgennummern ein Bündel zur Serie */
-<<<<<<< HEAD
-const FIKTION: GenreId[] = ['serie', 'krimi', 'film', 'comedy', 'kinder'];
-=======
 const FIKTION: GenreId[] = ['serie', 'krimi', 'film', 'comedy', 'kinder', 'drama', 'liebe', 'fantasy', 'historisch'];
->>>>>>> origin/feat/navigation-nach-art
 
 /**
  * Art eines Bündels: Nachrichten bei kurzen Ausgaben im Genre Nachrichten; Filmreihe, wenn überwiegend Filme

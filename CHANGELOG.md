@@ -4,8 +4,6 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
-<<<<<<< HEAD
-=======
 ### Neu
 
 - **Seitenleiste nach Art**: **Serien**, **Filme**, **Dokus**, **Shows & Talk**, **Nachrichten**, **Sport** und **Kinder** haben jetzt je eine eigene Seite – oben unterteilt nach Genre oder Thema, mit einer Reihe je Genre und Filter nach Sender
@@ -22,7 +20,6 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 - Serien und Sendereihen erkennst du an einer angedeuteten zweiten Karte über dem Bild
 - **Läuft bald ab** ist von der Seitenleiste nach **Alle Kategorien** umgezogen
 
->>>>>>> origin/feat/navigation-nach-art
 ## 0.12.0 – 2026-11-04
 
 ### Verbessert

@@ -207,13 +207,9 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
                 COUNT(DISTINCT CASE WHEN extra = 0 THEN staffel END) AS staffeln,
                 -- neueste Folge, die schon zu sehen ist (angekündigte Sendungen tragen ein Datum in der Zukunft)
                 COALESCE(MAX(CASE WHEN extra = 0 AND datum <= ${Math.floor(Date.now() / 1000)} THEN datum END), MAX(datum)) AS neueste,
-<<<<<<< HEAD
-                AVG(CASE WHEN extra = 0 THEN dauer END) AS dauer
-=======
                 AVG(CASE WHEN extra = 0 THEN dauer END) AS dauer,
                 SUM(extra = 0 AND (titel GLOB '*[0-9].[0-9][0-9].[0-9][0-9]*' OR titel GLOB '*[0-9][0-9].[0-9][0-9].*'
                     OR lower(titel) LIKE '% vom %' OR lower(titel) LIKE 'sendung vom%')) AS datiert
->>>>>>> origin/feat/navigation-nach-art
          FROM film WHERE variante = 0 AND buendel IS NOT NULL
          GROUP BY gruppe, buendel
          HAVING SUM(extra = 0) >= CASE WHEN MAX(buendel != thema) = 1 THEN 2 ELSE ${MIN_FOLGEN} END`
@@ -255,11 +251,7 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
         SELECT g.genre, s.id, s.neueste FROM serie s
         JOIN film f ON f.serie_id = s.id AND f.variante = 0 AND f.extra = 0
         JOIN film_genre g ON g.film_id = f.id
-<<<<<<< HEAD
-        WHERE NOT EXISTS (SELECT 1 FROM serie_genre sg WHERE sg.serie_id = s.id AND sg.genre != 'sonstiges')
-=======
         WHERE s.id NOT IN (SELECT serie_id FROM serie_genre WHERE genre != 'sonstiges')
->>>>>>> origin/feat/navigation-nach-art
         GROUP BY s.id, g.genre HAVING COUNT(*) * 3 >= s.folgen AND g.genre != 'sonstiges';
       -- „Weitere Sendungen“ nur, wenn das Bündel sonst nichts hat
       DELETE FROM serie_genre WHERE genre = 'sonstiges'
@@ -291,18 +283,11 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
     //    „Weitere Sendungen“ überschreibt nie, was eine Folge selbst hat.
     db.exec(`
       DELETE FROM film_genre WHERE film_id IN (
-<<<<<<< HEAD
-          SELECT f.id FROM film f WHERE f.serie_id IS NOT NULL
-            AND EXISTS (SELECT 1 FROM serie_genre sg WHERE sg.serie_id = f.serie_id AND sg.genre != 'sonstiges'))
-=======
           SELECT f.id FROM film f WHERE f.serie_id IN (SELECT serie_id FROM serie_genre WHERE genre != 'sonstiges'))
->>>>>>> origin/feat/navigation-nach-art
         AND NOT EXISTS (
           SELECT 1 FROM film f JOIN serie_genre sg ON sg.serie_id = f.serie_id WHERE f.id = film_genre.film_id AND sg.genre = film_genre.genre);
       INSERT OR IGNORE INTO film_genre (genre, film_id, datum)
         SELECT sg.genre, f.id, f.datum FROM film f JOIN serie_genre sg ON sg.serie_id = f.serie_id WHERE sg.genre != 'sonstiges';
-<<<<<<< HEAD
-=======
     `);
 
     // 6. Format der Sendungen: Folgen erben es von ihrem Bündel; Einzelsendungen aus Länge und Genres.
@@ -321,7 +306,6 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
           WHEN ${hat('comedy')} OR ${hat('unterhaltung')} THEN 'show'
           ELSE 'doku' END
         WHERE serie_id IS NULL;
->>>>>>> origin/feat/navigation-nach-art
     `);
     return { serien: zeilen.length, rubriken };
   });
@@ -457,15 +441,10 @@ export function stoebern(
   const filmTeil = `SELECT 'film', f.id, f.datum FROM film f
       ${genre ? 'JOIN film_genre g ON g.film_id = f.id AND g.genre = @genre' : ''}
       WHERE ${gelistet()} AND (@gruppe IS NULL OR f.gruppe = @gruppe)
-<<<<<<< HEAD
-      ${format === 'film' ? `AND ${istFilm}` : 'AND f.serie_id IS NULL'}`;
-  const quelle = format === 'serie' ? serienTeil : format === 'film' ? filmTeil : `${serienTeil} UNION ALL ${filmTeil}`;
-=======
       ${format ? 'AND f.format = @format' : ''}
       ${format === 'film' ? '' : 'AND f.serie_id IS NULL'}
       ${format === 'kurz' || gruppe ? '' : "AND f.format != 'kurz'"}`;
   const quelle = format === 'film' ? filmTeil : format === 'kurz' ? filmTeil : `${serienTeil} UNION ALL ${filmTeil}`;
->>>>>>> origin/feat/navigation-nach-art
   const gesamt = (db.prepare(`SELECT COUNT(*) AS n FROM (${quelle})`).get(p) as { n: number }).n;
   const zeilen = db.prepare(`${quelle} ORDER BY datum DESC LIMIT @limit OFFSET @offset`).all(p) as { typ: string; id: number; datum: number }[];
 

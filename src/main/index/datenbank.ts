@@ -10,11 +10,7 @@ import { fassungKern, fassungName, istFassung } from '@shared/fassung';
 export type Db = Database.Database;
 
 /** Erhöhen, wenn sich Tabellen oder abgeleitete Daten (z. B. Genre-Regeln) ändern – erzwingt einen Neuaufbau. */
-<<<<<<< HEAD
-export const SCHEMA_VERSION = 7;
-=======
 export const SCHEMA_VERSION = 8;
->>>>>>> origin/feat/navigation-nach-art
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS film (
@@ -45,11 +41,8 @@ CREATE TABLE IF NOT EXISTS film (
   extra INTEGER NOT NULL DEFAULT 0,
   -- 1 = Livestream (Sender-Stream oder angekündigte Übertragung): nicht in Listen und Bündeln
   live INTEGER NOT NULL DEFAULT 0,
-<<<<<<< HEAD
-=======
   -- Art der Sendung (Format: serie, film, doku …), beim Bündeln gesetzt
   format TEXT,
->>>>>>> origin/feat/navigation-nach-art
   -- Bündel (Serie/Reihe), nach jedem Import neu zugeordnet
   serie_id INTEGER,
   -- Serienname aus dem Titel („Twin Peaks - Staffel 1 (3/8)“) – für Themen, die nur eine Rubrik sind
@@ -105,10 +98,7 @@ const NEUE_SPALTEN: [string, string][] = [
   ['folge', 'INTEGER'],
   ['extra', 'INTEGER NOT NULL DEFAULT 0'],
   ['live', 'INTEGER NOT NULL DEFAULT 0'],
-<<<<<<< HEAD
-=======
   ['format', 'TEXT'],
->>>>>>> origin/feat/navigation-nach-art
   ['serie_id', 'INTEGER'],
   ['fassung', 'INTEGER NOT NULL DEFAULT 0'],
   ['kern', "TEXT NOT NULL DEFAULT ''"],
@@ -183,12 +173,8 @@ export function istLive(e: Pick<FilmEintrag, 'url' | 'thema' | 'datum' | 'dauer'
  * und Extras (die stehen auf der Seite ihrer Sendung), keine Livestreams und nichts mit Datum in der Zukunft.
  */
 export function gelistet(jetzt = Date.now(), alias = 'f'): string {
-<<<<<<< HEAD
-  return `${alias}.variante = 0 AND ${alias}.extra = 0 AND ${alias}.live = 0 AND ${alias}.datum <= ${Math.floor(jetzt / 1000)}`;
-=======
   // „+“ vor dem Datum: SQLite soll dafür keinen Index nehmen – sonst läuft die Volltextsuche über alle Filme nach Datum
   return `${alias}.variante = 0 AND ${alias}.extra = 0 AND ${alias}.live = 0 AND +${alias}.datum <= ${Math.floor(jetzt / 1000)}`;
->>>>>>> origin/feat/navigation-nach-art
 }
 
 export function schreiber(db: Db): (e: FilmEintrag) => void {

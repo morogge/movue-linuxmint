@@ -27,6 +27,8 @@ export interface Film {
   serieId: number | null;
   /** Name des Bündels (Serie bzw. Reihe), unter dem Abos und Serienseite laufen; null bei Einzelsendungen */
   buendel: string | null;
+  /** Art der Sendung (Serie, Film, Doku …); fehlt bei Sendungen, die nicht aus dem Index kommen */
+  format?: Format | null;
   /** Bei Reihen und Stöbern mitgeliefert: das Bündel, als Kachel statt der Folge */
   serie?: Serie;
 }

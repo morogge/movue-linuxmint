@@ -1,5 +1,5 @@
 import type { Film } from './film';
-import type { GenreId } from './genres';
+import type { Format, GenreId } from './genres';
 import type { SenderGruppe } from './sender';
 import { GESEHEN_ANTEIL } from './nutzer';
 
@@ -26,6 +26,8 @@ export interface Serie {
   gruppe: SenderGruppe;
   thema: string;
   art: SerienArt;
+  /** Art der Sendung (Serie, Doku, Magazin …) */
+  format: Format;
   /** Folgen ohne Extras und Varianten */
   folgen: number;
   extras: number;

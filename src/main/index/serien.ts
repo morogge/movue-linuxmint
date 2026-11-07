@@ -1,11 +1,13 @@
 import type { Film } from '@shared/film';
-import { istGenre, type Format, type GenreId } from '@shared/genres';
+import { buendelFormat, istFormat, istGenre, KONZERT, type Format, type GenreId } from '@shared/genres';
 import { istGruppe, type SenderGruppe } from '@shared/sender';
 import { JAHRGANG_AB, MIN_FOLGEN, serienArt, sortiereFolgen, type Serie, type SerieDetail } from '@shared/serie';
 import { baueFtsAbfrage, gelistet, genresFuer, istReihenThema, SPALTEN, zuFilm, type Db, type FilmZeile } from './datenbank';
 
 /** Mindestanteile, ab denen ein Thema als Rubrik gilt (siehe istRubrik) */
 const FILM_DAUER = 75 * 60;
+/** Kürzer und ohne Reihe: Kurzbeitrag (Clip, Ausschnitt) */
+const KURZ_BIS = 5 * 60;
 
 export interface ThemaStatistik {
   gruppe: string;
@@ -173,7 +175,9 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
                 COUNT(DISTINCT CASE WHEN extra = 0 THEN staffel END) AS staffeln,
                 -- neueste Folge, die schon zu sehen ist (angekündigte Sendungen tragen ein Datum in der Zukunft)
                 COALESCE(MAX(CASE WHEN extra = 0 AND datum <= ${Math.floor(Date.now() / 1000)} THEN datum END), MAX(datum)) AS neueste,
-                AVG(CASE WHEN extra = 0 THEN dauer END) AS dauer
+                AVG(CASE WHEN extra = 0 THEN dauer END) AS dauer,
+                SUM(extra = 0 AND (titel GLOB '*[0-9].[0-9][0-9].[0-9][0-9]*' OR titel GLOB '*[0-9][0-9].[0-9][0-9].*'
+                    OR lower(titel) LIKE '% vom %' OR lower(titel) LIKE 'sendung vom%')) AS datiert
          FROM film WHERE variante = 0 AND buendel IS NOT NULL
          GROUP BY gruppe, buendel
          HAVING SUM(extra = 0) >= CASE WHEN MAX(buendel != thema) = 1 THEN 2 ELSE ${MIN_FOLGEN} END`
@@ -188,17 +192,18 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
       staffeln: number;
       neueste: number;
       dauer: number;
+      datiert: number;
     }[];
 
     const neu = db.prepare(
       `INSERT INTO serie (gruppe, thema, art, folgen, extras, staffeln, neueste) VALUES (?, ?, 'reihe', ?, ?, ?, ?) RETURNING id`
     );
     const fts = db.prepare('INSERT INTO serie_fts (rowid, thema) VALUES (?, ?)');
-    const daten = new Map<number, { nummeriert: number; dauer: number; folgen: number; filme: number }>();
+    const daten = new Map<number, { nummeriert: number; dauer: number; folgen: number; filme: number; thema: string; datiert: number }>();
     for (const z of zeilen) {
       const { id } = neu.get(z.gruppe, z.buendel, z.folgen, z.extras, z.staffeln, z.neueste) as { id: number };
       fts.run(id, z.buendel);
-      daten.set(id, { nummeriert: z.nummeriert, dauer: z.dauer ?? 0, folgen: z.folgen, filme: z.filme });
+      daten.set(id, { nummeriert: z.nummeriert, dauer: z.dauer ?? 0, folgen: z.folgen, filme: z.filme, thema: z.buendel, datiert: z.datiert });
     }
 
     db.exec(`
@@ -233,8 +238,13 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
       liste.push(g.genre);
       genres.set(g.serie_id, liste);
     }
-    const art = db.prepare('UPDATE serie SET art = ? WHERE id = ?');
-    for (const [id, d] of daten) art.run(serienArt({ ...d, genres: genres.get(id) ?? [] }), id);
+    // … und daraus das Format (Serie, Film, Doku, Magazin …)
+    const art = db.prepare('UPDATE serie SET art = ?, format = ? WHERE id = ?');
+    for (const [id, d] of daten) {
+      const g = genres.get(id) ?? [];
+      const a = serienArt({ ...d, genres: g });
+      art.run(a, buendelFormat({ art: a, genres: g, thema: d.thema, dauer: d.dauer, datiert: d.folgen ? d.datiert / d.folgen : 0 }), id);
+    }
 
     // 5. Genres der Folgen an ihr Bündel angleichen: Eine Kulturzeit-Ausgabe über einen Krimi macht das
     //    Magazin nicht zum Krimi, eine Sportschau mit Musik nicht zu Kultur. Nur für Bündel mit echten Genres –
@@ -247,6 +257,24 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
       INSERT OR IGNORE INTO film_genre (genre, film_id, datum)
         SELECT sg.genre, f.id, f.datum FROM film f JOIN serie_genre sg ON sg.serie_id = f.serie_id WHERE sg.genre != 'sonstiges';
     `);
+
+    // 6. Format der Sendungen: Folgen erben es von ihrem Bündel; Einzelsendungen aus Länge und Genres.
+    //    Kurzbeiträge (unter 5 Minuten, ohne Reihe) erscheinen nur in Suche und auf Sender-Seiten.
+    const hat = (g: string) => `EXISTS (SELECT 1 FROM film_genre fg WHERE fg.film_id = film.id AND fg.genre = '${g}')`;
+    db.function('ist_konzert', { deterministic: true }, (text: unknown) => (typeof text === 'string' && KONZERT.test(text) ? 1 : 0));
+    db.exec(`
+      UPDATE film SET format = (SELECT s.format FROM serie s WHERE s.id = film.serie_id) WHERE serie_id IS NOT NULL;
+      UPDATE film SET format = CASE
+          WHEN dauer > 0 AND dauer < ${KURZ_BIS} THEN 'kurz'
+          WHEN ${hat('nachrichten')} THEN 'nachrichten'
+          WHEN ${hat('sport')} THEN 'sport'
+          WHEN ${hat('film')} THEN 'film'
+          WHEN ${hat('serie')} OR ${hat('krimi')} THEN CASE WHEN dauer >= ${FILM_DAUER} THEN 'film' ELSE 'serie' END
+          WHEN ${hat('kultur')} AND ist_konzert(thema || ' ' || titel) = 1 THEN 'konzert'
+          WHEN ${hat('comedy')} OR ${hat('unterhaltung')} THEN 'show'
+          ELSE 'doku' END
+        WHERE serie_id IS NULL;
+    `);
     return { serien: zeilen.length, rubriken };
   });
   const { serien, rubriken } = lauf();
@@ -258,6 +286,7 @@ interface SerieZeile {
   gruppe: string;
   thema: string;
   art: string;
+  format: string;
   folgen: number;
   extras: number;
   staffeln: number;
@@ -265,7 +294,7 @@ interface SerieZeile {
   film_id: number | null;
 }
 
-const SERIE_SPALTEN = 's.id, s.gruppe, s.thema, s.art, s.folgen, s.extras, s.staffeln, s.neueste, s.film_id';
+const SERIE_SPALTEN = 's.id, s.gruppe, s.thema, s.art, s.format, s.folgen, s.extras, s.staffeln, s.neueste, s.film_id';
 
 /** Zeilen → Serien, mit Genres und Bild-Folge in je einer Abfrage */
 function zuSerien(db: Db, zeilen: SerieZeile[]): Serie[] {
@@ -293,6 +322,7 @@ function zuSerien(db: Db, zeilen: SerieZeile[]): Serie[] {
     gruppe: (istGruppe(z.gruppe) ? z.gruppe : 'ARD') as SenderGruppe,
     thema: z.thema,
     art: z.art === 'serie' || z.art === 'nachrichten' || z.art === 'filmreihe' ? z.art : 'reihe',
+    format: istFormat(z.format) ? z.format : 'doku',
     folgen: z.folgen,
     extras: z.extras,
     staffeln: z.staffeln,
@@ -366,20 +396,23 @@ export function stoebern(
   const gruppe = a.gruppe && istGruppe(a.gruppe) ? a.gruppe : null;
   const genre = a.genre ?? null;
   const format = a.format ?? null;
-  const p = { genre, gruppe, limit, offset, nachrichten: genre === 'nachrichten' ? 1 : 0 };
-  const istFilm = "EXISTS (SELECT 1 FROM film_genre fg WHERE fg.genre = 'film' AND fg.film_id = f.id)";
+  const nachrichten = genre === 'nachrichten' || format === 'nachrichten' ? 1 : 0;
+  const p = { genre, gruppe, limit, offset, nachrichten, format };
 
-  // Bündel: Serien (bei Format „Serien“ nur echte Serien), ohne Nachrichten außerhalb ihres Genres
+  // Bündel: Serien und Sendereihen der gewählten Art, ohne Nachrichten außerhalb ihrer Seiten
   const serienTeil = `SELECT 'serie' AS typ, s.id AS id, s.neueste AS datum FROM serie s
       ${genre ? 'JOIN serie_genre sg ON sg.serie_id = s.id AND sg.genre = @genre' : ''}
       WHERE (@gruppe IS NULL OR s.gruppe = @gruppe) AND (s.art != 'nachrichten' OR @nachrichten = 1)
-      ${format === 'serie' ? "AND s.art = 'serie'" : ''}`;
-  // Einzelne Sendungen: ohne Bündel; bei Format „Filme“ alle Filme, auch aus Reihen wie „Tatort“
+      ${format ? 'AND s.format = @format' : ''}`;
+  // Einzelne Sendungen: ohne Bündel; bei Filmen alle Filme, auch aus Reihen wie „Tatort“.
+  // Kurzbeiträge nur auf der Seite eines Senders oder wenn ausdrücklich gewählt
   const filmTeil = `SELECT 'film', f.id, f.datum FROM film f
       ${genre ? 'JOIN film_genre g ON g.film_id = f.id AND g.genre = @genre' : ''}
       WHERE ${gelistet()} AND (@gruppe IS NULL OR f.gruppe = @gruppe)
-      ${format === 'film' ? `AND ${istFilm}` : 'AND f.serie_id IS NULL'}`;
-  const quelle = format === 'serie' ? serienTeil : format === 'film' ? filmTeil : `${serienTeil} UNION ALL ${filmTeil}`;
+      ${format ? 'AND f.format = @format' : ''}
+      ${format === 'film' ? '' : 'AND f.serie_id IS NULL'}
+      ${format === 'kurz' || gruppe ? '' : "AND f.format != 'kurz'"}`;
+  const quelle = format === 'film' ? filmTeil : format === 'kurz' ? filmTeil : `${serienTeil} UNION ALL ${filmTeil}`;
   const gesamt = (db.prepare(`SELECT COUNT(*) AS n FROM (${quelle})`).get(p) as { n: number }).n;
   const zeilen = db.prepare(`${quelle} ORDER BY datum DESC LIMIT @limit OFFSET @offset`).all(p) as { typ: string; id: number; datum: number }[];
 

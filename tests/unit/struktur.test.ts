@@ -6,7 +6,7 @@ import { folgenInfo, gruppeVon, serieAusTitel, serienArt } from '@shared/serie';
 import { baueFassungen, istLive, oeffneDb, reihe, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
 import { baueSerien, istReihenAnfang, istRubrik, serieDetail, serieNachThema, stoebern, titelAnfang } from '../../src/main/index/serien';
 import type { FilmEintrag } from '../../src/main/filmliste/eintrag';
-import type { GenreId } from '../../src/shared/genres';
+import { buendelFormat, type GenreId } from '../../src/shared/genres';
 
 describe('Serien aus Titeln', () => {
   it('liest Arte- und 3sat-Muster', () => {
@@ -64,6 +64,22 @@ describe('Rubriken und Arten', () => {
     expect(serienArt({ folgen: 100, nummeriert: 100, dauer: 1800, genres: g(['doku']) })).toBe('reihe');
     // ZDF nummeriert Filmreihen („Die Toten vom Bodensee (S04/E03)“): überwiegend Filme → Filmreihe
     expect(serienArt({ folgen: 30, nummeriert: 30, dauer: 5300, genres: g(['krimi', 'serie']), filme: 30 })).toBe('filmreihe');
+  });
+
+  it('bestimmt die Art eines Bündels', () => {
+    const b = (art: 'serie' | 'reihe' | 'filmreihe' | 'nachrichten', genres: GenreId[], thema = 'X', datiert = 0, dauer = 1800) =>
+      buendelFormat({ art, genres, thema, dauer, datiert });
+    expect(b('nachrichten', ['nachrichten'])).toBe('nachrichten');
+    expect(b('filmreihe', ['krimi'], 'Tatort')).toBe('film');
+    expect(b('serie', ['serie'])).toBe('serie');
+    expect(b('reihe', ['sport'], 'Sportschau')).toBe('sport');
+    expect(b('reihe', ['doku'], 'Mittendrin - Flughafen Frankfurt')).toBe('doku');
+    expect(b('reihe', ['kultur'], 'Kulturzeit', 0.9)).toBe('magazin');
+    expect(b('reihe', ['ratgeber'], 'Garten-Doc')).toBe('magazin');
+    expect(b('reihe', ['comedy'], 'heute-show')).toBe('show');
+    expect(b('reihe', ['gesellschaft'], 'maischberger')).toBe('show');
+    expect(b('reihe', ['kultur'], 'ARTE Concert')).toBe('konzert');
+    expect(b('reihe', ['wissen'], 'Terra X')).toBe('doku');
   });
 
   it('führt Staffeln auch bei Sendereihen als Reiter', () => {
@@ -137,6 +153,7 @@ describe('Bündel im Index', () => {
     w(e({ ...sport, titel: 'Trailer: Sport am Sonntag', dauer: 40 }));
     w(e({ ...sport, titel: 'Basketball live: Gladiators Trier – Trepca', dauer: 11_100, url: 'https://event.example.org/hls/live/1/master.m3u8' }));
     w(e({ ...sport, titel: 'Vorab: Sport am Montag', datum: 1_893_000_000 }));
+    w(e({ sender: 'ZDF', gruppe: 'ZDF', thema: 'Panorama', titel: 'Kurzer Clip über Kiel', dauer: 90, genres: ['gesellschaft'] }));
     // Eine Krimi-Folge von dreien macht keine Krimireihe
     const raetsel = { sender: 'ARD', gruppe: 'ARD' as const, thema: 'History or Mystery', genres: ['geschichte'] as GenreId[] };
     w(e({ ...raetsel, titel: 'Burg A (S01/E01)' }));
@@ -183,6 +200,19 @@ describe('Bündel im Index', () => {
     expect(detail?.folgen.find((f) => f.titel.startsWith('Trailer'))?.extra).toBe(true);
     expect(detail?.folgen.some((f) => f.titel.startsWith('Basketball live'))).toBe(false);
     expect(detail!.serie.neueste).toBeLessThan(1_893_000_000);
+  });
+
+  it('gibt jeder Sendung eine Art und blendet Kurzbeiträge beim Stöbern aus', () => {
+    expect(serieNachThema(db, 'Arte', 'Twin Peaks')?.format).toBe('serie');
+    expect(serieNachThema(db, '3sat', 'Kulturzeit')?.format).toBe('magazin');
+    expect(suche(db, { text: 'Sommer auf Asphalt' }).treffer[0].format).toBe('film');
+    expect(suche(db, { text: 'Kinotrailer' }).gesamt).toBe(0);
+    // Kurzbeitrag ohne Reihe: in der Suche ja, beim Stöbern nur auf der Seite des Senders
+    expect(suche(db, { text: 'Kurzer Clip' }).treffer[0].format).toBe('kurz');
+    const titel = (r: ReturnType<typeof stoebern>) => r.eintraege.map((x) => (x.typ === 'film' ? x.film.titel : x.serie.thema));
+    expect(titel(stoebern(db, {}))).not.toContain('Kurzer Clip über Kiel');
+    expect(titel(stoebern(db, { gruppe: 'ZDF' }))).toContain('Kurzer Clip über Kiel');
+    expect(titel(stoebern(db, { format: 'magazin' }))).toEqual(['Kulturzeit']);
   });
 
   it('nimmt für ein Bündel die Genres der Mehrheit', () => {

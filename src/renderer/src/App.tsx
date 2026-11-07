@@ -12,7 +12,10 @@ import { UpdateBanner, useUpdateZustand } from './components/UpdateBanner';
 import { HelpView } from './help/HelpView';
 import { useIndexZustand } from './hooks/useIndexZustand';
 import { DetailScreen } from './screens/DetailScreen';
-import { GenresScreen } from './screens/GenresScreen';
+import { ArtScreen } from './screens/ArtScreen';
+import { GenreScreen } from './screens/GenreScreen';
+import { KategorienScreen } from './screens/KategorienScreen';
+import { artSeite, type ArtSeite } from '@shared/arten';
 import { SearchScreen } from './screens/SearchScreen';
 import { StartScreen } from './screens/StartScreen';
 import { PlayerScreen } from './screens/PlayerScreen';
@@ -48,6 +51,9 @@ export interface Ansicht {
   gruppe?: SenderGruppe;
   filmId?: number;
   serie?: SerieRef;
+  /** Art-Seite (Serien, Filme …) */
+  seite?: string;
+  genre?: GenreId;
 }
 
 export function App() {
@@ -132,21 +138,9 @@ export function App() {
 
   const oeffneFilm = useCallback((f: Film) => gehe({ screen: 'detail', filmId: f.id }), [gehe]);
   const oeffneSerie = useCallback((s: SerieRef) => gehe({ screen: 'serie', serie: { gruppe: s.gruppe, thema: s.thema } }), [gehe]);
-  const zeigeGenre = useCallback(
-    (g: GenreId) => {
-      // „Spielfilme“ und „Serien“ sind Formate: als Format-Filter öffnen, nicht als Genre
-      if (g === 'film' || g === 'serie') {
-        setFormat(g);
-        setGenre(null);
-      } else {
-        setGenre(g);
-        setFormat(null);
-      }
-      setSuchtext('');
-      gehe({ screen: 'suche' });
-    },
-    [gehe]
-  );
+  const zeigeArt = useCallback((s: ArtSeite, gruppe: SenderGruppe | null = null) => gehe({ screen: 'art', seite: s.id, gruppe: gruppe ?? undefined }), [gehe]);
+  const zeigeGenre = useCallback((g: GenreId) => gehe({ screen: 'genre', genre: g }), [gehe]);
+  const zeigeKategorien = useCallback(() => gehe({ screen: 'kategorien' }), [gehe]);
 
   const openHelp = useCallback(() => setHelpPage(SCREENS[ansicht.screen].help), [ansicht.screen]);
   const closeHelp = useCallback(() => setHelpPage(null), []);
@@ -189,7 +183,7 @@ export function App() {
         <UpdateBanner zustand={update} />
         <TopBar ref={suchfeld} suchtext={suchtext} onSuche={sucheAendern} onHelp={openHelp} />
         {ansicht.screen === 'start' && (
-          <StartScreen zustand={zustand} onOeffne={oeffneFilm} onGenre={zeigeGenre} onAbspielen={abspielen} onSerie={oeffneSerie} />
+          <StartScreen zustand={zustand} onOeffne={oeffneFilm} onArt={zeigeArt} onAbspielen={abspielen} onSerie={oeffneSerie} />
         )}
         {ansicht.screen === 'sender' && ansicht.gruppe && (
           <StartScreen
@@ -197,7 +191,7 @@ export function App() {
             zustand={zustand}
             gruppe={ansicht.gruppe}
             onOeffne={oeffneFilm}
-            onGenre={zeigeGenre}
+            onArt={zeigeArt}
             onAbspielen={abspielen}
             onSerie={oeffneSerie}
           />
@@ -215,7 +209,29 @@ export function App() {
             onSerie={oeffneSerie}
           />
         )}
-        {ansicht.screen === 'genres' && <GenresScreen zustand={zustand} onWaehle={zeigeGenre} />}
+        {ansicht.screen === 'art' && artSeite(ansicht.seite) && (
+          <ArtScreen
+            key={`${ansicht.seite}|${ansicht.gruppe ?? ''}`}
+            seite={artSeite(ansicht.seite)!}
+            gruppe={ansicht.gruppe ?? null}
+            zustand={zustand}
+            onOeffne={oeffneFilm}
+            onSerie={oeffneSerie}
+            onKategorien={zeigeKategorien}
+          />
+        )}
+        {ansicht.screen === 'kategorien' && (
+          <KategorienScreen
+            zustand={zustand}
+            onArt={zeigeArt}
+            onGenre={zeigeGenre}
+            onSender={(g) => gehe({ screen: 'sender', gruppe: g })}
+            onAblauf={() => gehe({ screen: 'ablauf' })}
+          />
+        )}
+        {ansicht.screen === 'genre' && ansicht.genre && (
+          <GenreScreen key={ansicht.genre} genre={ansicht.genre} zustand={zustand} onOeffne={oeffneFilm} onSerie={oeffneSerie} onKategorien={zeigeKategorien} />
+        )}
         {ansicht.screen === 'merkliste' && <MerklisteScreen stand={zustand.stand} onOeffne={oeffneFilm} onSerie={oeffneSerie} />}
         {ansicht.screen === 'ablauf' && <AblaufScreen stand={zustand.stand} onOeffne={oeffneFilm} />}
         {ansicht.screen === 'detail' && ansicht.filmId !== undefined && (

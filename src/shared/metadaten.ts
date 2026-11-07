@@ -1,4 +1,5 @@
 import { fassungKern } from './fassung';
+import type { GenreId } from './genres';
 import { titelKern, type TitelInfo } from './titelinfo';
 
 /**
@@ -6,6 +7,29 @@ import { titelKern, type TitelInfo } from './titelinfo';
  * Eine GitHub-Action baut die Datei einmal am Tag für alle Titel des Verzeichnisses
  * (scripts/metadaten/baue.ts); die App lädt sie als Ganzes – so erfährt niemand, was du ansiehst.
  */
+
+/** Stand der Einträge: 2 = mit Genres. Ältere gefundene Einträge fragt die Action neu ab */
+export const META_STAND = 2;
+
+/** Wikidata-Bezeichnungen → Genres von Movue */
+const WD_GENRES: [RegExp, GenreId][] = [
+  [/dokumentar/i, 'doku'],
+  [/krimi|kriminal|thriller|detektiv|polizei|mord|crime|whodunit|noir|gangster|spionage/i, 'krimi'],
+  [/komödie|comedy|sitcom|satire|parodie/i, 'comedy'],
+  [/drama|melodram/i, 'drama'],
+  [/liebes|romanze|romantisch|familienfilm|familienserie|heimatfilm/i, 'liebe'],
+  [/fantasy|science.?fiction|mystery|horror|übernatürlich|dystop|endzeit/i, 'fantasy'],
+  [/historien|historisch|kostüm|kriegsfilm|western|biografi|biopic/i, 'historisch'],
+  [/kinderfilm|kinderserie|zeichentrick|animationsfilm|animationsserie|jugendfilm|jugendserie/i, 'kinder']
+];
+
+/** Genres zu den Wikidata-Angaben; eine Doku ist nie zugleich Krimi (True Crime ist ein Thema) */
+export function genresAusWikidata(bezeichnungen: readonly string[]): GenreId[] {
+  const genres = new Set<GenreId>();
+  for (const b of bezeichnungen) for (const [re, g] of WD_GENRES) if (re.test(b)) genres.add(g);
+  if (genres.has('doku')) genres.delete('krimi');
+  return [...genres];
+}
 
 export const METADATEN_URL = 'https://github.com/morogge/movue-linuxmint/releases/download/metadaten/metadaten.json.gz';
 
@@ -22,6 +46,10 @@ export interface MetaEintrag {
   r?: string[];
   /** Darsteller: [Name, Rolle] */
   d?: [string, string][];
+  /** Genres und Typen aus Wikidata (deutsche Bezeichnungen: „Kriminalfilm“, „Dokumentarserie“) */
+  g?: string[];
+  /** Stand des Eintrags (fehlt = 1: noch ohne Genres) */
+  v?: number;
   /** Zeitpunkt der Abfrage (ms) – auch für „nicht gefunden“, damit nicht täglich neu gefragt wird */
   t: number;
 }

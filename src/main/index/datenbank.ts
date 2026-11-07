@@ -10,7 +10,11 @@ import { fassungKern, fassungName, istFassung } from '@shared/fassung';
 export type Db = Database.Database;
 
 /** Erhöhen, wenn sich Tabellen oder abgeleitete Daten (z. B. Genre-Regeln) ändern – erzwingt einen Neuaufbau. */
+<<<<<<< HEAD
 export const SCHEMA_VERSION = 7;
+=======
+export const SCHEMA_VERSION = 8;
+>>>>>>> origin/feat/navigation-nach-art
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS film (
@@ -41,6 +45,11 @@ CREATE TABLE IF NOT EXISTS film (
   extra INTEGER NOT NULL DEFAULT 0,
   -- 1 = Livestream (Sender-Stream oder angekündigte Übertragung): nicht in Listen und Bündeln
   live INTEGER NOT NULL DEFAULT 0,
+<<<<<<< HEAD
+=======
+  -- Art der Sendung (Format: serie, film, doku …), beim Bündeln gesetzt
+  format TEXT,
+>>>>>>> origin/feat/navigation-nach-art
   -- Bündel (Serie/Reihe), nach jedem Import neu zugeordnet
   serie_id INTEGER,
   -- Serienname aus dem Titel („Twin Peaks - Staffel 1 (3/8)“) – für Themen, die nur eine Rubrik sind
@@ -72,6 +81,7 @@ CREATE TABLE IF NOT EXISTS serie (
   gruppe TEXT NOT NULL,
   thema TEXT NOT NULL,
   art TEXT NOT NULL,
+  format TEXT NOT NULL DEFAULT 'doku',
   folgen INTEGER NOT NULL,
   extras INTEGER NOT NULL,
   staffeln INTEGER NOT NULL,
@@ -95,6 +105,10 @@ const NEUE_SPALTEN: [string, string][] = [
   ['folge', 'INTEGER'],
   ['extra', 'INTEGER NOT NULL DEFAULT 0'],
   ['live', 'INTEGER NOT NULL DEFAULT 0'],
+<<<<<<< HEAD
+=======
+  ['format', 'TEXT'],
+>>>>>>> origin/feat/navigation-nach-art
   ['serie_id', 'INTEGER'],
   ['fassung', 'INTEGER NOT NULL DEFAULT 0'],
   ['kern', "TEXT NOT NULL DEFAULT ''"],
@@ -169,7 +183,12 @@ export function istLive(e: Pick<FilmEintrag, 'url' | 'thema' | 'datum' | 'dauer'
  * und Extras (die stehen auf der Seite ihrer Sendung), keine Livestreams und nichts mit Datum in der Zukunft.
  */
 export function gelistet(jetzt = Date.now(), alias = 'f'): string {
+<<<<<<< HEAD
   return `${alias}.variante = 0 AND ${alias}.extra = 0 AND ${alias}.live = 0 AND ${alias}.datum <= ${Math.floor(jetzt / 1000)}`;
+=======
+  // „+“ vor dem Datum: SQLite soll dafür keinen Index nehmen – sonst läuft die Volltextsuche über alle Filme nach Datum
+  return `${alias}.variante = 0 AND ${alias}.extra = 0 AND ${alias}.live = 0 AND +${alias}.datum <= ${Math.floor(jetzt / 1000)}`;
+>>>>>>> origin/feat/navigation-nach-art
 }
 
 export function schreiber(db: Db): (e: FilmEintrag) => void {
@@ -293,6 +312,7 @@ export interface FilmZeile {
   extra: number;
   serie_id: number | null;
   buendel: string | null;
+  format: string | null;
 }
 
 export function zuFilm(z: FilmZeile, genres: Map<number, GenreId[]>): Film {
@@ -316,12 +336,13 @@ export function zuFilm(z: FilmZeile, genres: Map<number, GenreId[]>): Film {
     folge: z.folge,
     extra: z.extra === 1,
     serieId: z.serie_id,
-    buendel: z.buendel || null
+    buendel: z.buendel || null,
+    format: istFormat(z.format) ? z.format : null
   };
 }
 
 export const SPALTEN = `f.id, f.sender, f.gruppe, f.thema, f.titel, f.datum, f.dauer, f.beschreibung, f.website,
-  f.url, f.url_klein, f.url_hd, f.url_untertitel, f.geo, f.staffel, f.folge, f.extra, f.serie_id, f.buendel`;
+  f.url, f.url_klein, f.url_hd, f.url_untertitel, f.geo, f.staffel, f.folge, f.extra, f.serie_id, f.buendel, f.format`;
 
 export function suche(db: Db, anfrage: SuchAnfrage): SuchErgebnis {
   const limit = Math.min(Math.max(anfrage.limit ?? 50, 1), 200);
@@ -330,15 +351,10 @@ export function suche(db: Db, anfrage: SuchAnfrage): SuchErgebnis {
   const genre = anfrage.genre && istGenre(anfrage.genre) ? anfrage.genre : null;
   const sortierung: Sortierung = anfrage.sortierung ?? 'relevanz';
   const fts = baueFtsAbfrage(anfrage.text);
-  const p = { fts, gruppe, genre, limit, offset };
-  // Format: nur Filme (Genre „Spielfilme“) bzw. nur Folgen echter Serien
+  // Format: nur Sendungen dieser Art (Serie, Film, Doku …)
   const format = istFormat(anfrage.format) ? anfrage.format : null;
-  const formatFilter =
-    format === 'film'
-      ? "AND EXISTS (SELECT 1 FROM film_genre fg WHERE fg.genre = 'film' AND fg.film_id = f.id)"
-      : format === 'serie'
-        ? "AND EXISTS (SELECT 1 FROM serie s WHERE s.id = f.serie_id AND s.art = 'serie')"
-        : '';
+  const p = { fts, gruppe, genre, limit, offset, format };
+  const formatFilter = format ? 'AND f.format = @format' : '';
 
   let treffer: FilmZeile[];
   let gesamt: number;

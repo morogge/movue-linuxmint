@@ -12,7 +12,7 @@ import { listenAdresse, oeffneListe } from '../../src/main/filmliste/quelle';
 import { oeffneDb, schliesseAufbau } from '../../src/main/index/datenbank';
 import { importiere } from '../../src/main/index/import';
 import { herkunft } from '../../src/shared/titelinfo';
-import { filmSchluessel, serienSchluessel, wikidataTitel, type MetaDatei, type MetaEintrag } from '../../src/shared/metadaten';
+import { filmSchluessel, META_STAND, serienSchluessel, wikidataTitel, type MetaDatei, type MetaEintrag } from '../../src/shared/metadaten';
 import { details, FILM_TYPEN, SERIEN_TYPEN, suche, waehle, type Kandidat } from './wikidata';
 
 const TAG = 86_400_000;
@@ -54,7 +54,7 @@ it('Metadaten bauen', { timeout: 120 * 60_000 }, async () => {
       if (!filme.has(schluessel)) filme.set(schluessel, { schluessel, namen: wikidataTitel(z.titel), jahr: herkunft(z.titel, z.beschreibung)?.jahr });
     }
     const serien = new Map<string, Titel>();
-    for (const z of db.prepare(`SELECT thema FROM serie WHERE art = 'serie' ORDER BY folgen DESC`).all() as { thema: string }[]) {
+    for (const z of db.prepare(`SELECT thema FROM serie WHERE art IN ('serie', 'filmreihe') ORDER BY folgen DESC`).all() as { thema: string }[]) {
       const schluessel = serienSchluessel(z.thema);
       if (!serien.has(schluessel)) serien.set(schluessel, { schluessel, namen: wikidataTitel(z.thema) });
     }
@@ -63,7 +63,8 @@ it('Metadaten bauen', { timeout: 120 * 60_000 }, async () => {
     const jetzt = Date.now();
     const offen = (t: Titel) => {
       const e = eintraege[t.schluessel];
-      return !e || jetzt - e.t > (e.q ? GUELTIG : LEER_GUELTIG);
+      // Gefundene Einträge eines älteren Stands (ohne Genres) neu abfragen
+      return !e || jetzt - e.t > (e.q ? GUELTIG : LEER_GUELTIG) || (!!e.q && (e.v ?? 1) < META_STAND);
     };
     const stat = { filme: filme.size, serien: serien.size, gefragt: 0, gefunden: 0, mitBesetzung: 0, abgebrochen: false };
 
@@ -105,6 +106,8 @@ it('Metadaten bauen', { timeout: 120 * 60_000 }, async () => {
             o: original,
             r: x?.regie.length ? x.regie : undefined,
             d: x?.darsteller.length ? x.darsteller : undefined,
+            g: x?.genres.length ? x.genres : undefined,
+            v: META_STAND,
             t: jetzt
           };
           stat.gefunden++;

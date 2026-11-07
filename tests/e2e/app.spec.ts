@@ -36,7 +36,8 @@ test('Startseite erscheint und das Sendungsverzeichnis wird geladen', async () =
   await expect(win.getByText(/Version \d+\.\d+\.\d+/)).toBeVisible();
   await expect(win.getByRole('status')).toContainText('10 Sendungen', { timeout: 60_000 });
   await expect(win.getByRole('status')).toContainText('Stand 01.11.');
-  await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 2 })).toBeVisible();
+  await expect(win.getByRole('heading', { name: 'Neu bei Filmen', level: 2 })).toBeVisible();
+  await expect(win.getByRole('heading', { name: 'Neu bei Serien', level: 2 })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/start.png' });
 });
 
@@ -52,7 +53,7 @@ test('Kachel öffnet die Detailseite mit weiteren Folgen, Alt+← führt zurück
   await expect(win.getByRole('link', { name: 'Wikidata' })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/detail.png' });
   await win.keyboard.press('Alt+ArrowLeft');
-  await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 2 })).toBeVisible();
+  await expect(win.getByRole('heading', { name: 'Neu bei Filmen', level: 2 })).toBeVisible();
 });
 
 test('Serien erscheinen als eine Kachel und öffnen die Serienseite mit Staffeln', async () => {
@@ -102,7 +103,8 @@ test('Merken und Reihe abonnieren landen in der Merkliste', async () => {
   await win.getByRole('button', { name: 'Abo „Tatort“ beenden' }).click();
   await expect(win.getByRole('heading', { name: 'Abos' })).toHaveCount(0);
 
-  await win.getByRole('button', { name: 'Läuft bald ab', exact: true }).click();
+  await win.getByRole('button', { name: 'Alle Kategorien', exact: true }).click();
+  await win.getByRole('button', { name: /^Läuft bald ab/ }).click();
   await expect(win.getByRole('heading', { name: 'Läuft bald ab', level: 1 })).toBeVisible();
   await expect(win.getByText('Gerade läuft nichts davon ab.')).toBeVisible();
   await win.getByRole('button', { name: 'Start', exact: true }).click();
@@ -111,7 +113,8 @@ test('Merken und Reihe abonnieren landen in der Merkliste', async () => {
 test('Sender-Seite zeigt nur Sendungen dieser Mediathek', async () => {
   await win.getByRole('button', { name: 'ZDF Mediathek' }).click();
   await expect(win.getByRole('heading', { name: 'ZDF Mediathek', level: 1 })).toBeVisible();
-  await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 2 })).toHaveCount(0);
+  await expect(win.getByRole('heading', { name: 'Neu bei Serien', level: 2 })).toHaveCount(0);
+  await expect(win.getByRole('button', { name: /Terra X: Die Ostsee/ }).first()).toBeVisible();
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 
@@ -158,29 +161,38 @@ test('Tastenkürzel-Seite zeigt die Tabelle aus der App', async () => {
   await win.getByRole('button', { name: 'Hilfe schließen (Esc)' }).click();
 });
 
-test('Genres: Kacheln zeigen, ein Genre öffnen', async () => {
-  await win.getByRole('button', { name: 'Genres', exact: true }).click();
-  await expect(win.getByRole('heading', { name: 'Genres', level: 1 })).toBeVisible();
+test('Alle Kategorien: ohne „Weitere Sendungen“, Genre-Seite mit Reitern je Art', async () => {
+  await win.getByRole('button', { name: 'Alle Kategorien', exact: true }).click();
+  await expect(win.getByRole('heading', { name: 'Alle Kategorien', level: 1 })).toBeVisible();
+  await expect(win.getByText('Weitere Sendungen')).toHaveCount(0);
+  await expect(win.getByRole('button', { name: /^Magazine/ })).toContainText('nur hier');
   const krimi = win.getByRole('button', { name: /Krimi & Thriller/ });
   await expect(krimi).toContainText('2 Sendungen');
-  await win.screenshot({ path: 'test-results/screens/genres.png' });
+  await win.screenshot({ path: 'test-results/screens/kategorien.png' });
   await krimi.click();
   await expect(win.getByRole('heading', { name: 'Krimi & Thriller', level: 1 })).toBeVisible();
-  await expect(win.getByText('2 Treffer')).toBeVisible();
+  // Tatort ist eine Filmreihe: Reiter „Filme“ mit beiden Filmen, keine Serien
+  await expect(win.getByRole('tab', { name: /^Serien/ })).toHaveCount(0);
+  await win.getByRole('tab', { name: /^Filme/ }).click();
+  await expect(win.getByRole('tab', { name: /^Filme/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(win.getByText('2 Einträge', { exact: false })).toBeVisible();
+  await expect(win.getByRole('button', { name: /Tatort: Der Fall Münster/ })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/genre-krimi.png' });
-  // Formate sind eigene Filter: Krimis als Serien → keine; alle Serien → die Serie als ein Eintrag
-  const format = win.getByRole('group', { name: 'Format' });
-  await format.getByRole('button', { name: 'Serien' }).click();
-  await expect(win.getByRole('heading', { name: 'Krimi & Thriller · Serien', level: 1 })).toBeVisible();
-  await expect(win.getByText('Keine Treffer.')).toBeVisible();
-  await win.getByLabel('Genre', { exact: true }).selectOption('');
+});
+
+test('Seite einer Art: Serien als eine Kachel, Filter nach Sender', async () => {
+  await win.getByRole('button', { name: 'Serien', exact: true }).click();
   await expect(win.getByRole('heading', { name: 'Serien', level: 1 })).toBeVisible();
-  await expect(win.getByRole('button', { name: /In aller Freundschaft/ })).toHaveCount(1);
-  await win.screenshot({ path: 'test-results/screens/format-serien.png' });
-  await win.getByRole('button', { name: 'Einzelne Folgen' }).click();
-  await expect(win.getByRole('button', { name: /Folge 1101: Neue Wege/ })).toBeVisible();
-  await win.getByRole('button', { name: 'Filter zurücksetzen' }).click();
-  await expect(win.getByRole('heading', { name: 'Neueste Sendungen', level: 1 })).toBeVisible();
+  await expect(win.getByRole('heading', { name: 'Neu bei Serien', level: 2 })).toBeVisible();
+  await expect(win.getByRole('button', { name: /In aller Freundschaft/ }).first()).toBeVisible();
+  await win.screenshot({ path: 'test-results/screens/art-serien.png' });
+  await win.getByRole('group', { name: 'Sender' }).getByRole('button', { name: 'ZDF' }).click();
+  await expect(win.getByRole('button', { name: /In aller Freundschaft/ })).toHaveCount(0);
+  await win.getByRole('button', { name: 'Dokus', exact: true }).click();
+  await expect(win.getByRole('heading', { name: 'Dokus', level: 1 })).toBeVisible();
+  await expect(win.getByRole('group', { name: 'Thema' })).toBeVisible();
+  await win.screenshot({ path: 'test-results/screens/art-dokus.png' });
+  await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 
 test('Hinweis auf eine heruntergeladene neue Version', async () => {

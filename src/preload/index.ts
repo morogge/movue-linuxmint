@@ -35,6 +35,9 @@ const api = {
       offset?: number;
     }): Promise<{ eintraege: ({ typ: 'serie'; serie: Serie; datum: number } | { typ: 'film'; film: Film; datum: number })[]; gesamt: number }> =>
       ipcRenderer.invoke('index:stoebern', a),
+    /** Anzahl der Einträge je Art (Serien, Filme, Dokus …), wahlweise nur eines Genres oder Senders */
+    arten: (a?: { genre?: GenreId | null; gruppe?: SenderGruppe | null }): Promise<Partial<Record<Format, number>>> =>
+      ipcRenderer.invoke('index:arten', a ?? {}),
     serienSuche: (a: { text: string; gruppe?: SenderGruppe | null }): Promise<Serie[]> => ipcRenderer.invoke('index:serien-suche', a),
     folgen: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:folgen', id),
     /** Fassungen derselben Sendung; name = null für die Standardfassung */

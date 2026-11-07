@@ -21,6 +21,14 @@ import { serieAusTitel } from '@shared/serie';
  */
 const BEGRIFFE: Record<Exclude<GenreId, 'sonstiges'>, string[]> = {
   krimi: [],
+<<<<<<< HEAD
+=======
+  // kommen aus Wikidata (Paket „Metadaten“), nicht aus Begriffen
+  drama: [],
+  liebe: [],
+  fantasy: [],
+  historisch: [],
+>>>>>>> origin/feat/navigation-nach-art
   film: [
     'spielfilm', 'fernsehfilm', 'kinofilm', 'filme im ersten', 'filmmittwoch', 'herzkino', 'montagskino',
     'der fernsehfilm der woche', 'sommerkino', 'kino im ersten', 'das kleine fernsehspiel', 'debüt im ersten',

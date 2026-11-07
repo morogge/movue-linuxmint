@@ -24,6 +24,15 @@ const PATHS = {
   untertitel: 'M2 5h20v14H2zM7 13h4M13 13h4M7 16h10',
   autoplay: 'M5 4v16l9-8zM16 5h3v14h-3',
   pip: 'M2 4h20v16H2zM12 12h7v5h-7z',
+  film: 'M4 4h16v16H4zM8 4v16M16 4v16M4 8h4M4 12h4M4 16h4M16 8h4M16 12h4M16 16h4',
+  doku: 'M3 7h12v10H3zM15 10l6-3v10l-6-3',
+  show: 'M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3',
+  nachrichten: 'M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M8 9h5M8 13h5',
+  sport: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM2 12h20M12 2c3 3 3 17 0 20M12 2c-3 3-3 17 0 20',
+  kinder: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01',
+  live: 'M12 12h.01M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14',
+  magazin: 'M4 4h16v16H4zM8 8h8M8 12h8M8 16h5',
+  konzert: 'M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM20 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
   vollbildAus: 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5'
 } as const;
 

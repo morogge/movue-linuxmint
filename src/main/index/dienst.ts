@@ -1,3 +1,4 @@
+import { dirname, join } from 'node:path';
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import type { IndexZustand, SuchAnfrage, SuchErgebnis } from '@shared/film';
 import type { ListenArt } from '../filmliste/quelle';
@@ -26,7 +27,7 @@ import type { GenreAnzahl } from '@shared/genres';
 import type { IndexerAuftrag, IndexerNachricht } from './indexer.worker';
 import { naechsteAktion } from './plan';
 import createIndexer from './indexer.worker?nodeWorker';
-import { mitSerien, serieDetail, serienSuche, stoebern, type StoebernEintrag } from './serien';
+import { artAnzahlen, mitSerien, serieDetail, serienSuche, stoebern, type StoebernEintrag } from './serien';
 import type { SerieDetail, Serie } from '@shared/serie';
 import type { Format, GenreId } from '@shared/genres';
 import type { SenderGruppe } from '@shared/sender';
@@ -43,6 +44,7 @@ export class IndexDienst {
   private timer: NodeJS.Timeout | null = null;
   private zustand: IndexZustand = { phase: 'leer', anzahl: 0, stand: null };
   private genreCache: GenreAnzahl[] | null = null;
+  private artCache: Partial<Record<Format, number>> | null = null;
 
   constructor(
     private readonly dbPfad: string,
@@ -101,6 +103,13 @@ export class IndexDienst {
     return this.db ? stoebern(this.db, a) : { eintraege: [], gesamt: 0 };
   }
 
+  /** Einträge je Art; ohne Filter einmal je Laden berechnet */
+  arten(a: { genre?: GenreId | null; gruppe?: SenderGruppe | null } = {}): Partial<Record<Format, number>> {
+    if (!this.db) return {};
+    if (!a.genre && !a.gruppe) return (this.artCache ??= artAnzahlen(this.db));
+    return artAnzahlen(this.db, a);
+  }
+
   serienSuche(text: string, gruppe?: SenderGruppe | null): Serie[] {
     return this.db ? serienSuche(this.db, text, gruppe) : [];
   }
@@ -153,6 +162,7 @@ export class IndexDienst {
 
   private oeffne(): void {
     this.genreCache = null;
+    this.artCache = null;
     this.db?.close();
     this.db = null;
     if (!existsSync(this.dbPfad)) {
@@ -194,7 +204,8 @@ export class IndexDienst {
     this.setze({ phase: this.db ? 'bereit' : 'laedt', fortschritt: 0, meldung: undefined });
 
     try {
-      const ergebnis = await this.imWorker({ art, dbPfad: ziel, userAgent: this.userAgent });
+      // Das Wikidata-Paket liegt neben dem Verzeichnis (siehe MetadatenDienst)
+      const ergebnis = await this.imWorker({ art, dbPfad: ziel, userAgent: this.userAgent, metaPfad: join(dirname(this.dbPfad), 'metadaten.json') });
       if (art === 'voll') {
         this.db?.close();
         this.db = null;

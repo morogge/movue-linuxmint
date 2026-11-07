@@ -169,6 +169,10 @@ ipcMain.handle('index:stoebern', (_event, a: { genre?: unknown; format?: unknown
   });
 });
 
+ipcMain.handle('index:arten', (_event, a: { genre?: unknown; gruppe?: unknown } | undefined) =>
+  index ? index.arten({ genre: istGenre(a?.genre) ? a.genre : null, gruppe: istGruppe(a?.gruppe) ? a.gruppe : null }) : {}
+);
+
 ipcMain.handle('index:serien-suche', (_event, a: { text?: unknown; gruppe?: unknown }) =>
   index && typeof a?.text === 'string' ? index.serienSuche(a.text, istGruppe(a.gruppe) ? a.gruppe : null) : []
 );

@@ -1,3 +1,5 @@
+import { gunzipSync } from 'node:zlib';
+import { METADATEN_URL, type MetaDatei, type MetaEintrag } from '../../src/shared/metadaten';
 import { createWriteStream, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -39,7 +41,16 @@ describe('Audit der Klassifizierung', () => {
     mkdirSync(ZIEL, { recursive: true });
     try {
       const db = oeffneDb(join(ordner, 'index.db'), { schnellaufbau: true });
-      await importiere(await oeffneListe(await listenAdresse('voll', UA), UA), db);
+      // Wikidata-Paket wie in der App (Genres für Filme und Serien)
+      let meta: Record<string, MetaEintrag> | undefined;
+      try {
+        const antwort = await fetch(METADATEN_URL);
+        if (antwort.ok) meta = (JSON.parse(gunzipSync(Buffer.from(await antwort.arrayBuffer())).toString('utf8')) as MetaDatei).eintraege;
+      } catch {
+        meta = undefined;
+      }
+      console.log(`AUDIT meta=${meta ? Object.keys(meta).length : 0}`);
+      await importiere(await oeffneListe(await listenAdresse('voll', UA), UA), db, undefined, meta);
       schliesseAufbau(db);
 
       const genresJeFilm = new Map<number, string[]>();
@@ -48,11 +59,12 @@ describe('Audit der Klassifizierung', () => {
         if (l) l.push(g.genre);
         else genresJeFilm.set(g.film_id, [g.genre]);
       }
-      const serien = db.prepare('SELECT id, gruppe, thema, art, folgen, extras, staffeln, neueste FROM serie').all() as {
+      const serien = db.prepare('SELECT id, gruppe, thema, art, format, folgen, extras, staffeln, neueste FROM serie').all() as {
         id: number;
         gruppe: string;
         thema: string;
         art: string;
+        format: string;
         folgen: number;
         extras: number;
         staffeln: number;
@@ -67,7 +79,7 @@ describe('Audit der Klassifizierung', () => {
       const zeilen = db
         .prepare(
           `SELECT id, sender, gruppe, thema, titel, datum, dauer, beschreibung, website, url, url_hd, geo, variante, fassung,
-                  staffel, folge, extra, serie_id, buendel, reihe_titel FROM film`
+                  staffel, folge, extra, serie_id, buendel, reihe_titel, format, live FROM film`
         )
         .all() as {
         id: number;
@@ -90,10 +102,12 @@ describe('Audit der Klassifizierung', () => {
         serie_id: number | null;
         buendel: string | null;
         reihe_titel: string | null;
+        format: string | null;
+        live: number;
       }[];
 
       const spalten = [
-        'id', 'gruppe', 'sender', 'thema', 'titel', 'datum', 'dauer', 'genres', 'genres_roh', 'serie', 'serie_art', 'buendel',
+        'id', 'gruppe', 'sender', 'thema', 'titel', 'datum', 'dauer', 'genres', 'genres_roh', 'serie', 'serie_art', 'format', 'live', 'buendel',
         'extra', 'variante', 'fassung', 'staffel', 'folge', 'website', 'url', 'beschreibung'
       ];
       const datensaetze = zeilen.map((z) => {
@@ -111,6 +125,8 @@ describe('Audit der Klassifizierung', () => {
           genres_roh: bestimmeGenres(z).sort().join('|'),
           serie: s?.thema ?? '',
           serie_art: s?.art ?? '',
+          format: z.format ?? '',
+          live: z.live,
           buendel: z.buendel ?? '',
           extra: z.extra,
           variante: z.variante,
@@ -145,6 +161,7 @@ describe('Audit der Klassifizierung', () => {
         gruppe: s.gruppe,
         thema: s.thema,
         art: s.art,
+        format: s.format,
         folgen: s.folgen,
         extras: s.extras,
         staffeln: s.staffeln,

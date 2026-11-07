@@ -23,12 +23,12 @@ Movue zeigt das Titelbild, das die Mediathek für die Serie verwendet – oft mi
 
 Unter dem Namen steht, was für ein Bündel es ist:
 
-- **Serie**: Folgen mit Staffel- oder Folgennummer, etwa „Die Rosenheim-Cops“.
-- **Filmreihe**: eigenständige Filme unter einer Marke, etwa „Tatort“ oder „Polizeiruf 110“. In der Reihe **Spielfilme** stehen sie einzeln.
+- **Serie**: erzählte Folgen mit Staffel- oder Folgennummer, etwa „Die Rosenheim-Cops“. Doku-Serien wie „Mittendrin – Flughafen Frankfurt“ sind Sendereihen, auch wenn sie Staffeln haben.
+- **Filmreihe**: eigenständige Filme unter einer Marke, etwa „Tatort“, „Polizeiruf 110“ oder „Die Toten vom Bodensee“ – auch wenn der Sender sie durchnummeriert. In der Reihe **Spielfilme** stehen sie einzeln.
 - **Sendereihe**: Magazine und Dokureihen, etwa „Kulturzeit“, „Terra X“ oder „Volle Kanne“.
 - **Nachrichten**: viele kurze Ausgaben; sie erscheinen nicht auf der Startseite.
 
-Ein Bündel steht in den Genres, die zu mindestens einem Drittel seiner Folgen passen. Einzelne Folgen ziehen es nicht in ein fremdes Genre – eine Kulturzeit-Ausgabe über einen Krimi macht das Kulturmagazin nicht zum Krimi.
+Ein Bündel steht in den Genres, die zur Mehrheit seiner Folgen passen; nur wenn keins die Mehrheit hat (gemischte Magazine), reicht ein Drittel. Alle Folgen bekommen die Genres ihres Bündels. Einzelne Folgen ziehen es nicht in ein fremdes Genre – eine Kulturzeit-Ausgabe über einen Krimi macht das Kulturmagazin nicht zum Krimi.
 
 ## Die Serienseite
 
@@ -37,8 +37,9 @@ Ein Klick auf eine Serienkachel öffnet die Serienseite:
 - Oben Name, Sender, Genres und die Beschreibung der neuesten Folge.
 - Der große Knopf startet die passende Folge: **Weiterschauen S2 · F4**, wenn du eine Folge angefangen hast; **Nächste Folge**, wenn du die letzte zu Ende gesehen hast; sonst **Abspielen** ab der ersten Folge bzw. bei Sendereihen **Neueste Folge**.
 - **Abonnieren** meldet dir neue Folgen (siehe **Merkliste und Abos**).
+- **Beim Sender ansehen** öffnet die Seite der Serie in der Mediathek (ZDF, 3sat). Kennt Movue sie nicht, öffnet es die Suche der Mediathek nach dem Namen der Serie.
 - **Besetzung** der Serie, sofern Wikidata sie kennt.
-- Die Reiter darunter teilen die Folgen ein: bei Serien nach **Staffel**, bei Sendereihen nach **Jahr**. Vorschauen, Making-of, Outtakes und Trailer stehen unter **Extras** und zählen nicht als Folge.
+- Die Reiter darunter teilen die Folgen ein: nach **Staffel**, wenn der Sender Staffeln nennt, sonst bei Sendereihen nach **Jahr**. Trailer, Vorschauen, Clips, Making-of und Outtakes stehen unter **Extras** und zählen nicht als Folge – in Listen, Genres und Suche erscheinen sie nicht. Was länger als 20 Minuten dauert, ist eine richtige Folge, auch wenn „Podcast“ oder „Hinter den Kulissen“ im Titel steht.
 - Ein Klick auf eine Folge spielt sie ab; **Details** öffnet ihre Seite. Gesehene Folgen sind blasser, angefangene zeigen einen Balken und die Restzeit.
 
 ## Wo Serien erscheinen

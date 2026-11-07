@@ -4,7 +4,7 @@ import type { IndexZustand, SuchAnfrage } from '@shared/film';
 import type { UpdateZustand } from '@shared/update';
 import { IndexDienst } from './index/dienst';
 import { UpdateDienst } from './update';
-import { BildDienst } from './bilder';
+import { BildDienst, serienSeite } from './bilder';
 import { NutzerDb } from './nutzer';
 import { AblaufDienst } from './ablauf';
 import { TitelInfoDienst } from './titelinfo';
@@ -303,9 +303,11 @@ ipcMain.handle('ablauf:bald', (): { film: Film; ablauf: Ablauf; gemerkt: boolean
   return liste.sort((x, y) => (x.ablauf.bis ?? 0) - (y.ablauf.bis ?? 0));
 });
 
-ipcMain.handle('film:seite-oeffnen', async (_event, film: { website?: unknown; gruppe?: unknown; titel?: unknown }) => {
+ipcMain.handle('film:seite-oeffnen', async (_event, film: { website?: unknown; gruppe?: unknown; titel?: unknown; serie?: unknown }) => {
   if (typeof film?.website !== 'string' || typeof film.titel !== 'string' || !istGruppe(film.gruppe)) return null;
-  const ziel = await seitenZiel({ website: film.website, gruppe: film.gruppe, titel: film.titel });
+  // Für eine Serie die Seite der Sendereihe (ZDF, 3sat) – sonst die Suche der Mediathek nach ihrem Namen
+  const website = film.serie === true ? (serienSeite(film.website) ?? '') : film.website;
+  const ziel = await seitenZiel({ website, gruppe: film.gruppe, titel: film.titel });
   await shell.openExternal(ziel.url);
   return ziel.art;
 });

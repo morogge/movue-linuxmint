@@ -10,7 +10,7 @@ import { fassungKern, fassungName, istFassung } from '@shared/fassung';
 export type Db = Database.Database;
 
 /** Erhöhen, wenn sich Tabellen oder abgeleitete Daten (z. B. Genre-Regeln) ändern – erzwingt einen Neuaufbau. */
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS film (
@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS film (
   staffel INTEGER,
   folge INTEGER,
   extra INTEGER NOT NULL DEFAULT 0,
+  -- 1 = Livestream (Sender-Stream oder angekündigte Übertragung): nicht in Listen und Bündeln
+  live INTEGER NOT NULL DEFAULT 0,
   -- Bündel (Serie/Reihe), nach jedem Import neu zugeordnet
   serie_id INTEGER,
   -- Serienname aus dem Titel („Twin Peaks - Staffel 1 (3/8)“) – für Themen, die nur eine Rubrik sind
@@ -92,6 +94,7 @@ const NEUE_SPALTEN: [string, string][] = [
   ['staffel', 'INTEGER'],
   ['folge', 'INTEGER'],
   ['extra', 'INTEGER NOT NULL DEFAULT 0'],
+  ['live', 'INTEGER NOT NULL DEFAULT 0'],
   ['serie_id', 'INTEGER'],
   ['fassung', 'INTEGER NOT NULL DEFAULT 0'],
   ['kern', "TEXT NOT NULL DEFAULT ''"],
@@ -156,18 +159,31 @@ export function istVariante(titel: string): boolean {
   return VARIANTE.test(titel) || istFassung(titel);
 }
 
+/** Livestream statt Video: HLS-Live-Adresse, Thema „Livestream“ oder weder Datum noch Dauer (Sender-Streams) */
+export function istLive(e: Pick<FilmEintrag, 'url' | 'thema' | 'datum' | 'dauer'>): boolean {
+  return /\/hls\/live\/|\/live\/hls\//i.test(e.url) || e.thema.trim().toLowerCase() === 'livestream' || (e.datum === 0 && e.dauer === 0);
+}
+
+/**
+ * Bedingung für alles, was in Listen, Suche und auf Genre-Seiten erscheint: nur Standardfassungen, keine Trailer
+ * und Extras (die stehen auf der Seite ihrer Sendung), keine Livestreams und nichts mit Datum in der Zukunft.
+ */
+export function gelistet(jetzt = Date.now(), alias = 'f'): string {
+  return `${alias}.variante = 0 AND ${alias}.extra = 0 AND ${alias}.live = 0 AND ${alias}.datum <= ${Math.floor(jetzt / 1000)}`;
+}
+
 export function schreiber(db: Db): (e: FilmEintrag) => void {
   const stmt = db.prepare(`
     INSERT INTO film (url, sender, gruppe, thema, titel, datum, dauer, beschreibung, website,
-                      url_klein, url_hd, url_untertitel, geo, neu, variante, staffel, folge, extra, fassung, kern, reihe_titel)
+                      url_klein, url_hd, url_untertitel, geo, neu, variante, staffel, folge, extra, live, fassung, kern, reihe_titel)
     VALUES (@url, @sender, @gruppe, @thema, @titel, @datum, @dauer, @beschreibung, @website,
-            @urlKlein, @urlHd, @urlUntertitel, @geo, @neu, @variante, @staffel, @folge, @extra, @fassung, @kern, @reiheTitel)
+            @urlKlein, @urlHd, @urlUntertitel, @geo, @neu, @variante, @staffel, @folge, @extra, @live, @fassung, @kern, @reiheTitel)
     ON CONFLICT(url) DO UPDATE SET
       sender = excluded.sender, gruppe = excluded.gruppe, thema = excluded.thema, titel = excluded.titel,
       datum = excluded.datum, dauer = excluded.dauer, beschreibung = excluded.beschreibung,
       website = excluded.website, url_klein = excluded.url_klein, url_hd = excluded.url_hd,
       url_untertitel = excluded.url_untertitel, geo = excluded.geo, neu = excluded.neu,
-      variante = excluded.variante, staffel = excluded.staffel, folge = excluded.folge, extra = excluded.extra,
+      variante = excluded.variante, staffel = excluded.staffel, folge = excluded.folge, extra = excluded.extra, live = excluded.live,
       fassung = excluded.fassung, kern = excluded.kern, reihe_titel = excluded.reihe_titel
     RETURNING id
   `);
@@ -175,7 +191,7 @@ export function schreiber(db: Db): (e: FilmEintrag) => void {
   const genre = db.prepare('INSERT OR IGNORE INTO film_genre (genre, film_id, datum) VALUES (?, ?, ?)');
   return (e) => {
     const { genres, ...felder } = e;
-    const info = folgenInfo(e.titel);
+    const info = folgenInfo(e.titel, e.dauer);
     // Bei Rubrik-Themen (Arte, „Fernsehfilm der Woche“) steht der Serienname im Titel
     const ausTitel = serieAusTitel(e.titel);
     if (ausTitel && info.folge === null) {
@@ -193,7 +209,8 @@ export function schreiber(db: Db): (e: FilmEintrag) => void {
       reiheTitel: ausTitel?.name ?? null,
       staffel: info.staffel,
       folge: info.folge,
-      extra: info.extra ? 1 : 0
+      extra: info.extra ? 1 : 0,
+      live: istLive(e) ? 1 : 0
     }) as { id: number };
     loescheGenres.run(id);
     for (const g of genres ?? ['sonstiges']) genre.run(g, id, e.datum);
@@ -325,6 +342,7 @@ export function suche(db: Db, anfrage: SuchAnfrage): SuchErgebnis {
 
   let treffer: FilmZeile[];
   let gesamt: number;
+  const sichtbar = gelistet();
 
   if (!fts && genre) {
     // Neueste im Genre: über den Index (genre, datum)
@@ -332,25 +350,25 @@ export function suche(db: Db, anfrage: SuchAnfrage): SuchErgebnis {
     treffer = db
       .prepare(
         `SELECT ${SPALTEN} FROM film_genre g JOIN film f ON f.id = g.film_id
-         WHERE g.genre = @genre AND f.variante = 0 ${filter} ORDER BY g.datum DESC LIMIT @limit OFFSET @offset`
+         WHERE g.genre = @genre AND ${sichtbar} ${filter} ORDER BY g.datum DESC LIMIT @limit OFFSET @offset`
       )
       .all(p) as FilmZeile[];
     gesamt = (
       db
-        .prepare(`SELECT count(*) AS n FROM film_genre g JOIN film f ON f.id = g.film_id WHERE g.genre = @genre AND f.variante = 0 ${filter}`)
+        .prepare(`SELECT count(*) AS n FROM film_genre g JOIN film f ON f.id = g.film_id WHERE g.genre = @genre AND ${sichtbar} ${filter}`)
         .get(p) as { n: number }
     ).n;
   } else if (!fts) {
     // Ohne Suchbegriff: neueste Sendungen
     // Nur Standardfassungen – andere Fassungen stehen auf der Seite der Sendung
-    const where = (gruppe ? 'WHERE f.variante = 0 AND f.gruppe = @gruppe ' : 'WHERE f.variante = 0 ') + formatFilter;
+    const where = `WHERE ${sichtbar} ` + (gruppe ? 'AND f.gruppe = @gruppe ' : '') + formatFilter;
     treffer = db
       .prepare(`SELECT ${SPALTEN} FROM film f ${where} ORDER BY f.datum DESC LIMIT @limit OFFSET @offset`)
       .all(p) as FilmZeile[];
     gesamt = (db.prepare(`SELECT count(*) AS n FROM film f ${where}`).get(p) as { n: number }).n;
   } else {
     const filter = [
-      'AND f.variante = 0',
+      `AND ${sichtbar}`,
       formatFilter,
       gruppe ? 'AND f.gruppe = @gruppe' : '',
       genre ? 'AND EXISTS (SELECT 1 FROM film_genre g WHERE g.genre = @genre AND g.film_id = f.id)' : ''
@@ -444,8 +462,8 @@ export function reihe(db: Db, anfrage: ReihenAnfrage): Film[] {
              CASE WHEN @genre = 'film' THEN CAST(f.id AS TEXT)
                   ELSE f.gruppe || '|' || COALESCE(f.buendel, 'id' || f.id) END AS schluessel
       FROM film_genre g JOIN film f ON f.id = g.film_id
-      WHERE g.genre = @genre AND g.datum >= @seit AND g.datum <= @bis
-        AND f.dauer >= @minDauer AND f.variante = 0 ${filter}
+      WHERE g.genre = @genre AND g.datum >= @seit
+        AND f.dauer >= @minDauer AND ${gelistet(jetzt * 1000)} ${filter}
         -- Spielfilme: keine Folgen von Serien und Magazinen, nur Einzelfilme und Filmreihen (Tatort)
         AND (@genre != 'film' OR f.serie_id IS NULL OR EXISTS (SELECT 1 FROM serie s WHERE s.id = f.serie_id AND s.art = 'filmreihe'))
     ), r AS (
@@ -453,7 +471,7 @@ export function reihe(db: Db, anfrage: ReihenAnfrage): Film[] {
     )
     SELECT ${SPALTEN} FROM r JOIN film f ON f.id = r.id WHERE r.rn = 1 ORDER BY r.datum DESC LIMIT @mehr`;
   const stmt = db.prepare(sql);
-  const p = { genre: anfrage.genre, gruppe, minDauer: anfrage.minDauer ?? 600, bis: jetzt + 86400, mehr: limit * 2 };
+  const p = { genre: anfrage.genre, gruppe, minDauer: anfrage.minDauer ?? 600, mehr: limit * 2 };
 
   // Erst die letzten zwei Monate; reicht das nicht, ein Jahr zurück
   let zeilen = stmt.all({ ...p, seit: jetzt - 60 * 86400 }) as FilmZeile[];
@@ -501,10 +519,10 @@ export interface ReihenStand {
 /** Stand einer abonnierten Reihe: wie viele Folgen gibt es, wie viele sind neuer als `seit` (Sekunden) */
 export function reihenStand(db: Db, gruppe: string, thema: string, seit: number): ReihenStand {
   const z = db
-    .prepare(`SELECT COUNT(*) AS anzahl, COALESCE(SUM(datum > ?), 0) AS neu FROM film WHERE gruppe = ? AND buendel = ? AND variante = 0`)
+    .prepare(`SELECT COUNT(*) AS anzahl, COALESCE(SUM(datum > ?), 0) AS neu FROM film f WHERE gruppe = ? AND buendel = ? AND ${gelistet()}`)
     .get(seit, gruppe, thema) as { anzahl: number; neu: number };
   const n = db
-    .prepare(`SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.buendel = ? AND f.variante = 0 ORDER BY f.datum DESC LIMIT 1`)
+    .prepare(`SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.buendel = ? AND ${gelistet()} ORDER BY f.datum DESC LIMIT 1`)
     .get(gruppe, thema) as FilmZeile | undefined;
   return { anzahl: z.anzahl, neu: z.neu, neueste: n ? zuFilm(n, genresFuer(db, [n.id])) : null };
 }

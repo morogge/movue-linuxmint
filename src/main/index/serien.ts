@@ -473,6 +473,40 @@ export function stoebern(
   return { eintraege, gesamt };
 }
 
+/**
+ * Wie viele Einträge jede Art beim Stöbern hat (wie in `stoebern` gezählt): Bündel als einer,
+ * Filme immer einzeln. Für die Kacheln unter „Alle Kategorien“ und die Reiter einer Genre-Seite.
+ */
+export function artAnzahlen(db: Db, a: { genre?: GenreId | null; gruppe?: SenderGruppe | null } = {}): Partial<Record<Format, number>> {
+  const gruppe = a.gruppe && istGruppe(a.gruppe) ? a.gruppe : null;
+  const genre = a.genre ?? null;
+  const p = { genre, gruppe };
+  const ergebnis: Partial<Record<Format, number>> = {};
+  const dazu = (zeilen: { format: string | null; n: number }[]) => {
+    for (const z of zeilen) if (istFormat(z.format)) ergebnis[z.format] = (ergebnis[z.format] ?? 0) + z.n;
+  };
+  dazu(
+    db
+      .prepare(
+        `SELECT s.format AS format, COUNT(*) AS n FROM serie s
+         ${genre ? 'JOIN serie_genre sg ON sg.serie_id = s.id AND sg.genre = @genre' : ''}
+         WHERE (@gruppe IS NULL OR s.gruppe = @gruppe) AND s.format != 'film' GROUP BY s.format`
+      )
+      .all(p) as { format: string | null; n: number }[]
+  );
+  dazu(
+    db
+      .prepare(
+        `SELECT f.format AS format, COUNT(*) AS n FROM film f
+         ${genre ? 'JOIN film_genre g ON g.film_id = f.id AND g.genre = @genre' : ''}
+         WHERE ${gelistet()} AND (@gruppe IS NULL OR f.gruppe = @gruppe) AND (f.serie_id IS NULL OR f.format = 'film')
+         GROUP BY f.format`
+      )
+      .all(p) as { format: string | null; n: number }[]
+  );
+  return ergebnis;
+}
+
 /** Serien, deren Name zur Suche passt – für die Reihe „Serien“ über den Suchtreffern */
 export function serienSuche(db: Db, text: string, gruppe?: SenderGruppe | null, limit = 8): Serie[] {
   const abfrage = baueFtsAbfrage(text);

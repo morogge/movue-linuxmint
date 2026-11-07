@@ -1,22 +1,42 @@
 # Stöbern
 
-Die Startseite zeigt dir, was es Neues in den Mediatheken gibt – geordnet nach Genres, über alle vier Sender hinweg.
+Movue ordnet alles nach **Art**: Serien, Filme, Dokus, Shows & Talk, Nachrichten, Sport – über alle vier Sender hinweg. Jede Art hat ihre eigene Seite.
+
+## Seitenleiste
+
+Die Seitenleiste links ist in drei Gruppen geteilt:
+
+- **Start**
+- die Arten **Serien**, **Filme**, **Dokus**, **Shows & Talk**, **Nachrichten**, **Sport** und **Kinder**, darunter etwas kleiner **Alle Kategorien** (siehe **Kategorien und Genres**)
+- **Live & demnächst** (folgt in Version 0.14), **Merkliste** und **Suche**
+
+Darunter stehen die **Sender**. Die Leiste bleibt beim Scrollen stehen. Mit dem Pfeil oben neben dem Namen – oder **Strg + B** – klappst du sie auf die Symbole ein und wieder aus; Movue merkt sich die Wahl. Ganz unten siehst du, wie aktuell das Sendungsverzeichnis ist und welche Version von Movue läuft.
+
+**Läuft bald ab** findest du unter **Alle Kategorien → Merkmale**.
 
 ## Startseite
 
 - Oben steht eine **Empfehlung**: der neueste Spielfilm bzw. die neueste Doku mit Beschreibung.
-- Darunter findest du unter **Weiterschauen** die Sendungen, die du angefangen hast.
-- Darunter folgen **Reihen** je Genre: Spielfilme, Krimis, Dokus, Serien, Wissen und mehr. Mit den **Pfeilen** am linken und rechten Rand blätterst du eine Reihe weiter; ein Pfeil erscheint nur, wenn es in diese Richtung noch etwas zu sehen gibt. Mit einem Touchpad kannst du auch seitwärts wischen.
-- Jede Reihe zeigt je Sendereihe nur einen Eintrag – so steht nicht zehnmal dieselbe Serie hintereinander. Serien und Sendereihen erscheinen als **Serienkachel**, die zur Serienseite führt (siehe **Serien und Sendereihen**). Kurze Clips unter zehn Minuten und doppelte Fassungen (z. B. mit Audiodeskription) blendet Movue hier aus; in der Suche findest du sie weiterhin.
-- **Alle anzeigen** öffnet das ganze Genre.
+- Darunter findest du unter **Weiterschauen** die Sendungen, die du angefangen hast, und unter **Neue Folgen deiner Abos** Neues aus deinen Abos.
+- Darunter folgt je Art eine **Reihe** mit dem Neuesten: **Neu bei Serien**, **Neu bei Filmen**, **Neu bei Dokus** und so weiter. Mit den **Pfeilen** am linken und rechten Rand blätterst du eine Reihe weiter; ein Pfeil erscheint nur, wenn es in diese Richtung noch etwas zu sehen gibt. Mit einem Touchpad kannst du auch seitwärts wischen.
+- **Alle anzeigen** öffnet die Seite der Art.
 
-## Seitenleiste
+## Kacheln
 
-Die Seitenleiste links bleibt beim Scrollen stehen. Mit dem Pfeil oben neben dem Namen – oder **Strg + B** – klappst du sie auf die Symbole ein und wieder aus; Movue merkt sich die Wahl. Unter der Navigation siehst du, wie aktuell das Sendungsverzeichnis ist und welche Version von Movue läuft.
+Serien und Sendereihen erscheinen als **eine Kachel** – erkennbar an der angedeuteten zweiten Karte über dem Bild. Sie führt zur Serienseite (siehe **Serien und Sendereihen**). Einzelne Sendungen öffnen ihre Detailseite. Kurzbeiträge unter fünf Minuten und doppelte Fassungen (z. B. mit Audiodeskription) stehen nicht in den Reihen; in der Suche findest du sie weiterhin.
+
+## Seite einer Art
+
+Ein Klick auf **Serien**, **Dokus** usw. öffnet die Seite dieser Art:
+
+- Oben teilen **Genres** (bei Serien und Filmen) bzw. **Themen** (bei Dokus, Shows, Magazinen) das Angebot ein, bei **Kinder** die Arten. **Alle** zeigt eine Reihe mit dem Neuesten und darunter eine Reihe je Genre oder Thema.
+- Wählst du ein Genre oder Thema – oder **Alle anzeigen** an einer Reihe –, siehst du alles daraus als Raster, die neuesten zuerst. **Mehr laden** zeigt weitere.
+- Die Knöpfe **Alle Sender**, **ARD**, **ZDF**, **3sat** und **Arte** beschränken die Seite auf eine Mediathek.
+- Nachrichten und Sport haben keine Unterteilung und zeigen gleich alles.
 
 ## Sender-Seiten
 
-Unter **Sender** in der Seitenleiste hat jede Mediathek ihre eigene Seite – mit eigener Empfehlung aus dem Programm dieses Senders und denselben Reihen, aber nur mit seinen Sendungen.
+Unter **Sender** in der Seitenleiste hat jede Mediathek ihre eigene Seite – mit eigener Empfehlung aus dem Programm dieses Senders und denselben Reihen je Art, aber nur mit seinen Sendungen. Nur hier gibt es zusätzlich eine Reihe **Kurzbeiträge**. **Alle anzeigen** öffnet die Seite der Art, schon auf diesen Sender beschränkt.
 
 ## Detailseite einer Sendung
 

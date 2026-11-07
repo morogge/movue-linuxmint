@@ -45,8 +45,8 @@ Ein Klick auf eine Serienkachel öffnet die Serienseite:
 ## Wo Serien erscheinen
 
 - **Startseite und Sender-Seiten**: Gehört die neueste Sendung einer Reihe zu einer Serie, steht dort die Serienkachel.
-- **Genres**: Beim Stöbern in einem Genre stehen Serien standardmäßig als eine Kachel zwischen den einzelnen Sendungen. Mit **Einzelne Folgen** oben siehst du wieder jede Folge für sich.
+- **Seiten einer Art, eines Genres oder Themas**: Serien stehen als eine Kachel zwischen den einzelnen Sendungen. Wer jede Folge einzeln sehen will, nimmt die **Suche** und dort **Einzelne Folgen**.
 - **Suche**: Passt dein Suchbegriff zum Namen einer Serie, erscheint sie über den Treffern unter **Serien und Sendereihen**.
 - **Seite einer Folge**: **Alle Folgen von …** führt zur Serienseite.
 
-Nachrichtensendungen wie „heute“ oder „tagesschau24“ fasst Movue ebenfalls zusammen, zeigt sie aber nicht auf der Startseite – du findest sie unter **Nachrichten & Politik** und in der Suche.
+Nachrichtensendungen wie „heute“ oder „tagesschau24“ fasst Movue ebenfalls zusammen, zeigt sie aber nicht auf der Startseite – du findest sie unter **Nachrichten** in der Seitenleiste und in der Suche.

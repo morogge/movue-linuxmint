@@ -6,7 +6,9 @@
 export const SCREENS = {
   start: { title: 'Start', help: 'stoebern' },
   suche: { title: 'Suche', help: 'suchen' },
-  genres: { title: 'Genres', help: 'genres' },
+  art: { title: 'Art', help: 'stoebern' },
+  kategorien: { title: 'Alle Kategorien', help: 'kategorien' },
+  genre: { title: 'Genre', help: 'kategorien' },
   sender: { title: 'Sender', help: 'stoebern' },
   detail: { title: 'Sendung', help: 'stoebern' },
   serie: { title: 'Serie', help: 'serien' },

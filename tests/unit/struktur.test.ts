@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { folgenInfo, gruppeVon, serieAusTitel, serienArt } from '@shared/serie';
 import { genresAusWikidata, serienSchluessel } from '@shared/metadaten';
 import { baueFassungen, istLive, oeffneDb, reihe, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
-import { baueSerien, istReihenAnfang, istRubrik, serieDetail, serieNachThema, stoebern, titelAnfang } from '../../src/main/index/serien';
+import { artAnzahlen, baueSerien, istReihenAnfang, istRubrik, serieDetail, serieNachThema, stoebern, titelAnfang } from '../../src/main/index/serien';
 import type { FilmEintrag } from '../../src/main/filmliste/eintrag';
 import { buendelFormat, type GenreId } from '../../src/shared/genres';
 
@@ -227,6 +227,15 @@ describe('Bündel im Index', () => {
     expect(titel(stoebern(db, {}))).not.toContain('Kurzmeldung aus Kiel');
     expect(titel(stoebern(db, { gruppe: 'ZDF' }))).toContain('Kurzmeldung aus Kiel');
     expect(titel(stoebern(db, { format: 'magazin' }))).toEqual(['Kulturzeit']);
+  });
+
+  it('zählt je Art so, wie die Seiten sie zeigen', () => {
+    const anzahl = artAnzahlen(db);
+    for (const format of ['serie', 'doku', 'magazin', 'film', 'sport'] as const) {
+      expect(anzahl[format] ?? 0, format).toBe(stoebern(db, { format, limit: 200 }).gesamt);
+    }
+    const sport = artAnzahlen(db, { genre: 'sport' });
+    expect(Object.values(sport).reduce((a, b) => a + (b ?? 0), 0)).toBeGreaterThan(0);
   });
 
   it('nimmt für ein Bündel die Genres der Mehrheit', () => {

@@ -4,6 +4,22 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+### Neu
+
+- **Seitenleiste nach Art**: **Serien**, **Filme**, **Dokus**, **Shows & Talk**, **Nachrichten**, **Sport** und **Kinder** haben jetzt je eine eigene Seite – oben unterteilt nach Genre oder Thema, mit einer Reihe je Genre und Filter nach Sender
+- **Alle Kategorien** ersetzt die Seite „Genres“: Arten, Genres, Themen, Kinder, Sender und **Läuft bald ab** auf einen Blick. Magazine sowie Konzert & Bühne findest du hier
+- **Genre-Seiten** mit Reitern je Art: Krimi & Thriller zum Beispiel getrennt nach Serien und Filmen, jeweils mit Anzahl
+- **Neue Genres** aus Wikidata: Drama, Liebe & Familie, Fantasy & Science-Fiction, Historienfilme & -serien. Sie kommen aus dem Metadaten-Paket – Movue fragt dafür niemanden einzeln
+- Die Startseite zeigt je Art das Neueste: **Neu bei Serien**, **Neu bei Filmen**, **Neu bei Dokus** und so weiter
+- Auf den Sender-Seiten gibt es eine Reihe **Kurzbeiträge**
+
+### Geändert
+
+- „Weitere Sendungen“ gibt es nicht mehr – jede Sendung hat jetzt eine Art
+- Kurzbeiträge unter fünf Minuten stehen nur noch in der Suche und auf der Seite ihres Senders
+- Serien und Sendereihen erkennst du an einer angedeuteten zweiten Karte über dem Bild
+- **Läuft bald ab** ist von der Seitenleiste nach **Alle Kategorien** umgezogen
+
 ## 0.12.0 – 2026-11-04
 
 ### Verbessert

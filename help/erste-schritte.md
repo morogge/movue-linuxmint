@@ -8,14 +8,14 @@ Movue lädt zuerst das Verzeichnis aller Sendungen. Das dauert ein bis zwei Minu
 
 ## Stand dieser Version
 
-- **Startseite** mit Empfehlung und Reihen je Genre, dazu eine Seite je Sender
+- **Startseite** mit Empfehlung und Reihen je Art, dazu eine Seite je Art (Serien, Filme, Dokus …) und je Sender
 - **Detailseite** zu jeder Sendung mit allen weiteren Folgen
 - **Suche** über alle vier Mediatheken, mit Filter nach Sender, Format (Serien, Filme) und Genre
-- **Genres**: Stöbern nach Themen über alle Sender hinweg
+- **Alle Kategorien**: Stöbern nach Art, Genre oder Thema über alle Sender hinweg
 - **Player** mit Untertiteln, Qualitätswahl, Vollbild, Mini-Player und automatisch nächster Folge
 - **Merkliste** und **Abos**: Sendungen für später ablegen, über neue Folgen informiert werden und sehen, was bald aus der Mediathek verschwindet
 
-Live-TV kommt in einer der nächsten Versionen dazu. Neue Versionen installiert Movue selbst (siehe **Aktualisierungen**); was sich ändert, steht unter **Was ist neu**.
+**Live & demnächst** kommt mit Version 0.14 dazu. Neue Versionen installiert Movue selbst (siehe **Aktualisierungen**); was sich ändert, steht unter **Was ist neu**.
 
 ## Hilfe aufrufen
 

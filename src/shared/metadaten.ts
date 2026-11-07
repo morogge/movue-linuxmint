@@ -18,7 +18,8 @@ const WD_GENRES: [RegExp, GenreId][] = [
   [/komödie|comedy|sitcom|satire|parodie/i, 'comedy'],
   [/drama|melodram/i, 'drama'],
   [/liebes|romanze|romantisch|familienfilm|familienserie|heimatfilm/i, 'liebe'],
-  [/fantasy|science.?fiction|mystery|horror|übernatürlich|dystop|endzeit/i, 'fantasy'],
+  // „Mystery“ fehlt bewusst: Wikidata nennt so auch Rätselkrimis wie „Death in Paradise“
+  [/fantasy|science.?fiction|horror|übernatürlich|dystop|endzeit/i, 'fantasy'],
   [/historien|historisch|kostüm|kriegsfilm|western|biografi|biopic/i, 'historisch'],
   [/kinderfilm|kinderserie|zeichentrick|animationsfilm|animationsserie|jugendfilm|jugendserie/i, 'kinder']
 ];

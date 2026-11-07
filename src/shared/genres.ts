@@ -94,9 +94,10 @@ export function buendelFormat(z: {
   if (z.art === 'serie') return 'serie';
   // Fiktion ohne Nummerierung (z. B. „Tatort“ ohne Staffeln): lang = Filme, kurz = Serie
   if (!g('doku') && FIKTION_GENRES.some(g)) return z.dauer >= 60 * 60 ? 'film' : 'serie';
+  // Satire und Talk vor Nachrichten: heute-show und Markus Lanz sind Shows, auch wenn es um Politik geht
+  if (g('comedy') || g('unterhaltung') || TALK.test(z.thema)) return 'show';
   if (g('nachrichten') && !(g('doku') && z.dauer >= 20 * 60)) return 'nachrichten';
   if (g('kultur') && KONZERT.test(z.thema)) return 'konzert';
-  if (g('comedy') || g('unterhaltung') || TALK.test(z.thema)) return 'show';
   if (/magazin/i.test(z.thema) || z.datiert >= 0.5) return 'magazin';
   if (!g('doku') && (g('ratgeber') || g('gesellschaft') || g('kultur'))) return 'magazin';
   return 'doku';

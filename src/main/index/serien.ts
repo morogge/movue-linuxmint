@@ -438,7 +438,7 @@ export function stoebern(
       ${format ? 'AND s.format = @format' : ''}`;
   // Einzelne Sendungen: ohne Bündel; bei Filmen alle Filme, auch aus Reihen wie „Tatort“.
   // Kurzbeiträge nur auf der Seite eines Senders oder wenn ausdrücklich gewählt
-  const filmTeil = `SELECT 'film', f.id, f.datum FROM film f
+  const filmTeil = `SELECT 'film' AS typ, f.id AS id, f.datum AS datum FROM film f
       ${genre ? 'JOIN film_genre g ON g.film_id = f.id AND g.genre = @genre' : ''}
       WHERE ${gelistet()} AND (@gruppe IS NULL OR f.gruppe = @gruppe)
       ${format ? 'AND f.format = @format' : ''}

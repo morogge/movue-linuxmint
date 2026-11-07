@@ -25,6 +25,7 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
   const [abonniert, setAbonniert] = useState(false);
   const [bannerFehler, setBannerFehler] = useState(false);
   const [info, setInfo] = useState<TitelInfo | null>(null);
+  const [seite, setSeite] = useState<'bereit' | 'pruefe' | 'suche'>('bereit');
   const bannerFilm = detail ? (detail.serie.bild ?? detail.folgen[0] ?? null) : null;
   const banner = useSerienBild(bannerFilm, 'banner');
 
@@ -77,6 +78,13 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
     return 'Neueste Folge';
   })();
   const aboUmschalten = async () => setAbonniert(await window.movue.abo.setzen(ref, !abonniert));
+  // Seite der Serie beim Sender (ZDF, 3sat), sonst die Suche der Mediathek nach dem Namen der Serie
+  const seiteOeffnen = async () => {
+    if (!kopfFilm) return;
+    setSeite('pruefe');
+    const art = await window.movue.film.seiteOeffnen({ website: kopfFilm.website, gruppe: serie.gruppe, titel: serie.thema, serie: true });
+    setSeite(art === 'suche' ? 'suche' : 'bereit');
+  };
 
   return (
     <section className="detail serie" aria-labelledby="serie-titel">
@@ -126,7 +134,17 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
             >
               <Icon name="glocke" size={16} /> {abonniert ? 'Abonniert' : 'Abonnieren'}
             </button>
+            {kopfFilm && (
+              <button type="button" className="secondary" onClick={() => void seiteOeffnen()} disabled={seite === 'pruefe'}>
+                {seite === 'pruefe' ? 'Prüfe Seite …' : 'Beim Sender ansehen'} <Icon name="external" size={14} />
+              </button>
+            )}
           </div>
+          {seite === 'suche' && (
+            <p className="treffer-hinweis" role="status">
+              Movue hat die Suche der Mediathek nach „{serie.thema}“ geöffnet.
+            </p>
+          )}
         </div>
         {kopfFilm && !(banner && !bannerFehler) && <FilmBild film={kopfFilm} gross titelbild="serie" />}
       </div>

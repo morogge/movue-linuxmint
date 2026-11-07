@@ -4,6 +4,8 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.13.0 – 2026-11-07
+
 ### Neu
 
 - **Seitenleiste nach Art**: **Serien**, **Filme**, **Dokus**, **Shows & Talk**, **Nachrichten**, **Sport** und **Kinder** haben jetzt je eine eigene Seite – oben unterteilt nach Genre oder Thema, mit einer Reihe je Genre und Filter nach Sender
@@ -19,6 +21,8 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 - Kurzbeiträge unter fünf Minuten stehen nur noch in der Suche und auf der Seite ihres Senders
 - Serien und Sendereihen erkennst du an einer angedeuteten zweiten Karte über dem Bild
 - **Läuft bald ab** ist von der Seitenleiste nach **Alle Kategorien** umgezogen
+- Satire- und Talkshows wie heute-show, Markus Lanz oder Maischberger stehen unter **Shows & Talk**, nicht mehr unter Nachrichten
+- Krimireihen ohne Staffeln wie Tatort oder Wilsberg stehen unter **Filme**
 
 ## 0.12.0 – 2026-11-04
 

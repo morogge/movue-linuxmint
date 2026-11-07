@@ -169,7 +169,8 @@ export function istLive(e: Pick<FilmEintrag, 'url' | 'thema' | 'datum' | 'dauer'
  * und Extras (die stehen auf der Seite ihrer Sendung), keine Livestreams und nichts mit Datum in der Zukunft.
  */
 export function gelistet(jetzt = Date.now(), alias = 'f'): string {
-  return `${alias}.variante = 0 AND ${alias}.extra = 0 AND ${alias}.live = 0 AND ${alias}.datum <= ${Math.floor(jetzt / 1000)}`;
+  // „+“ vor dem Datum: SQLite soll dafür keinen Index nehmen – sonst läuft die Volltextsuche über alle Filme nach Datum
+  return `${alias}.variante = 0 AND ${alias}.extra = 0 AND ${alias}.live = 0 AND +${alias}.datum <= ${Math.floor(jetzt / 1000)}`;
 }
 
 export function schreiber(db: Db): (e: FilmEintrag) => void {

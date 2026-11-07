@@ -214,7 +214,7 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
         SELECT g.genre, s.id, s.neueste FROM serie s
         JOIN film f ON f.serie_id = s.id AND f.variante = 0 AND f.extra = 0
         JOIN film_genre g ON g.film_id = f.id
-        WHERE NOT EXISTS (SELECT 1 FROM serie_genre sg WHERE sg.serie_id = s.id AND sg.genre != 'sonstiges')
+        WHERE s.id NOT IN (SELECT serie_id FROM serie_genre WHERE genre != 'sonstiges')
         GROUP BY s.id, g.genre HAVING COUNT(*) * 3 >= s.folgen AND g.genre != 'sonstiges';
       -- „Weitere Sendungen“ nur, wenn das Bündel sonst nichts hat
       DELETE FROM serie_genre WHERE genre = 'sonstiges'
@@ -241,8 +241,7 @@ export function baueSerien(db: Db): { serien: number; rubriken: number; ms: numb
     //    „Weitere Sendungen“ überschreibt nie, was eine Folge selbst hat.
     db.exec(`
       DELETE FROM film_genre WHERE film_id IN (
-          SELECT f.id FROM film f WHERE f.serie_id IS NOT NULL
-            AND EXISTS (SELECT 1 FROM serie_genre sg WHERE sg.serie_id = f.serie_id AND sg.genre != 'sonstiges'))
+          SELECT f.id FROM film f WHERE f.serie_id IN (SELECT serie_id FROM serie_genre WHERE genre != 'sonstiges'))
         AND NOT EXISTS (
           SELECT 1 FROM film f JOIN serie_genre sg ON sg.serie_id = f.serie_id WHERE f.id = film_genre.film_id AND sg.genre = film_genre.genre);
       INSERT OR IGNORE INTO film_genre (genre, film_id, datum)

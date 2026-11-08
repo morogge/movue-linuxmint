@@ -112,16 +112,25 @@ export function baueSerien(
     schritte[name] = jetzt - marke;
     marke = jetzt;
   };
-  db.function('ist_reihe', { deterministic: true }, (thema: unknown) => (typeof thema === 'string' && istReihenThema(thema) ? 1 : 0));
   const lauf = db.transaction(() => {
     db.exec(`
       DELETE FROM serie;
       DELETE FROM serie_genre;
       DELETE FROM serie_fts;
-      UPDATE film SET serie_id = NULL, buendel = NULL WHERE serie_id IS NOT NULL OR buendel IS NOT NULL;
+      -- Indizes auf serie_id und buendel: am Ende in einem Rutsch neu bauen statt bei jeder der
+      -- Hunderttausenden Änderungen nachzuführen (spart den größten Teil der Zeit)
+      DROP INDEX IF EXISTS film_serie;
+      DROP INDEX IF EXISTS film_buendel;
       DROP TABLE IF EXISTS temp.rubrik;
       CREATE TEMP TABLE rubrik (gruppe TEXT NOT NULL, thema TEXT NOT NULL, PRIMARY KEY (gruppe, thema));
+      DROP TABLE IF EXISTS temp.reihenthema;
+      CREATE TEMP TABLE reihenthema (thema TEXT PRIMARY KEY) WITHOUT ROWID;
     `);
+    // Welche Themen Reihen sein können: einmal je Thema prüfen statt einmal je Sendung
+    const reihenthema = db.prepare('INSERT INTO temp.reihenthema (thema) VALUES (?)');
+    for (const { thema } of db.prepare('SELECT DISTINCT thema FROM film').all() as { thema: string }[]) {
+      if (istReihenThema(thema)) reihenthema.run(thema);
+    }
 
     stopp('0 leeren');
     // 1. Rubriken erkennen
@@ -133,7 +142,7 @@ export function baueSerien(
                 SUM(dauer < 600) AS kurz,
                 SUM(instr(lower(titel), lower(thema)) > 0 OR titel GLOB '*[0-9].[0-9][0-9].[0-9][0-9]*'
                     OR titel GLOB '*[0-9][0-9].[0-9][0-9].*' OR lower(titel) LIKE '% vom %' OR lower(titel) LIKE 'sendung vom%') AS wiederkehrend
-         FROM film WHERE variante = 0 AND live = 0 AND ist_reihe(thema) = 1
+         FROM film WHERE variante = 0 AND live = 0 AND thema IN (SELECT thema FROM temp.reihenthema)
          GROUP BY gruppe, thema HAVING COUNT(*) >= ${MIN_FOLGEN}`
       )
       .all() as { gruppe: string; thema: string; n: number; nummeriert: number; filme: number; kurz: number; wiederkehrend: number }[];
@@ -159,9 +168,9 @@ export function baueSerien(
     stopp('1 rubriken');
     // 2. Name des Bündels: das Thema – bei Rubriken (und Sammelthemen) der Serienname aus dem Titel
     db.exec(`
-      UPDATE film SET buendel = CASE
+      UPDATE film SET serie_id = NULL, buendel = CASE
         WHEN live = 1 THEN NULL
-        WHEN ist_reihe(thema) = 1 AND NOT EXISTS (SELECT 1 FROM temp.rubrik r WHERE r.gruppe = film.gruppe AND r.thema = film.thema) THEN thema
+        WHEN thema IN (SELECT thema FROM temp.reihenthema) AND NOT EXISTS (SELECT 1 FROM temp.rubrik r WHERE r.gruppe = film.gruppe AND r.thema = film.thema) THEN thema
         ELSE NULLIF(reihe_titel, '') END;
     `);
 
@@ -258,6 +267,7 @@ export function baueSerien(
     stopp('3 einfuegen');
     db.exec(`
       UPDATE film SET serie_id = s.id FROM serie s WHERE s.gruppe = film.gruppe AND s.thema = film.buendel;
+      CREATE INDEX IF NOT EXISTS film_serie ON film(serie_id, datum DESC);
       -- Genres des Bündels: was die Mehrheit der Folgen hat – eine Folge mit „ermittelt“ macht keine Krimireihe
       INSERT INTO serie_genre (genre, serie_id, neueste)
         SELECT g.genre, s.id, s.neueste FROM serie s
@@ -328,6 +338,7 @@ export function baueSerien(
           ELSE 'doku' END
         WHERE serie_id IS NULL;
     `);
+    db.exec('CREATE INDEX IF NOT EXISTS film_buendel ON film(gruppe, buendel, datum DESC)');
     stopp('6 format');
     return { serien: zeilen.length, rubriken };
   });

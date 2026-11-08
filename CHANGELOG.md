@@ -4,6 +4,16 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+### Neu
+
+- **Live & demnächst**: das laufende Programm von Das Erste, ZDF, 3sat, Arte, den Spartensendern und allen Dritten (Auswahl in der Karte „Die Dritten“) mit einem Klick
+- **Live-Übertragungen** wie Sport oder Sondersendungen mit Tag und Uhrzeit. Mit **Erinnern** meldet sich Movue fünf Minuten vor Beginn
+- **Vorab in der Mediathek**: Sendungen, die schon vor dem Fernsehtermin online stehen, mit ihrem TV-Termin
+
+### Verbessert
+
+- Livestreams zeigen im Player **LIVE** statt einer Zeitleiste
+
 ## 0.13.0 – 2026-11-07
 
 ### Neu

@@ -16,6 +16,7 @@ import { ladeUntertitel } from './untertitel';
 import { seitenZiel } from './links';
 import { istGruppe } from '@shared/sender';
 import { istFormat, istGenre } from '@shared/genres';
+import { ERINNERN_VORHER, terminText } from '@shared/live';
 
 // Für Tests: eigenes Datenverzeichnis statt ~/.config/Movue
 if (process.env['MOVUE_DATEN']) app.setPath('userData', process.env['MOVUE_DATEN']);
@@ -100,6 +101,20 @@ function pruefeAbos(): void {
   n.show();
 }
 
+/** Meldet Live-Übertragungen kurz vor Beginn, an die der Nutzer erinnert werden möchte */
+function pruefeErinnerungen(): void {
+  if (!nutzer) return;
+  const faellig = nutzer.faelligeErinnerungen(Date.now() + ERINNERN_VORHER);
+  if (faellig.length === 0) return;
+  for (const win of BrowserWindow.getAllWindows()) win.webContents.send('live:erinnerung', faellig);
+  if (process.env['MOVUE_KEINE_MELDUNG'] || !Notification.isSupported()) return;
+  for (const film of faellig) {
+    const n = new Notification({ title: `Gleich live: ${film.titel}`, body: `${terminText(film.datum)} · ${film.sender}` });
+    n.on('click', () => zeigeFenster('live'));
+    n.show();
+  }
+}
+
 function aboListe(): Abo[] {
   if (!nutzer || !index) return [];
   return nutzer.abos().flatMap((a) => {
@@ -167,6 +182,23 @@ ipcMain.handle('index:stoebern', (_event, a: { genre?: unknown; format?: unknown
     limit: typeof a.limit === 'number' ? a.limit : undefined,
     offset: typeof a.offset === 'number' ? a.offset : undefined
   });
+});
+
+ipcMain.handle('live:angebot', () => index?.live() ?? { sender: [], uebertragungen: [], vorab: [] });
+
+ipcMain.handle('live:erinnerungen', () => nutzer?.erinnerungen() ?? []);
+
+/** Erinnern über die id: nur Live-Übertragungen aus dem Verzeichnis */
+ipcMain.handle('live:erinnern', (_event, id: unknown, an: unknown) => {
+  if (!nutzer || !index || typeof id !== 'number') return false;
+  const film = index.film(id);
+  if (!film) return false;
+  if (an === true) {
+    nutzer.erinnern(film);
+    return true;
+  }
+  nutzer.vergissErinnerung(film.url);
+  return false;
 });
 
 ipcMain.handle('index:arten', (_event, a: { genre?: unknown; gruppe?: unknown } | undefined) =>
@@ -345,6 +377,8 @@ app.whenReady().then(() => {
   createWindow();
   index.start();
   update.start();
+  // Einmal je Minute: steht eine Übertragung an, an die erinnert werden soll?
+  setInterval(pruefeErinnerungen, 60_000).unref();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

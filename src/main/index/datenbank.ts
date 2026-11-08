@@ -5,6 +5,7 @@ import { istGruppe, type SenderGruppe } from '@shared/sender';
 import type { FilmEintrag } from '../filmliste/eintrag';
 import { folgenInfo, serieAusTitel } from '@shared/serie';
 import { titelKern } from '@shared/titelinfo';
+import { liveGruppe, senderName, sortiereSender, type LiveAngebot, type LiveSender } from '@shared/live';
 import { fassungKern, fassungName, istFassung } from '@shared/fassung';
 
 export type Db = Database.Database;
@@ -594,4 +595,40 @@ export function fassungen(db: Db, film: Film): Fassung[] {
       gesehen.add(k);
       return true;
     });
+}
+
+/**
+ * „Live & demnächst“: Livestreams der Sender, Live-Übertragungen, die noch laufen oder kommen, und
+ * Sendungen, die schon vor ihrem Fernsehtermin abrufbar sind (Datum in der Zukunft).
+ */
+export function liveAngebot(db: Db, jetzt = Date.now(), vorabLimit = 120): LiveAngebot {
+  const s = Math.floor(jetzt / 1000);
+  const lade = (sql: string, ...p: unknown[]) => {
+    const zeilen = db.prepare(`SELECT ${SPALTEN} FROM film f WHERE ${sql}`).all(...p) as FilmZeile[];
+    const genres = genresFuer(
+      db,
+      zeilen.map((z) => z.id)
+    );
+    return zeilen.map((z) => zuFilm(z, genres));
+  };
+  const streams = lade(`f.live = 1 AND f.variante = 0 AND lower(trim(f.thema)) = 'livestream'`);
+  const gesehen = new Set<string>();
+  const sender: LiveSender[] = [];
+  for (const film of streams) {
+    const name = senderName(film.titel);
+    // Doppelte Einträge (gleicher Sender aus zwei Quellen) nur einmal
+    if (gesehen.has(name)) continue;
+    gesehen.add(name);
+    sender.push({ name, gruppe: liveGruppe(name), film });
+  }
+  const uebertragungen = lade(
+    `f.live = 1 AND f.variante = 0 AND lower(trim(f.thema)) != 'livestream' AND f.dauer > 0 AND f.datum + f.dauer >= ? ORDER BY f.datum LIMIT 100`,
+    s
+  );
+  const vorab = lade(
+    `f.live = 0 AND f.variante = 0 AND f.extra = 0 AND f.datum > ? AND f.format IS NOT 'kurz' ORDER BY f.datum LIMIT ?`,
+    s,
+    vorabLimit
+  );
+  return { sender: sortiereSender(sender), uebertragungen, vorab };
 }

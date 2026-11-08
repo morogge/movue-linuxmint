@@ -2222,3 +2222,171 @@ button {
   border-radius: 6px 6px 0 0;
   background: var(--border-strong);
 }
+
+/* 0.14: Live & demnächst */
+:root {
+  /* LIVE-Marke: weiße Schrift erreicht 7,4 : 1 */
+  --live: #c8372d;
+}
+
+.live-seite {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.live-marke {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--live);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.live-raster {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.live-raster > li {
+  display: flex;
+}
+
+.live-karte {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 132px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(160deg, #20242a 0%, #16191d 100%);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+button.live-karte:hover {
+  border-color: var(--accent);
+}
+
+.live-karte.dritte {
+  cursor: default;
+}
+
+.live-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.live-start {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.live-karte select {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.termin-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+
+.termin {
+  display: grid;
+  grid-template-columns: 150px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.termin-zeit {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.termin-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.termin-titel {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.termin-text:hover .termin-titel {
+  text-decoration: underline;
+}
+
+.termin-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.vorab-termin {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.update-banner.erinnerung {
+  border-color: rgba(200, 55, 45, 0.6);
+  background: rgba(200, 55, 45, 0.12);
+}
+
+.update-banner.erinnerung > svg {
+  color: #ff8a80;
+}
+
+@media (max-width: 720px) {
+  .termin {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

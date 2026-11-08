@@ -15,7 +15,7 @@ Movue lädt zuerst das Verzeichnis aller Sendungen. Das dauert ein bis zwei Minu
 - **Player** mit Untertiteln, Qualitätswahl, Vollbild, Mini-Player und automatisch nächster Folge
 - **Merkliste** und **Abos**: Sendungen für später ablegen, über neue Folgen informiert werden und sehen, was bald aus der Mediathek verschwindet
 
-**Live & demnächst** kommt mit Version 0.14 dazu. Neue Versionen installiert Movue selbst (siehe **Aktualisierungen**); was sich ändert, steht unter **Was ist neu**.
+Unter **Live & demnächst** siehst du das laufende Programm der Sender und angekündigte Live-Übertragungen. Neue Versionen installiert Movue selbst (siehe **Aktualisierungen**); was sich ändert, steht unter **Was ist neu**.
 
 ## Hilfe aufrufen
 

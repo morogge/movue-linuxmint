@@ -195,6 +195,22 @@ test('Seite einer Art: Serien als eine Kachel, Filter nach Sender', async () => 
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 
+test('Live & demnächst: Sender, Übertragung mit Erinnerung, Vorab', async () => {
+  await win.getByRole('button', { name: 'Live & demnächst', exact: true }).click();
+  await expect(win.getByRole('heading', { name: 'Live & demnächst', level: 1 })).toBeVisible();
+  await expect(win.getByRole('button', { name: 'ZDF live ansehen' })).toBeVisible();
+  await expect(win.getByLabel('Die Dritten')).toHaveValue('WDR');
+  await expect(win.getByText('Basketball live: Gladiators Trier gegen Testgegner')).toBeVisible();
+  const erinnern = win.getByRole('button', { name: 'Erinnern' });
+  await erinnern.click();
+  await expect(win.getByRole('button', { name: 'Erinnert' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(win.getByRole('button', { name: /Planet e.: Vorab im Netz/ })).toBeVisible();
+  await win.screenshot({ path: 'test-results/screens/live.png' });
+  await win.getByRole('button', { name: 'Erinnert' }).click();
+  await expect(win.getByRole('button', { name: 'Erinnern' })).toHaveAttribute('aria-pressed', 'false');
+  await win.getByRole('button', { name: 'Start', exact: true }).click();
+});
+
 test('Hinweis auf eine heruntergeladene neue Version', async () => {
   const hinweis = win.getByRole('region', { name: 'Neue Version' });
   await expect(hinweis).toContainText('Movue 9.9.9 ist da.');

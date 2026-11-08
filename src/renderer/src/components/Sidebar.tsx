@@ -9,7 +9,7 @@ import type { UpdateZustand } from '@shared/update';
 import { Icon, type IconName } from './Icon';
 
 interface NavItem {
-  /** Bildschirm oder Art-Seite; null = folgt in einer späteren Version */
+  /** Bildschirm oder Art-Seite */
   ziel: Ansicht | null;
   label: string;
   icon: IconName;
@@ -36,7 +36,7 @@ const NAV: NavItem[][] = [
     { ziel: { screen: 'kategorien' }, label: 'Alle Kategorien', icon: 'grid', leise: true }
   ],
   [
-    { ziel: null, label: 'Live & demnächst', icon: 'live' },
+    { ziel: { screen: 'live' }, label: 'Live & demnächst', icon: 'live' },
     { ziel: { screen: 'merkliste' }, label: 'Merkliste', icon: 'bookmark' },
     { ziel: { screen: 'suche' }, label: 'Suche', icon: 'search' }
   ]
@@ -134,7 +134,7 @@ export function Sidebar({
                   disabled={item.ziel === null}
                   aria-current={aktiv ? 'page' : undefined}
                   aria-label={item.label}
-                  title={item.ziel === null ? 'Folgt in Version 0.14' : eingeklappt ? item.label : undefined}
+                  title={eingeklappt ? item.label : undefined}
                   onClick={() => item.ziel && onNavigate(item.ziel)}
                 >
                   <Icon name={item.icon} size={item.leise ? 18 : 20} />

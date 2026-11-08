@@ -4,13 +4,14 @@ import { formatDatum, formatDauer } from '@shared/format';
 import { genreName } from '@shared/genres';
 import { formatZeit } from '@shared/player';
 import { formatAblauf, laeuftBaldAb, type Ablauf } from '@shared/nutzer';
-import { folgenKennung, type SerieRef } from '@shared/serie';
+import { folgenKennung, waehleTrailer, type SerieRef } from '@shared/serie';
 import { herkunft, type TitelInfo } from '@shared/titelinfo';
 import { GRUPPEN } from '@shared/sender';
 import { SENDER_FARBE } from '../senderFarben';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Icon } from '../components/Icon';
 import { Besetzung } from '../components/Besetzung';
+import { KopfTrailer } from '../components/KopfTrailer';
 
 /** „(S02/E05)“ im Titel → Staffel 2, sonst null */
 export function staffelVon(titel: string): number | null {
@@ -24,9 +25,11 @@ interface Props {
   onZurueck: () => void;
   onAbspielen: (f: Film) => void;
   onSerie: (s: SerieRef) => void;
+  /** Der Mini-Player läuft – dann kein Trailer im Kopf */
+  miniLaeuft?: boolean;
 }
 
-export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie }: Props) {
+export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie, miniLaeuft = false }: Props) {
   const [position, setPosition] = useState<number | null>(null);
   const [film, setFilm] = useState<Film | null>(null);
   const [folgen, setFolgen] = useState<Film[]>([]);
@@ -38,6 +41,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
   const [auchBei, setAuchBei] = useState<Film[]>([]);
   const [fassungen, setFassungen] = useState<{ film: Film; name: string | null }[]>([]);
   const [info, setInfo] = useState<TitelInfo | null>(null);
+  const [extras, setExtras] = useState<Film[]>([]);
 
   useEffect(() => {
     let aktiv = true;
@@ -53,7 +57,9 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
       setAuchBei([]);
       setInfo(null);
       setFassungen([]);
+      setExtras([]);
       if (!f) return;
+      void window.movue.index.extras(f.id).then((x) => aktiv && setExtras(x));
       void window.movue.index.fassungen(f.id).then((x) => aktiv && setFassungen(x));
       void window.movue.index.auchBei(f.id).then((a) => aktiv && setAuchBei(a));
       void window.movue.index.titelInfo(f.id).then((i) => aktiv && setInfo(i));
@@ -84,6 +90,9 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
     const liste = staffeln.length > 1 && staffel !== null ? folgen.filter((f) => staffelVon(f.titel) === staffel) : folgen;
     return liste.filter((f) => f.id !== filmId).slice(0, 60);
   }, [folgen, staffeln, staffel, filmId]);
+
+  // Ein Trailer zeigt sich nicht selbst im Kopf
+  const trailer = film && !film.extra ? waehleTrailer(extras) : null;
 
   if (!film) {
     return (
@@ -178,6 +187,11 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
             <button type="button" className="primary" onClick={() => onAbspielen(film)}>
               <Icon name="play" size={16} /> {position !== null ? `Weiterschauen ab ${formatZeit(position)}` : 'Abspielen'}
             </button>
+            {trailer && (
+              <button type="button" className="secondary" onClick={() => onAbspielen(trailer)}>
+                <Icon name="film" size={16} /> Trailer
+              </button>
+            )}
             <button type="button" className={gemerkt ? 'secondary an' : 'secondary'} aria-pressed={gemerkt} onClick={() => void merkenUmschalten()}>
               <Icon name="bookmark" size={16} /> {gemerkt ? 'Gemerkt' : 'Merken'}
             </button>
@@ -202,10 +216,36 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
             </p>
           )}
         </div>
-        <FilmBild film={film} gross />
+        <KopfTrailer trailer={trailer} aus={miniLaeuft}>
+          <FilmBild film={film} gross />
+        </KopfTrailer>
       </div>
 
       <Besetzung info={info} />
+
+      {film.serieId === null && extras.filter((x) => x.id !== film.id).length > 0 && (
+        <section className="folgen" aria-labelledby="extras-titel">
+          <h2 id="extras-titel">Trailer & Extras</h2>
+          <ul className="folgen-liste">
+            {extras
+              .filter((x) => x.id !== film.id)
+              .map((x) => (
+                <li key={x.id}>
+                  <button type="button" className="folge" onClick={() => onAbspielen(x)} aria-label={`${x.titel} abspielen`}>
+                    <FilmBild film={x} />
+                    <span className="folge-text">
+                      <span className="folge-titel">{x.titel}</span>
+                      <span className="folge-meta">
+                        {formatDatum(x.datum)}
+                        {x.dauer > 0 && ` · ${formatDauer(x.dauer)}`}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
 
       {film.serieId !== null && (
         <section className="folgen zur-serie" aria-label="Serie">

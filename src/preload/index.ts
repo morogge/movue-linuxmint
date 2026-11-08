@@ -36,6 +36,8 @@ const api = {
       offset?: number;
     }): Promise<{ eintraege: ({ typ: 'serie'; serie: Serie; datum: number } | { typ: 'film'; film: Film; datum: number })[]; gesamt: number }> =>
       ipcRenderer.invoke('index:stoebern', a),
+    /** Trailer und Extras zu einer Sendung (aus ihrem Bündel oder mit gleichem Thema) */
+    extras: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:extras', id),
     /** Anzahl der Einträge je Art (Serien, Filme, Dokus …), wahlweise nur eines Genres oder Senders */
     arten: (a?: { genre?: GenreId | null; gruppe?: SenderGruppe | null }): Promise<Partial<Record<Format, number>>> =>
       ipcRenderer.invoke('index:arten', a ?? {}),

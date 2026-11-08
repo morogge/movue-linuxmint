@@ -36,11 +36,18 @@ Ein Klick auf eine Serienkachel öffnet die Serienseite:
 
 - Oben Name, Sender, Genres und die Beschreibung der neuesten Folge.
 - Der große Knopf startet die passende Folge: **Weiterschauen S2 · F4**, wenn du eine Folge angefangen hast; **Nächste Folge**, wenn du die letzte zu Ende gesehen hast; sonst **Abspielen** ab der ersten Folge bzw. bei Sendereihen **Neueste Folge**.
+- **Trailer** spielt den Trailer der Serie im Player, wenn es einen gibt.
 - **Abonnieren** meldet dir neue Folgen (siehe **Merkliste und Abos**).
 - **Beim Sender ansehen** öffnet die Seite der Serie in der Mediathek (ZDF, 3sat). Kennt Movue sie nicht, öffnet es die Suche der Mediathek nach dem Namen der Serie.
 - **Besetzung** der Serie, sofern Wikidata sie kennt.
 - Die Reiter darunter teilen die Folgen ein: nach **Staffel**, wenn der Sender Staffeln nennt, sonst bei Sendereihen nach **Jahr**. Trailer, Vorschauen, Clips, Making-of und Outtakes stehen unter **Extras** und zählen nicht als Folge – in Listen, Genres und Suche erscheinen sie nicht. Was länger als 20 Minuten dauert, ist eine richtige Folge, auch wenn „Podcast“ oder „Hinter den Kulissen“ im Titel steht.
 - Ein Klick auf eine Folge spielt sie ab; **Details** öffnet ihre Seite. Gesehene Folgen sind blasser, angefangene zeigen einen Balken und die Restzeit.
+
+## Trailer im Kopf
+
+Hat eine Serie einen Trailer, eine Vorschau oder einen Teaser (bis fünf Minuten lang), läuft er nach kurzer Zeit oben im Titelbild ab – **ohne Ton** und nur einmal. Unten rechts hältst du ihn an oder schaltest den Ton ein. Das gilt genauso für die Detailseite einer einzelnen Sendung, wenn der Sender unter demselben Thema einen Trailer hat. Abschalten kannst du das unter **Einstellungen**.
+
+Auf der Detailseite einer einzelnen Sendung stehen Trailer, Making-of und andere Extras unter **Trailer & Extras**; bei Serien findest du sie im Reiter **Extras**.
 
 ## Wo Serien erscheinen
 

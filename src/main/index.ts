@@ -184,6 +184,8 @@ ipcMain.handle('index:stoebern', (_event, a: { genre?: unknown; format?: unknown
   });
 });
 
+ipcMain.handle('index:extras', (_event, id: unknown) => (typeof id === 'number' && index ? index.extras(id) : []));
+
 ipcMain.handle('live:angebot', () => index?.live() ?? { sender: [], uebertragungen: [], vorab: [] });
 
 ipcMain.handle('live:erinnerungen', () => nutzer?.erinnerungen() ?? []);

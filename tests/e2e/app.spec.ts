@@ -211,6 +211,25 @@ test('Live & demnächst: Sender, Übertragung mit Erinnerung, Vorab', async () =
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 
+test('Trailer & Extras auf der Detailseite, Vorschauen in den Einstellungen', async () => {
+  await win.getByLabel('Suche in allen Mediatheken').fill('Terra X Ostsee');
+  await win.getByRole('button', { name: /Terra X: Die Ostsee/ }).first().click();
+  await expect(win.getByRole('heading', { name: 'Terra X: Die Ostsee', level: 1 })).toBeVisible();
+  await expect(win.getByRole('button', { name: 'Trailer', exact: true })).toBeVisible();
+  await expect(win.getByRole('heading', { name: 'Trailer & Extras' })).toBeVisible();
+  await win.getByRole('button', { name: 'Einstellungen', exact: true }).click();
+  await expect(win.getByRole('heading', { name: 'Einstellungen', level: 1 })).toBeVisible();
+  const schalter = win.getByRole('switch', { name: /Vorschauen automatisch abspielen/ });
+  await expect(schalter).toBeChecked();
+  await schalter.click();
+  await expect(schalter).not.toBeChecked();
+  await win.screenshot({ path: 'test-results/screens/einstellungen.png' });
+  await schalter.click();
+  await expect(schalter).toBeChecked();
+  await win.getByLabel('Suche in allen Mediatheken').fill('');
+  await win.getByRole('button', { name: 'Start', exact: true }).click();
+});
+
 test('Hinweis auf eine heruntergeladene neue Version', async () => {
   const hinweis = win.getByRole('region', { name: 'Neue Version' });
   await expect(hinweis).toContainText('Movue 9.9.9 ist da.');

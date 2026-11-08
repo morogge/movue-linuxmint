@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { folgenInfo, gruppeVon, serieAusTitel, serienArt } from '@shared/serie';
+import { folgenInfo, gruppeVon, serieAusTitel, serienArt, waehleTrailer } from '@shared/serie';
 import { genresAusWikidata, serienSchluessel } from '@shared/metadaten';
 import { baueFassungen, istLive, oeffneDb, reihe, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
 import { artAnzahlen, baueSerien, istReihenAnfang, istRubrik, serieDetail, serieNachThema, stoebern, titelAnfang } from '../../src/main/index/serien';
@@ -258,5 +258,15 @@ describe('Bündel im Index', () => {
   it('führt eine gemischte Rubrik nicht als Serie', () => {
     expect(serieNachThema(db, 'ZDF', 'Das kleine Fernsehspiel')).toBeNull();
     expect(suche(db, { text: 'Film A' }).treffer[0].serieId).toBeNull();
+  });
+});
+
+describe('Trailer für den Kopf', () => {
+  const f = (titel: string, dauer: number, datum = 1) => ({ titel, dauer, datum, url: `${titel}.mp4` });
+  it('nimmt den neuesten kurzen Trailer, nie ein Making-of oder Lange', () => {
+    expect(waehleTrailer([f('Making-of', 120, 5), f('Trailer: Alt', 90, 1), f('Teaser: Neu', 60, 3)])?.titel).toBe('Teaser: Neu');
+    expect(waehleTrailer([f('Making-of', 120)])).toBeNull();
+    expect(waehleTrailer([f('Trailer: Langfassung', 900)])).toBeNull();
+    expect(waehleTrailer([])).toBeNull();
   });
 });

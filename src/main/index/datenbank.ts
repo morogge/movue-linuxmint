@@ -632,3 +632,31 @@ export function liveAngebot(db: Db, jetzt = Date.now(), vorabLimit = 120): LiveA
   );
   return { sender: sortiereSender(sender), uebertragungen, vorab };
 }
+
+/**
+ * Trailer und andere Extras zu einer Sendung: aus ihrem Bündel, sonst mit gleichem Sender und Thema
+ * („Trailer: How to Dad“ unter dem Thema „How to Dad“). Neueste zuerst.
+ */
+export function extrasZu(db: Db, filmId: number, limit = 12): Film[] {
+  const f = db.prepare('SELECT id, gruppe, thema, serie_id FROM film WHERE id = ?').get(filmId) as
+    | { id: number; gruppe: string; thema: string; serie_id: number | null }
+    | undefined;
+  if (!f) return [];
+  const zeilen = (
+    f.serie_id !== null
+      ? db
+          .prepare(`SELECT ${SPALTEN} FROM film f WHERE f.serie_id = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 ORDER BY f.datum DESC LIMIT ?`)
+          .all(f.serie_id, limit)
+      : db
+          .prepare(
+            `SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 AND f.id != ?
+             ORDER BY f.datum DESC LIMIT ?`
+          )
+          .all(f.gruppe, f.thema, f.id, limit)
+  ) as FilmZeile[];
+  const genres = genresFuer(
+    db,
+    zeilen.map((z) => z.id)
+  );
+  return zeilen.map((z) => zuFilm(z, genres));
+}

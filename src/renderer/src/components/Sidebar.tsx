@@ -169,6 +169,17 @@ export function Sidebar({
         </ul>
       </div>
       <div className="sidebar-foot">
+        <button
+          type="button"
+          className={ansicht.screen === 'einstellungen' ? 'nav-item leise active' : 'nav-item leise'}
+          aria-current={ansicht.screen === 'einstellungen' ? 'page' : undefined}
+          aria-label="Einstellungen"
+          title={eingeklappt ? 'Einstellungen' : undefined}
+          onClick={() => onNavigate({ screen: 'einstellungen' })}
+        >
+          <Icon name="einstellungen" size={18} />
+          <span className="nav-text">Einstellungen</span>
+        </button>
         <IndexStatus zustand={zustand} />
         {version && (
           <span className="version">

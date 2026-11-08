@@ -13,6 +13,7 @@ import {
   type Fassung,
   genreAnzahlen,
   leseMeta,
+  extrasZu,
   liveAngebot,
   oeffneDb,
   reihe,
@@ -118,6 +119,11 @@ export class IndexDienst {
 
   film(id: number): Film | null {
     return this.db ? filmNachId(this.db, id) : null;
+  }
+
+  /** Trailer und Extras zu einer Sendung */
+  extras(filmId: number): Film[] {
+    return this.db ? extrasZu(this.db, filmId) : [];
   }
 
   /** Livestreams, Live-Übertragungen und Vorab-Sendungen */

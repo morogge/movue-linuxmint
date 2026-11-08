@@ -46,7 +46,7 @@ jobs:
           retention-days: 14
       # Artefakte sind von manchen Arbeitsumgebungen aus nicht erreichbar: Audit-Dumps zusätzlich als Zweig audit/daten
       - name: Audit-Dumps in Zweig audit/daten
-        if: always() && inputs.nur == 'tests/echt/audit.test.ts'
+        if: always() && startsWith(inputs.nur, 'tests/echt/audit')
         run: |
           mkdir -p /tmp/daten
           cd test-results/audit

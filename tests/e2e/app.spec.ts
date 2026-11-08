@@ -195,6 +195,7 @@ test('Seite einer Art: Serien als eine Kachel, Filter nach Sender', async () => 
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 
+// Termine in den Testdaten: Oktober 2027 (höchstens ein Jahr nach dem Stand der Liste, sonst setzt der Import das Datum zurück)
 test('Live & demnächst: Sender, Übertragung mit Erinnerung, Vorab', async () => {
   await win.getByRole('button', { name: 'Live & demnächst', exact: true }).click();
   await expect(win.getByRole('heading', { name: 'Live & demnächst', level: 1 })).toBeVisible();

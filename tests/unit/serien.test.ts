@@ -131,7 +131,7 @@ describe('Bündel im Index', () => {
     expect(suche(db, { text: 'Gladiators' }).treffer).toHaveLength(0);
     expect(suche(db, { text: 'Vorab im Netz' }).treffer).toHaveLength(0);
     // Vorbei ist vorbei
-    expect(liveAngebot(db, Date.parse('2031-01-01T00:00:00Z')).uebertragungen).toHaveLength(0);
+    expect(liveAngebot(db, Date.parse('2028-01-01T00:00:00Z')).uebertragungen).toHaveLength(0);
   });
 
   it('findet Trailer einer Einzelsendung unter demselben Thema', () => {

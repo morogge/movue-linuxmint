@@ -17,9 +17,13 @@ async function hole(url: string): Promise<unknown> {
 describe('ARD-Suche', () => {
   it('findet Mittendrin und lädt die Seite der Reihe', async () => {
     mkdirSync(ZIEL, { recursive: true });
-    const suche = (await hole(
-      'https://api.ardmediathek.de/search-system/search/shows/ard?query=Mittendrin%20Flughafen%20Frankfurt&pageSize=5&platform=MEDIA_THEK'
-    )) as { json: unknown };
+    let suche = (await hole(
+      'https://api.ardmediathek.de/search-system/mediathek/ard/search/shows?query=Mittendrin%20Flughafen%20Frankfurt&pageSize=5'
+    )) as { status: number; json: unknown };
+    if (suche.status !== 200)
+      suche = (await hole(
+        'https://api.ardmediathek.de/page-gateway/widgets/ard/search/grouping?searchString=Mittendrin%20Flughafen%20Frankfurt&pageSize=5'
+      )) as { status: number; json: unknown };
     writeFileSync(join(ZIEL, 'mittendrin-suche.json'), JSON.stringify(suche, null, 1));
     const text = JSON.stringify(suche.json);
     const id = /"id":"(Y3Jp[A-Za-z0-9_-]+)"/.exec(text)?.[1] ?? /grouping\/([A-Za-z0-9_-]+)/.exec(text)?.[1];

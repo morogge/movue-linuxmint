@@ -14,7 +14,23 @@ async function hole(url: string): Promise<unknown> {
   return { status: a.status, json: a.ok ? await a.json() : await a.text() };
 }
 
-describe('ARD-Staffeln', () => {
+describe('ARD-Suche', () => {
+  it('findet Mittendrin und lädt die Seite der Reihe', async () => {
+    mkdirSync(ZIEL, { recursive: true });
+    const suche = (await hole(
+      'https://api.ardmediathek.de/search-system/search/shows/ard?query=Mittendrin%20Flughafen%20Frankfurt&pageSize=5&platform=MEDIA_THEK'
+    )) as { json: unknown };
+    writeFileSync(join(ZIEL, 'mittendrin-suche.json'), JSON.stringify(suche, null, 1));
+    const text = JSON.stringify(suche.json);
+    const id = /"id":"(Y3Jp[A-Za-z0-9_-]+)"/.exec(text)?.[1] ?? /grouping\/([A-Za-z0-9_-]+)/.exec(text)?.[1];
+    console.log('MITTENDRIN', id);
+    if (!id) return;
+    const g = await hole(`https://api.ardmediathek.de/page-gateway/pages/ard/grouping/${id}?seasoned=true&devicetype=pc&embedded=true`);
+    writeFileSync(join(ZIEL, 'mittendrin-grouping-seasoned.json'), JSON.stringify(g, null, 1));
+  }, 60_000);
+});
+
+describe.skip('ARD-Staffeln', () => {
   it('lädt Item- und Show-Seiten', async () => {
     mkdirSync(ZIEL, { recursive: true });
     for (const [name, id] of Object.entries(FOLGEN)) {

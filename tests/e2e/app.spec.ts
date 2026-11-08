@@ -61,12 +61,12 @@ test('Serien erscheinen als eine Kachel und öffnen die Serienseite mit Staffeln
   await expect(win.getByRole('heading', { name: 'In aller Freundschaft', level: 1 })).toBeVisible();
   await expect(win.getByText('2 Staffeln · 3 Folgen')).toBeVisible();
   await expect(win.getByRole('button', { name: /Abspielen S27 · F40/ })).toBeVisible();
-  await expect(win.getByRole('tab', { name: 'Staffel 27' })).toHaveAttribute('aria-selected', 'true');
+  await expect(win.getByRole('tab', { name: /^Staffel 27/ })).toHaveAttribute('aria-selected', 'true');
   await expect(win.getByRole('list', { name: 'Darsteller' })).toContainText('Thomas Rühmann');
-  await win.getByRole('tab', { name: 'Staffel 28' }).click();
+  await win.getByRole('tab', { name: /^Staffel 28/ }).click();
   await expect(win.getByRole('button', { name: 'Folge 1102: Alte Freunde (S28/E02) abspielen' })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/serie.png' });
-  await win.getByRole('tab', { name: 'Extras' }).click();
+  await win.getByRole('tab', { name: /^Extras/ }).click();
   await expect(win.getByRole('button', { name: 'Vorschau auf Folge 1103 abspielen' })).toBeVisible();
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });

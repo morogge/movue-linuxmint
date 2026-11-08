@@ -2510,3 +2510,45 @@ button.live-karte:hover {
     transition: none;
   }
 }
+
+/* 0.14: Staffeln als Karten mit Bild */
+.staffel-karten {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.staffel-karte {
+  width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 0 8px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.staffel-karte .film-bild {
+  border-radius: 10px 10px 0 0;
+}
+
+.staffel-karte.an {
+  border-color: var(--accent);
+}
+
+.staffel-name {
+  padding: 4px 10px 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.staffel-zahl {
+  padding: 0 10px;
+  font-size: 12px;
+  color: var(--muted);
+}

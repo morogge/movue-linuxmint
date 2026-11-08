@@ -12,6 +12,7 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 - **Trailer im Kopf**: Hat eine Serie oder Sendung einen Trailer, läuft er oben auf ihrer Seite einmal ohne Ton – anhalten und Ton per Knopf, nicht während der Mini-Player läuft und nicht, wenn dein System weniger Bewegung wünscht
 - Knopf **Trailer** auf Serien- und Detailseiten, dazu **Trailer & Extras** auf der Detailseite einzelner Sendungen
 - **Einstellungen** unten in der Seitenleiste – dort schaltest du die Vorschauen ab
+- **Staffelbilder**: Bei Serien mit bis zu zwölf Staffeln zeigen die Reiter das Bild der Staffel und die Zahl der Folgen
 
 ### Verbessert
 

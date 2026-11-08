@@ -40,7 +40,7 @@ Ein Klick auf eine Serienkachel öffnet die Serienseite:
 - **Abonnieren** meldet dir neue Folgen (siehe **Merkliste und Abos**).
 - **Beim Sender ansehen** öffnet die Seite der Serie in der Mediathek (ZDF, 3sat). Kennt Movue sie nicht, öffnet es die Suche der Mediathek nach dem Namen der Serie.
 - **Besetzung** der Serie, sofern Wikidata sie kennt.
-- Die Reiter darunter teilen die Folgen ein: nach **Staffel**, wenn der Sender Staffeln nennt, sonst bei Sendereihen nach **Jahr**. Trailer, Vorschauen, Clips, Making-of und Outtakes stehen unter **Extras** und zählen nicht als Folge – in Listen, Genres und Suche erscheinen sie nicht. Was länger als 20 Minuten dauert, ist eine richtige Folge, auch wenn „Podcast“ oder „Hinter den Kulissen“ im Titel steht.
+- Die Reiter darunter teilen die Folgen ein: nach **Staffel**, wenn der Sender Staffeln nennt, sonst bei Sendereihen nach **Jahr**. Hat eine Serie bis zu zwölf Staffeln, sind die Reiter Karten mit dem Bild der ersten Folge und der Zahl der Folgen – bei der ARD ist das oft das eigene Titelbild der Staffel. Trailer, Vorschauen, Clips, Making-of und Outtakes stehen unter **Extras** und zählen nicht als Folge – in Listen, Genres und Suche erscheinen sie nicht. Was länger als 20 Minuten dauert, ist eine richtige Folge, auch wenn „Podcast“ oder „Hinter den Kulissen“ im Titel steht.
 - Ein Klick auf eine Folge spielt sie ab; **Details** öffnet ihre Seite. Gesehene Folgen sind blasser, angefangene zeigen einen Balken und die Restzeit.
 
 ## Trailer im Kopf

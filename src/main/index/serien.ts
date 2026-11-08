@@ -112,6 +112,12 @@ export function baueSerien(
     schritte[name] = jetzt - marke;
     marke = jetzt;
   };
+  // Für die Dauer des Aufbaus: großer Zwischenspeicher (128 MB statt 2 MB) und Zwischentabellen im Speicher –
+  // sonst schreibt SQLite bei Hunderttausenden geänderten Zeilen ständig Seiten zwischendurch auf die Platte
+  const cache = db.pragma('cache_size', { simple: true }) as number;
+  const temp = db.pragma('temp_store', { simple: true }) as number;
+  db.pragma('cache_size = -131072');
+  db.pragma('temp_store = MEMORY');
   const lauf = db.transaction(() => {
     db.exec(`
       DELETE FROM serie;
@@ -342,7 +348,14 @@ export function baueSerien(
     stopp('6 format');
     return { serien: zeilen.length, rubriken };
   });
-  const { serien, rubriken } = lauf();
+  let ergebnis: { serien: number; rubriken: number };
+  try {
+    ergebnis = lauf();
+  } finally {
+    db.pragma(`cache_size = ${cache}`);
+    db.pragma(`temp_store = ${temp}`);
+  }
+  const { serien, rubriken } = ergebnis;
   stopp('commit');
   return { serien, rubriken, ms: Date.now() - t0, schritte };
 }

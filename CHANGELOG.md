@@ -4,6 +4,8 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.14.0 – 2026-11-08
+
 ### Neu
 
 - **Live & demnächst**: das laufende Programm von Das Erste, ZDF, 3sat, Arte, den Spartensendern und allen Dritten (Auswahl in der Karte „Die Dritten“) mit einem Klick
@@ -18,6 +20,8 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 - Livestreams zeigen im Player **LIVE** statt einer Zeitleiste
 - Das Sendungsverzeichnis baut sich schneller auf
+- Der Knopf **Jetzt neu starten** im Update-Hinweis ist wieder gut lesbar
+- Die Knöpfe oben auf Serien- und Detailseiten brechen in eine neue Zeile um, statt sich zu quetschen
 
 ## 0.13.0 – 2026-11-07
 

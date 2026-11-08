@@ -13,7 +13,7 @@ import {
   sortiereGruppen,
   startFolge
 } from '@shared/serie';
-import { filmNachId, oeffneDb, schliesseAufbau, suche, type Db } from '../../src/main/index/datenbank';
+import { extrasZu, filmNachId, liveAngebot, oeffneDb, schliesseAufbau, suche, type Db } from '../../src/main/index/datenbank';
 import { importiere } from '../../src/main/index/import';
 import { mitSerien, serieDetail, serieNachThema, serienSuche, stoebern } from '../../src/main/index/serien';
 
@@ -117,5 +117,28 @@ describe('Bündel im Index', () => {
   it('findet Serien über ihren Namen', () => {
     expect(serienSuche(db, 'freundschaft').map((s) => s.thema)).toEqual(['In aller Freundschaft']);
     expect(serienSuche(db, 'freundschaft', 'ZDF')).toEqual([]);
+  });
+
+  it('sammelt Livestreams, Übertragungen und Vorab-Sendungen für „Live & demnächst“', () => {
+    const live = liveAngebot(db, Date.parse('2026-11-08T12:00:00Z'));
+    expect(live.sender.map((s) => [s.name, s.gruppe])).toEqual([
+      ['ZDF', 'haupt'],
+      ['WDR', 'dritte']
+    ]);
+    expect(live.uebertragungen.map((f) => f.titel)).toEqual(['Basketball live: Gladiators Trier gegen Testgegner']);
+    expect(live.vorab.map((f) => f.titel)).toContain('Planet e.: Vorab im Netz');
+    // Nichts davon in Suche und Listen
+    expect(suche(db, { text: 'Gladiators' }).treffer).toHaveLength(0);
+    expect(suche(db, { text: 'Vorab im Netz' }).treffer).toHaveLength(0);
+    // Vorbei ist vorbei
+    expect(liveAngebot(db, Date.parse('2028-01-01T00:00:00Z')).uebertragungen).toHaveLength(0);
+  });
+
+  it('findet Trailer einer Einzelsendung unter demselben Thema', () => {
+    const ostsee = suche(db, { text: 'Terra X Ostsee' }).treffer.find((f) => f.titel === 'Terra X: Die Ostsee');
+    expect(ostsee).toBeDefined();
+    expect(extrasZu(db, ostsee!.id).map((f) => f.titel)).toEqual(['Trailer: Terra X – Die Ostsee']);
+    // Der Trailer selbst steht nicht in der Suche
+    expect(suche(db, { text: 'Trailer Ostsee' }).treffer).toHaveLength(0);
   });
 });

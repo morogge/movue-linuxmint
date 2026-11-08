@@ -47,6 +47,6 @@ Die Sender liefern keine einheitlichen Genres. Movue leitet sie deshalb selbst a
 
 Die **Art** ergibt sich daraus: Serien mit Staffeln und Folgen sind **Serien**, Reihen aus Spielfilmen wie „Tatort“ **Filme**, Sendungen mit Satire, Quiz oder Talk **Shows & Talk**, regelmäßige Sendungen mit mehreren Beiträgen **Magazine**, alles Übrige mit Sachthema **Dokus**. Alle Folgen einer Serie oder Reihe haben deren Art und Genres (siehe **Serien und Sendereihen**).
 
-Dazu kommen Ausschlüsse: Sport, Nachrichten und Dokus über echte Verbrechen stehen nie unter **Krimi & Thriller**, Krimis nie unter **Reisen & Länder**. Trailer, Extras und Livestreams erscheinen in keiner Kategorie.
+Dazu kommen Ausschlüsse: Sport, Nachrichten und Dokus über echte Verbrechen stehen nie unter **Krimi & Thriller**, Krimis nie unter **Reisen & Länder**. Trailer und Extras erscheinen in keiner Kategorie, sondern auf der Seite ihrer Sendung; Livestreams stehen unter **Live & demnächst**.
 
 Liegt Movue bei einer Sendung daneben? Gib gern Bescheid – die Regeln werden laufend verbessert.

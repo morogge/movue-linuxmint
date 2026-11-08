@@ -4,6 +4,25 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.14.0 – 2026-11-08
+
+### Neu
+
+- **Live & demnächst**: das laufende Programm von Das Erste, ZDF, 3sat, Arte, den Spartensendern und allen Dritten (Auswahl in der Karte „Die Dritten“) mit einem Klick
+- **Live-Übertragungen** wie Sport oder Sondersendungen mit Tag und Uhrzeit. Mit **Erinnern** meldet sich Movue fünf Minuten vor Beginn
+- **Vorab in der Mediathek**: Sendungen, die schon vor dem Fernsehtermin online stehen, mit ihrem TV-Termin
+- **Trailer im Kopf**: Hat eine Serie oder Sendung einen Trailer, läuft er oben auf ihrer Seite einmal ohne Ton – anhalten und Ton per Knopf, nicht während der Mini-Player läuft und nicht, wenn dein System weniger Bewegung wünscht
+- Knopf **Trailer** auf Serien- und Detailseiten, dazu **Trailer & Extras** auf der Detailseite einzelner Sendungen
+- **Einstellungen** unten in der Seitenleiste – dort schaltest du die Vorschauen ab
+- **Staffelbilder**: Bei Serien mit bis zu zwölf Staffeln zeigen die Reiter das Bild der Staffel und die Zahl der Folgen
+
+### Verbessert
+
+- Livestreams zeigen im Player **LIVE** statt einer Zeitleiste
+- Das Sendungsverzeichnis baut sich schneller auf
+- Der Knopf **Jetzt neu starten** im Update-Hinweis ist wieder gut lesbar
+- Die Knöpfe oben auf Serien- und Detailseiten brechen in eine neue Zeile um, statt sich zu quetschen
+
 ## 0.13.0 – 2026-11-07
 
 ### Neu

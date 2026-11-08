@@ -341,7 +341,12 @@ button {
 .hero-actions {
   margin-top: 24px;
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
+}
+
+.hero-actions > button {
+  white-space: nowrap;
 }
 
 .primary {
@@ -782,6 +787,8 @@ button {
 }
 
 .primary.klein {
+  /* sonst färbt die allgemeine Regel .klein die Schrift grau – kaum lesbar auf Gelb */
+  color: var(--on-accent);
   height: 40px;
   padding: 0 16px;
   display: inline-flex;
@@ -2221,4 +2228,339 @@ button {
   height: 5px;
   border-radius: 6px 6px 0 0;
   background: var(--border-strong);
+}
+
+/* 0.14: Live & demnächst */
+:root {
+  /* LIVE-Marke: weiße Schrift erreicht 7,4 : 1 */
+  --live: #c8372d;
+}
+
+.live-seite {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.live-marke {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--live);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.live-raster {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.live-raster > li {
+  display: flex;
+}
+
+.live-karte {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 132px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(160deg, #20242a 0%, #16191d 100%);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+button.live-karte:hover {
+  border-color: var(--accent);
+}
+
+.live-karte.dritte {
+  cursor: default;
+}
+
+.live-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.live-start {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.live-karte select {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.termin-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+
+.termin {
+  display: grid;
+  grid-template-columns: 150px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.termin-zeit {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.termin-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.termin-titel {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.termin-text:hover .termin-titel {
+  text-decoration: underline;
+}
+
+.termin-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.vorab-termin {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.update-banner.erinnerung {
+  border-color: rgba(200, 55, 45, 0.6);
+  background: rgba(200, 55, 45, 0.12);
+}
+
+.update-banner.erinnerung > svg {
+  color: #ff8a80;
+}
+
+@media (max-width: 720px) {
+  .termin {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+/* 0.14: Trailer im Kopf von Serien- und Detailseiten */
+.kopf-trailer {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.kopf-trailer-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+  animation: trailer-ein 0.6s ease-out;
+}
+
+@keyframes trailer-ein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.kopf-trailer-knoepfe {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 6px;
+}
+
+.kopf-trailer-knoepfe .player-knopf {
+  width: 38px;
+  height: 38px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kopf-trailer-video {
+    animation: none;
+  }
+}
+
+/* 0.14: Einstellungen */
+.einstellungen {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 760px;
+}
+
+.schalter {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.schalter input {
+  appearance: none;
+  flex: 0 0 auto;
+  position: relative;
+  width: 44px;
+  height: 26px;
+  margin: 2px 0 0;
+  border-radius: 13px;
+  background: var(--border-strong);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.schalter input::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+
+.schalter input:checked {
+  background: var(--accent);
+}
+
+.schalter input:checked::after {
+  transform: translateX(18px);
+}
+
+.schalter input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.schalter-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-foot .nav-item.leise {
+  margin-bottom: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .schalter input,
+  .schalter input::after {
+    transition: none;
+  }
+}
+
+/* 0.14: Staffeln als Karten mit Bild */
+.staffel-karten {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.staffel-karte {
+  width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 0 8px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.staffel-karte .film-bild {
+  border-radius: 10px 10px 0 0;
+}
+
+.staffel-karte.an {
+  border-color: var(--accent);
+}
+
+.staffel-name {
+  padding: 4px 10px 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.staffel-zahl {
+  padding: 0 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Staffelkarten unter der Überschrift, nicht daneben */
+.reihe-kopf .staffel-karten {
+  flex-basis: 100%;
 }

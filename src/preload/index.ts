@@ -5,6 +5,7 @@ import type { Format, GenreAnzahl, GenreId } from '../shared/genres';
 import type { SenderGruppe } from '../shared/sender';
 import type { Abo, Ablauf, MerkEintrag } from '../shared/nutzer';
 import type { Serie, SerieDetail } from '../shared/serie';
+import type { LiveAngebot } from '../shared/live';
 import type { TitelInfo } from '../shared/titelinfo';
 
 export interface AppInfo {
@@ -35,6 +36,8 @@ const api = {
       offset?: number;
     }): Promise<{ eintraege: ({ typ: 'serie'; serie: Serie; datum: number } | { typ: 'film'; film: Film; datum: number })[]; gesamt: number }> =>
       ipcRenderer.invoke('index:stoebern', a),
+    /** Trailer und Extras zu einer Sendung (aus ihrem Bündel oder mit gleichem Thema) */
+    extras: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:extras', id),
     /** Anzahl der Einträge je Art (Serien, Filme, Dokus …), wahlweise nur eines Genres oder Senders */
     arten: (a?: { genre?: GenreId | null; gruppe?: SenderGruppe | null }): Promise<Partial<Record<Format, number>>> =>
       ipcRenderer.invoke('index:arten', a ?? {}),
@@ -89,6 +92,20 @@ const api = {
       const listener = () => callback();
       ipcRenderer.on('abo:neu', listener);
       return () => ipcRenderer.removeListener('abo:neu', listener);
+    }
+  },
+  live: {
+    /** Livestreams der Sender, Live-Übertragungen und Sendungen, die schon vor dem TV-Termin abrufbar sind */
+    angebot: (): Promise<LiveAngebot> => ipcRenderer.invoke('live:angebot'),
+    /** Videoadressen der Übertragungen, an die Movue erinnern soll */
+    erinnerungen: (): Promise<string[]> => ipcRenderer.invoke('live:erinnerungen'),
+    /** Erinnerung an- oder abschalten; gibt den neuen Zustand zurück */
+    erinnern: (id: number, an: boolean): Promise<boolean> => ipcRenderer.invoke('live:erinnern', id, an),
+    /** Eine Übertragung, an die erinnert werden soll, beginnt gleich */
+    beiErinnerung: (cb: (filme: Film[]) => void): (() => void) => {
+      const listener = (_e: unknown, filme: Film[]) => cb(filme);
+      ipcRenderer.on('live:erinnerung', listener);
+      return () => ipcRenderer.removeListener('live:erinnerung', listener);
     }
   },
   ablauf: {

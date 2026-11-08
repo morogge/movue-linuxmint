@@ -45,6 +45,13 @@ export class NutzerDb {
         gemeldet INTEGER NOT NULL,
         PRIMARY KEY (gruppe, thema)
       );
+      CREATE TABLE IF NOT EXISTS erinnerung (
+        url TEXT PRIMARY KEY,
+        film TEXT NOT NULL,
+        -- Beginn der Übertragung (s)
+        beginn INTEGER NOT NULL,
+        gemeldet INTEGER NOT NULL DEFAULT 0
+      );
       CREATE TABLE IF NOT EXISTS ablauf (
         url TEXT PRIMARY KEY,
         bis INTEGER,
@@ -169,6 +176,43 @@ export class NutzerDb {
 
   aboGemeldet(gruppe: string, thema: string, datum: number): void {
     this.db.prepare('UPDATE abo SET gemeldet = MAX(gemeldet, ?) WHERE gruppe = ? AND thema = ?').run(datum, gruppe, thema);
+  }
+
+  // --- Erinnerungen an Live-Übertragungen ---
+
+  erinnern(film: Film): void {
+    this.db
+      .prepare('INSERT INTO erinnerung (url, film, beginn) VALUES (?, ?, ?) ON CONFLICT(url) DO UPDATE SET film = excluded.film, beginn = excluded.beginn')
+      .run(film.url, JSON.stringify(film), film.datum);
+  }
+
+  vergissErinnerung(url: string): void {
+    this.db.prepare('DELETE FROM erinnerung WHERE url = ?').run(url);
+  }
+
+  erinnerungen(): string[] {
+    return (this.db.prepare('SELECT url FROM erinnerung').all() as { url: string }[]).map((z) => z.url);
+  }
+
+  /**
+   * Erinnerungen, deren Beginn bis `bis` (ms) erreicht ist und die noch nicht gemeldet wurden – werden dabei
+   * als gemeldet markiert. Was länger als einen Tag vorbei ist, fällt weg.
+   */
+  faelligeErinnerungen(bis: number, jetzt = Date.now()): Film[] {
+    this.db.prepare('DELETE FROM erinnerung WHERE beginn < ?').run(Math.floor(jetzt / 1000) - 86_400);
+    const zeilen = this.db.prepare('SELECT url, film FROM erinnerung WHERE gemeldet = 0 AND beginn <= ?').all(Math.floor(bis / 1000)) as {
+      url: string;
+      film: string;
+    }[];
+    const markiere = this.db.prepare('UPDATE erinnerung SET gemeldet = 1 WHERE url = ?');
+    return zeilen.flatMap((z) => {
+      markiere.run(z.url);
+      try {
+        return [JSON.parse(z.film) as Film];
+      } catch {
+        return [];
+      }
+    });
   }
 
   // --- Ablaufdaten ---

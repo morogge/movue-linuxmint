@@ -3,22 +3,37 @@ import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
 import { genreName } from '@shared/genres';
 import { formatZeit } from '@shared/player';
-import { artName, folgenKennung, gruppenName, gruppeVon, serienUmfang, sortiereGruppen, startFolge, type FolgenStand, type SerieDetail, type SerieRef } from '@shared/serie';
+import {
+  artName,
+  folgenKennung,
+  gruppenName,
+  gruppeVon,
+  serienUmfang,
+  sortiereGruppen,
+  startFolge,
+  waehleTrailer,
+  type FolgenStand,
+  type SerieDetail,
+  type SerieRef
+} from '@shared/serie';
 import { GESEHEN_ANTEIL } from '@shared/nutzer';
 import { FilmBild, SenderMarke } from '../components/Kachel';
 import { Icon } from '../components/Icon';
 import { Besetzung } from '../components/Besetzung';
 import type { TitelInfo } from '@shared/titelinfo';
 import { useSerienBild } from '../hooks/useBild';
+import { KopfTrailer } from '../components/KopfTrailer';
 
 interface Props {
   serie: SerieRef;
   onZurueck: () => void;
   onAbspielen: (f: Film) => void;
   onOeffne: (f: Film) => void;
+  /** Der Mini-Player läuft – dann kein Trailer im Kopf */
+  miniLaeuft?: boolean;
 }
 
-export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Props) {
+export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne, miniLaeuft = false }: Props) {
   const [detail, setDetail] = useState<SerieDetail | null | undefined>(undefined);
   const [staende, setStaende] = useState<Map<string, FolgenStand>>(new Map());
   const [reiter, setReiter] = useState<string | null>(null);
@@ -54,6 +69,14 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
   const start = useMemo(() => (detail ? startFolge(detail, staende) : null), [detail, staende]);
   // Anfangs den Reiter der Folge zeigen, mit der es weitergeht
   const aktiverReiter = reiter ?? (start && detail ? gruppeVon(start.film, detail.serie.art) : (gruppen[0] ?? null));
+  const trailer = useMemo(() => (detail ? waehleTrailer(detail.folgen.filter((f) => f.extra)) : null), [detail]);
+  // Staffeln als Karten mit dem Bild ihrer ersten Folge – bei der ARD oft ein eigenes Staffelbild („mittendrin Staffel 1“)
+  const erstesJe = useMemo(() => {
+    const m = new Map<string, Film>();
+    if (detail) for (const f of detail.folgen) if (!m.has(gruppeVon(f, detail.serie.art))) m.set(gruppeVon(f, detail.serie.art), f);
+    return m;
+  }, [detail]);
+  const staffelKarten = gruppen.length > 1 && gruppen.length <= 12 && gruppen.every((g) => g.startsWith('s') || g === 'extras');
   const sichtbar = detail && aktiverReiter ? detail.folgen.filter((f) => gruppeVon(f, detail.serie.art) === aktiverReiter) : [];
 
   if (detail === undefined || detail === null) {
@@ -93,9 +116,11 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
       </button>
 
       {banner && !bannerFehler && (
-        <div className="serie-banner">
-          <img src={banner} alt="" referrerPolicy="no-referrer" onError={() => setBannerFehler(true)} />
-        </div>
+        <KopfTrailer trailer={trailer} aus={miniLaeuft}>
+          <div className="serie-banner">
+            <img src={banner} alt="" referrerPolicy="no-referrer" onError={() => setBannerFehler(true)} />
+          </div>
+        </KopfTrailer>
       )}
 
       <div className={banner && !bannerFehler ? 'detail-kopf ohne-bild' : 'detail-kopf'}>
@@ -125,6 +150,11 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
                 <Icon name="play" size={16} /> {startText}
               </button>
             )}
+            {trailer && (
+              <button type="button" className="secondary" onClick={() => onAbspielen(trailer)}>
+                <Icon name="film" size={16} /> Trailer
+              </button>
+            )}
             <button
               type="button"
               className={abonniert ? 'secondary an' : 'secondary'}
@@ -146,7 +176,11 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
             </p>
           )}
         </div>
-        {kopfFilm && !(banner && !bannerFehler) && <FilmBild film={kopfFilm} gross titelbild="serie" />}
+        {kopfFilm && !(banner && !bannerFehler) && (
+          <KopfTrailer trailer={trailer} aus={miniLaeuft}>
+            <FilmBild film={kopfFilm} gross titelbild="serie" />
+          </KopfTrailer>
+        )}
       </div>
 
       <Besetzung info={info} />
@@ -154,7 +188,29 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne }: Pr
       <section className="folgen" aria-labelledby="serie-folgen-titel">
         <div className="reihe-kopf">
           <h2 id="serie-folgen-titel">{aktiverReiter ? gruppenName(aktiverReiter) : 'Folgen'}</h2>
-          {gruppen.length > 1 && (
+          {staffelKarten && (
+            <div className="staffel-karten" role="tablist" aria-label="Staffeln">
+              {gruppen.map((g) => {
+                const erste = erstesJe.get(g);
+                const anzahl = detail.folgen.filter((f) => gruppeVon(f, serie.art) === g).length;
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    role="tab"
+                    className={aktiverReiter === g ? 'staffel-karte an' : 'staffel-karte'}
+                    aria-selected={aktiverReiter === g}
+                    onClick={() => setReiter(g)}
+                  >
+                    {erste && <FilmBild film={erste} />}
+                    <span className="staffel-name">{gruppenName(g)}</span>
+                    <span className="staffel-zahl">{g === 'extras' ? (anzahl === 1 ? '1 Extra' : `${anzahl} Extras`) : anzahl === 1 ? '1 Folge' : `${anzahl} Folgen`}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {gruppen.length > 1 && !staffelKarten && (
             <div className="chips" role="tablist" aria-label={serie.art === 'serie' ? 'Staffeln' : 'Jahrgänge'}>
               {gruppen.map((g) => (
                 <button

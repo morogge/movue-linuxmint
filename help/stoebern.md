@@ -8,7 +8,7 @@ Die Seitenleiste links ist in drei Gruppen geteilt:
 
 - **Start**
 - die Arten **Serien**, **Filme**, **Dokus**, **Shows & Talk**, **Nachrichten**, **Sport** und **Kinder**, darunter etwas kleiner **Alle Kategorien** (siehe **Kategorien und Genres**)
-- **Live & demnächst** (folgt in Version 0.14), **Merkliste** und **Suche**
+- **Live & demnächst** (siehe **Live & demnächst**), **Merkliste** und **Suche**
 
 Darunter stehen die **Sender**. Die Leiste bleibt beim Scrollen stehen. Mit dem Pfeil oben neben dem Namen – oder **Strg + B** – klappst du sie auf die Symbole ein und wieder aus; Movue merkt sich die Wahl. Ganz unten siehst du, wie aktuell das Sendungsverzeichnis ist und welche Version von Movue läuft.
 

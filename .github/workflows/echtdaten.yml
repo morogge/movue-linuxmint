@@ -50,8 +50,10 @@ jobs:
         run: |
           mkdir -p /tmp/daten
           cd test-results/audit
-          split -b 40m filme.jsonl.gz /tmp/daten/filme.jsonl.gz.teil-
-          cp buendel.json buendel.csv meta.json /tmp/daten/
+          # Große Dateien in Teile (GitHub nimmt höchstens 100 MB je Datei)
+          for f in *; do
+            if [ "$(stat -c%s "$f")" -gt 40000000 ]; then split -b 40m "$f" "/tmp/daten/$f.teil-"; else cp "$f" /tmp/daten/; fi
+          done
           cd /tmp/daten
           git init -q -b daten
           git add .

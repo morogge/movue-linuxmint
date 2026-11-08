@@ -21,7 +21,9 @@ describe('ARD-Staffeln', () => {
       const item = (await hole(`https://api.ardmediathek.de/page-gateway/pages/ard/item/${id}?devicetype=pc&embedded=true`)) as { json: unknown };
       writeFileSync(join(ZIEL, `${name}-item.json`), JSON.stringify(item, null, 1));
       const text = JSON.stringify(item.json);
-      const show = /"show":\{"id":"([^"]+)"/.exec(text)?.[1] ?? /grouping\/([A-Za-z0-9]+)/.exec(text)?.[1];
+      // Show-Id: erstes "id" in einem "show"-Objekt, sonst ein Link auf eine Grouping-Seite
+      const show =
+        /"show":\{[^{}]*?"id":"([^"]+)"/.exec(text)?.[1] ?? /pages\/ard\/grouping\/([A-Za-z0-9_-]+)/.exec(text)?.[1] ?? /"grouping\/([A-Za-z0-9_-]+)/.exec(text)?.[1];
       console.log('SHOW', name, show);
       if (!show) continue;
       const g = await hole(`https://api.ardmediathek.de/page-gateway/pages/ard/grouping/${show}?devicetype=pc&embedded=true`);

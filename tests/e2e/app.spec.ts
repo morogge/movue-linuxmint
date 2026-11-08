@@ -34,7 +34,7 @@ test.afterAll(async () => {
 
 test('Startseite erscheint und das Sendungsverzeichnis wird geladen', async () => {
   await expect(win.getByText(/Version \d+\.\d+\.\d+/)).toBeVisible();
-  await expect(win.getByRole('status')).toContainText('10 Sendungen', { timeout: 60_000 });
+  await expect(win.getByRole('status')).toContainText('15 Sendungen', { timeout: 60_000 });
   await expect(win.getByRole('status')).toContainText('Stand 01.11.');
   await expect(win.getByRole('heading', { name: 'Neu bei Filmen', level: 2 })).toBeVisible();
   await expect(win.getByRole('heading', { name: 'Neu bei Serien', level: 2 })).toBeVisible();

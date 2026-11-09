@@ -6,12 +6,12 @@ import type { FilmEintrag } from '../filmliste/eintrag';
 import { folgenInfo, serieAusTitel } from '@shared/serie';
 import { titelKern } from '@shared/titelinfo';
 import { liveGruppe, senderName, sortiereSender, type LiveAngebot, type LiveSender } from '@shared/live';
-import { fassungKern, fassungName, istFassung } from '@shared/fassung';
+import { fassungKern, fassungName, istFassung, ohneFassung } from '@shared/fassung';
 
 export type Db = Database.Database;
 
 /** Erhöhen, wenn sich Tabellen oder abgeleitete Daten (z. B. Genre-Regeln) ändern – erzwingt einen Neuaufbau. */
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS film (
@@ -200,9 +200,11 @@ export function schreiber(db: Db): (e: FilmEintrag) => void {
   const genre = db.prepare('INSERT OR IGNORE INTO film_genre (genre, film_id, datum) VALUES (?, ?, ?)');
   return (e) => {
     const { genres, ...felder } = e;
-    const info = folgenInfo(e.titel, e.dauer);
+    // Ohne den Zusatz der Fassung („(Gebärdensprache)“, „(Englisch)“), sonst verdeckt er die Folgennummer am Titelende
+    const basis = ohneFassung(e.titel);
+    const info = folgenInfo(basis, e.dauer);
     // Bei Rubrik-Themen (Arte, „Fernsehfilm der Woche“) steht der Serienname im Titel
-    const ausTitel = serieAusTitel(e.titel);
+    const ausTitel = serieAusTitel(basis);
     if (ausTitel && info.folge === null) {
       info.folge = ausTitel.folge;
       info.staffel ??= ausTitel.staffel;
@@ -644,25 +646,45 @@ export function liveAngebot(db: Db, jetzt = Date.now(), vorabLimit = 120): LiveA
  * („Trailer: How to Dad“ unter dem Thema „How to Dad“). Neueste zuerst.
  */
 export function extrasZu(db: Db, filmId: number, limit = 12): Film[] {
-  const f = db.prepare('SELECT id, gruppe, thema, serie_id FROM film WHERE id = ?').get(filmId) as
-    | { id: number; gruppe: string; thema: string; serie_id: number | null }
+  const f = db.prepare('SELECT id, gruppe, thema, titel, serie_id FROM film WHERE id = ?').get(filmId) as
+    | { id: number; gruppe: string; thema: string; titel: string; serie_id: number | null }
     | undefined;
   if (!f) return [];
-  const zeilen = (
-    f.serie_id !== null
-      ? db
-          .prepare(`SELECT ${SPALTEN} FROM film f WHERE f.serie_id = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 ORDER BY f.datum DESC LIMIT ?`)
-          .all(f.serie_id, limit)
-      : db
-          .prepare(
-            `SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 AND f.id != ?
-             ORDER BY f.datum DESC LIMIT ?`
-          )
-          .all(f.gruppe, f.thema, f.id, limit)
-  ) as FilmZeile[];
+  let zeilen: FilmZeile[];
+  if (f.serie_id !== null) {
+    zeilen = db
+      .prepare(`SELECT ${SPALTEN} FROM film f WHERE f.serie_id = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 ORDER BY f.datum DESC LIMIT ?`)
+      .all(f.serie_id, limit) as FilmZeile[];
+  } else {
+    const kandidaten = db
+      .prepare(
+        `SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 AND f.id != ?
+         ORDER BY f.datum DESC LIMIT 200`
+      )
+      .all(f.gruppe, f.thema, f.id) as FilmZeile[];
+    // Sammelthemen („Filme“ beim ZDF): dort gehört ein Trailer nur zur Sendung, deren Haupttitel er nennt
+    const sendungen = (
+      db
+        .prepare('SELECT COUNT(*) AS n FROM film WHERE gruppe = ? AND thema = ? AND extra = 0 AND variante = 0 AND live = 0')
+        .get(f.gruppe, f.thema) as { n: number }
+    ).n;
+    const eigenesThema = sendungen <= 3 && istReihenThema(f.thema);
+    const stamm = titelStamm(f.titel);
+    zeilen = kandidaten.filter((z) => eigenesThema || (stamm !== null && z.titel.toLowerCase().includes(stamm))).slice(0, limit);
+  }
   const genres = genresFuer(
     db,
     zeilen.map((z) => z.id)
   );
   return zeilen.map((z) => zuFilm(z, genres));
+}
+
+/** Haupttitel vor „ - “ oder „:“, klein geschrieben: „Ponyherz - Wild und frei“ → „ponyherz“; zu kurz → null */
+export function titelStamm(titel: string): string | null {
+  const stamm = ohneFassung(titel)
+    .split(/\s[-–:]\s|:\s/)[0]!
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .trim()
+    .toLowerCase();
+  return stamm.length >= 4 ? stamm : null;
 }

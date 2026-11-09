@@ -15,6 +15,10 @@ Bewegst du die Maus über das Video, erscheinen die Bedienelemente; nach drei Se
 - **Zeitleiste**: Klicken oder Ziehen springt an eine Stelle.
 - **10 Sekunden zurück / vor**, **Lautstärke**
 - **Untertitel** (nur wenn der Sender welche liefert)
+- **Sprache**: Bietet ein Stream mehrere Tonspuren an – etwa Deutsch, Originalton oder Audiodeskription –, wählst du sie hier. Movue merkt sich die Sprache und nimmt sie beim nächsten Video wieder, wenn es sie gibt.
+- **Untertitel im Stream**: Enthält der Stream selbst Untertitel, auch in mehreren Sprachen, wählst du sie hier aus oder schaltest sie ab. Auch diese Wahl merkt sich Movue.
+
+Die beiden Auswahlfelder erscheinen nur, wenn der Stream mehr als eine Sprache bzw. überhaupt Untertitel enthält. Andere **Fassungen** einer Sendung – mit Gebärdensprache, Audiodeskription oder im Original, wenn der Sender sie als eigenes Video anbietet – wählst du auf ihrer Detailseite.
 - **Qualität**: Niedrig, Standard oder HD – Movue merkt sich deine Wahl. Bei langsamer Verbindung hilft **Niedrig**.
 - **Bild-in-Bild**: Das Video läuft in einem kleinen eigenen Fenster, das immer im Vordergrund bleibt – auch über anderen Programmen.
 - **Vollbild**: per Knopf, Doppelklick oder **F**.

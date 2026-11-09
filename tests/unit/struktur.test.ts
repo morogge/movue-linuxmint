@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { folgenInfo, gruppeVon, serieAusTitel, serienArt, waehleTrailer } from '@shared/serie';
 import { genresAusWikidata, serienSchluessel } from '@shared/metadaten';
-import { baueFassungen, istLive, oeffneDb, reihe, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
+import { baueFassungen, istLive, oeffneDb, reihe, schliesseAufbau, schreiber, suche, type Db, extrasZu, titelStamm } from '../../src/main/index/datenbank';
 import { artAnzahlen, baueSerien, istReihenAnfang, istRubrik, serieDetail, serieNachThema, stoebern, titelAnfang } from '../../src/main/index/serien';
 import type { FilmEintrag } from '../../src/main/filmliste/eintrag';
 import { buendelFormat, type GenreId } from '../../src/shared/genres';
@@ -208,6 +208,15 @@ describe('Bündel im Index', () => {
     expect(s?.genres).toEqual(['kultur']);
     expect(suche(db, { text: '', genre: 'krimi', gruppe: '3sat' }).gesamt).toBe(0);
     expect(reihe(db, { genre: 'krimi', gruppe: '3sat', minDauer: 0, jetzt: 1_793_100_000_000 })).toEqual([]);
+  });
+
+  it('hängt Trailer einer Sammelrubrik nicht an jeden Film der Rubrik', () => {
+    const filmA = db.prepare("SELECT id FROM film WHERE titel = 'Film A'").get() as { id: number };
+    expect(extrasZu(db, filmA.id)).toEqual([]);
+    expect(titelStamm('Ponyherz - Wild und frei (Gebärdensprache)')).toBe('ponyherz');
+    expect(titelStamm('Terra X: Die Ostsee')).toBe('terra x');
+    expect(titelStamm('Kompromat - Die Macht der Lüge')).toBe('kompromat');
+    expect(titelStamm('Ufo')).toBeNull();
   });
 
   it('zeigt Trailer, Livestreams und Angekündigtes nicht in Listen, Angekündigtes aber in der Suche', () => {

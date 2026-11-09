@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import type { Film } from '@shared/film';
 import { findeReihenTrailer, type ReihenTrailer } from './ardtrailer';
 import { findeZdfTrailer } from './zdftrailer';
 
@@ -160,6 +161,29 @@ export async function findeSenderTrailer(website: string): Promise<ReihenTrailer
   if (id) return findeReihenTrailer(id);
   const reihe = serienSeite(website);
   return reihe ? findeZdfTrailer(reihe) : null;
+}
+
+/**
+ * Bild zu einer Sendung mit Ersatzwegen. Viele ältere Einträge stehen noch in der Filmliste, ihre Seite beim Sender
+ * gibt es aber nicht mehr (404/410). Dann: Bild einer anderen Folge derselben Serie (neueste zuerst, höchstens vier),
+ * sonst Titelbild der Serie (ARD, ZDF, 3sat).
+ */
+export async function bildMitErsatz(
+  film: Pick<Film, 'id' | 'website' | 'buendel' | 'gruppe'>,
+  folgen: () => Pick<Film, 'id' | 'website'>[],
+  url: (website: string, art?: BildArt) => Promise<string | null>
+): Promise<string | null> {
+  const eigenes = film.website ? await url(film.website) : null;
+  if (eigenes || !film.buendel) return eigenes;
+  const andere = folgen()
+    .filter((f) => f.id !== film.id && f.website && f.website !== film.website)
+    .slice(0, 4);
+  for (const f of andere) {
+    const bild = await url(f.website);
+    if (bild) return bild;
+  }
+  const quelle = andere[0]?.website ?? film.website;
+  return quelle && film.gruppe !== 'Arte' ? url(quelle, 'serie') : null;
 }
 
 export class BildDienst {

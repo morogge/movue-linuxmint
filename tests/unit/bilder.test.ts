@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { ardId, BildDienst, extrahiereOgImage, verkleinere } from '../../src/main/bilder';
+import { ardId, BildDienst, bildMitErsatz, extrahiereOgImage, verkleinere } from '../../src/main/bilder';
 
 describe('Vorschaubilder', () => {
   it('liest og:image aus HTML', () => {
@@ -79,5 +79,33 @@ describe('BildDienst', () => {
     expect(await dienst.reihenTrailer('https://www.arte.tv/de/videos/123456-001-A/x/')).toBeNull();
     expect(gefragt).toEqual([mit, ohne, 'https://www.zdf.de/video/serien/mit-trailer-100/folge-1-100']);
     dienst.schliessen();
+  });
+});
+
+describe('Bild mit Ersatzwegen', () => {
+  const film = { id: 1, website: 'https://s.de/weg', buendel: 'Kulturzeit', gruppe: '3sat' as const };
+  const folgen = () => [
+    { id: 1, website: 'https://s.de/weg' },
+    { id: 2, website: 'https://s.de/auch-weg' },
+    { id: 3, website: 'https://s.de/da' }
+  ];
+
+  it('nimmt das eigene Bild, wenn es eins gibt', async () => {
+    expect(await bildMitErsatz({ ...film, website: 'https://s.de/da' }, folgen, async (w) => (w.endsWith('/da') ? 'eigen.jpg' : null))).toBe('eigen.jpg');
+  });
+
+  it('nimmt sonst das Bild einer anderen Folge derselben Serie', async () => {
+    const gefragt: string[] = [];
+    const url = async (w: string, art?: string) => {
+      gefragt.push(`${art ?? 'folge'}:${w}`);
+      return w.endsWith('/da') && !art ? 'andere.jpg' : null;
+    };
+    expect(await bildMitErsatz(film, folgen, url)).toBe('andere.jpg');
+    expect(gefragt).toEqual(['folge:https://s.de/weg', 'folge:https://s.de/auch-weg', 'folge:https://s.de/da']);
+  });
+
+  it('nimmt zuletzt das Titelbild der Serie, bei Einzelsendungen nichts', async () => {
+    expect(await bildMitErsatz(film, folgen, async (_w, art) => (art === 'serie' ? 'serie.jpg' : null))).toBe('serie.jpg');
+    expect(await bildMitErsatz({ ...film, buendel: null }, folgen, async (_w, art) => (art === 'serie' ? 'serie.jpg' : null))).toBeNull();
   });
 });

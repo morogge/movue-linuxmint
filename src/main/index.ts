@@ -5,6 +5,7 @@ import type { UpdateZustand } from '@shared/update';
 import { IndexDienst } from './index/dienst';
 import { UpdateDienst } from './update';
 import { BildDienst, bildMitErsatz, serienSeite } from './bilder';
+import { standbild } from './standbild';
 import { NutzerDb } from './nutzer';
 import { AblaufDienst } from './ablauf';
 import { TitelInfoDienst } from './titelinfo';
@@ -279,7 +280,12 @@ async function bildFuerFilm(id: number, url: string, website: string): Promise<s
   const dienst = bilder;
   // Kennungen ändern sich bei jedem Neuaufbau (Merkliste, Verlauf): nur die Seite fragen, wenn es nicht dieselbe Sendung ist
   if (!film || film.url !== url) return website ? dienst.url(website) : null;
-  return bildMitErsatz(film, () => index?.folgen(id) ?? [], (w, art) => dienst.url(w, art));
+  return bildMitErsatz(
+    film,
+    () => index?.folgen(id) ?? [],
+    (w, art) => dienst.url(w, art),
+    (video) => dienst.standbild(video)
+  );
 }
 
 ipcMain.handle('bild:film', (_event, id: unknown, url: unknown, website: unknown) => {
@@ -431,8 +437,11 @@ app.whenReady().then(() => {
     join(app.getPath('userData'), 'bilder.db'),
     process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined,
     process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined,
-    process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined
+    process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined,
+    process.env['MOVUE_BILDER_AUS'] ? async () => null : (video) => standbild(video)
   );
+  // Für die Oberflächentests: Standbild direkt aus dem Hauptprozess prüfbar (Bilder sind dort sonst aus)
+  if (process.env['MOVUE_BILDER_AUS']) (globalThis as { movueStandbild?: typeof standbild }).movueStandbild = standbild;
   createWindow();
   index.start();
   update.start();

@@ -251,6 +251,23 @@ test('Senderliste in der Seitenleiste ein- und ausklappen', async () => {
   await expect(zdf).toBeVisible();
 });
 
+test('Standbild aus einem Video, wenn die Seite beim Sender fehlt', async () => {
+  // Echter Trailer der ARD (MP4) – braucht Netz; im unsichtbaren Fenster wird ein Bild daraus gezeichnet
+  const video = 'https://mdr-progressive.ard-mcdn.de/mdr/video/weltweit/2026/08/03/mdrde-32fb77ca-aee1-4a5a-a8fe-6c7f02a54a0b.avc720.mp4';
+  const bild = await app.evaluate(
+    async (_electron, url) => (globalThis as { movueStandbild?: (u: string) => Promise<string | null> }).movueStandbild?.(url) ?? null,
+    video
+  );
+  expect(bild).toMatch(/^data:image\/jpeg;base64,/);
+  expect((bild ?? '').length).toBeGreaterThan(5000);
+  // Ungeeignete Adressen (HLS, kein https) gar nicht erst laden
+  const hls = await app.evaluate(
+    async (_electron, url) => (globalThis as { movueStandbild?: (u: string) => Promise<string | null> }).movueStandbild?.(url) ?? null,
+    'https://example.org/x/master.m3u8'
+  );
+  expect(hls).toBeNull();
+});
+
 test('Hinweis auf eine heruntergeladene neue Version', async () => {
   const hinweis = win.getByRole('region', { name: 'Neue Version' });
   await expect(hinweis).toContainText('Movue 9.9.9 ist da.');

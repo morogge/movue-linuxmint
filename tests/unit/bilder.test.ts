@@ -83,7 +83,7 @@ describe('BildDienst', () => {
 });
 
 describe('Bild mit Ersatzwegen', () => {
-  const film = { id: 1, website: 'https://s.de/weg', buendel: 'Kulturzeit', gruppe: '3sat' as const };
+  const film = { id: 1, website: 'https://s.de/weg', buendel: 'Kulturzeit', gruppe: '3sat' as const, url: 'https://cdn.s.de/v.mp4' };
   const folgen = () => [
     { id: 1, website: 'https://s.de/weg' },
     { id: 2, website: 'https://s.de/auch-weg' },
@@ -104,8 +104,14 @@ describe('Bild mit Ersatzwegen', () => {
     expect(gefragt).toEqual(['folge:https://s.de/weg', 'folge:https://s.de/auch-weg', 'folge:https://s.de/da']);
   });
 
-  it('nimmt zuletzt das Titelbild der Serie, bei Einzelsendungen nichts', async () => {
+  it('nimmt dann das Titelbild der Serie, bei Einzelsendungen nicht', async () => {
     expect(await bildMitErsatz(film, folgen, async (_w, art) => (art === 'serie' ? 'serie.jpg' : null))).toBe('serie.jpg');
     expect(await bildMitErsatz({ ...film, buendel: null }, folgen, async (_w, art) => (art === 'serie' ? 'serie.jpg' : null))).toBeNull();
+  });
+
+  it('nimmt zuletzt ein Standbild aus dem Video', async () => {
+    const standbild = async (v: string) => (v === 'https://cdn.s.de/v.mp4' ? 'data:image/jpeg;base64,xyz' : null);
+    expect(await bildMitErsatz({ ...film, buendel: null }, folgen, async () => null, standbild)).toBe('data:image/jpeg;base64,xyz');
+    expect(await bildMitErsatz(film, folgen, async () => null, standbild)).toBe('data:image/jpeg;base64,xyz');
   });
 });

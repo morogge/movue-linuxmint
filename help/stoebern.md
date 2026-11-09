@@ -54,4 +54,10 @@ Ein Klick auf eine Kachel oder einen Titel in der Suche öffnet die Detailseite:
 
 ## Vorschaubilder
 
-Die Bilder holt Movue von den Seiten der Sender und merkt sie sich, damit sie beim nächsten Mal sofort da sind. Hat der Sender die Seite einer Sendung entfernt, zeigt Movue stattdessen den Namen der Reihe.
+Die Bilder holt Movue von den Seiten der Sender und merkt sie sich, damit sie beim nächsten Mal sofort da sind. Bei älteren Sendungen gibt es die Seite beim Sender oft nicht mehr, obwohl das Video noch abrufbar ist. Dann nimmt Movue der Reihe nach:
+
+1. das Bild einer anderen Folge derselben Serie,
+2. das Titelbild der Serie (ARD, ZDF, 3sat),
+3. ein Standbild aus dem Video selbst – etwa zehn Prozent nach dem Anfang, höchstens anderthalb Minuten hinein. Dafür lädt Movue den Anfang des Videos vom Server des Senders.
+
+Erst wenn nichts davon klappt, steht der Name der Reihe auf der Kachel.

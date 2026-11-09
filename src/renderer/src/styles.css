@@ -2572,3 +2572,29 @@ button.live-karte:hover {
   margin: 0;
   font-size: inherit;
 }
+
+/* Art als erstes Schild, daneben „Falsch einsortiert?“ */
+.tag.art-tag {
+  border-color: var(--border-strong);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.melden {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
+}
+
+.melden .text-button {
+  padding: 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.melden .text-button:hover {
+  color: var(--text);
+}

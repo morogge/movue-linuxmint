@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
-import { genreName } from '@shared/genres';
+import { formatName, genreName } from '@shared/genres';
 import { formatZeit } from '@shared/player';
 import { formatAblauf, laeuftBaldAb, type Ablauf } from '@shared/nutzer';
 import { folgenKennung, waehleTrailer, type SerieRef } from '@shared/serie';
@@ -13,6 +13,7 @@ import { terminText } from '@shared/live';
 import { Icon } from '../components/Icon';
 import { Besetzung } from '../components/Besetzung';
 import { KopfTrailer } from '../components/KopfTrailer';
+import { MeldenKnopf } from '../components/Melden';
 
 /** „(S02/E05)“ im Titel → Staffel 2, sonst null */
 export function staffelVon(titel: string): number | null {
@@ -135,6 +136,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
           <h1 id="detail-titel">{film.titel}</h1>
           {info?.originaltitel && <p className="originaltitel">Originaltitel: {info.originaltitel}</p>}
           <div className="detail-tags">
+            {film.format && <span className="tag art-tag">{formatName(film.format)}</span>}
             {film.genres
               .filter((g) => g !== 'sonstiges')
               .map((g) => (
@@ -146,6 +148,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
             {film.urlUntertitel && <span className="tag">UT</span>}
             {film.urlHd && <span className="tag">HD</span>}
             {film.geo && <span className="tag">{film.geo.replace(/-/g, ' · ')}</span>}
+            <MeldenKnopf ziel={{ filmId: film.id }} />
           </div>
           {film.beschreibung && <p className="detail-beschreibung">{film.beschreibung}</p>}
           <p className="detail-info">

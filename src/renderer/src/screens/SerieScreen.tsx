@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
-import { genreName } from '@shared/genres';
+import { formatName, genreName } from '@shared/genres';
 import { formatZeit } from '@shared/player';
 import {
   artName,
@@ -24,6 +24,7 @@ import { Besetzung } from '../components/Besetzung';
 import type { TitelInfo } from '@shared/titelinfo';
 import { useSerienBild } from '../hooks/useBild';
 import { KopfTrailer } from '../components/KopfTrailer';
+import { MeldenKnopf } from '../components/Melden';
 import { useVorschauen } from '../einstellungen';
 
 interface Props {
@@ -147,6 +148,7 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne, mini
           </div>
           <h1 id="serie-titel">{serie.thema}</h1>
           <div className="detail-tags">
+            <span className="tag art-tag">{formatName(serie.format)}</span>
             {serie.genres
               .filter((g) => g !== 'sonstiges')
               .map((g) => (
@@ -154,6 +156,7 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne, mini
                   {genreName(g)}
                 </span>
               ))}
+            <MeldenKnopf ziel={{ gruppe: serie.gruppe, thema: serie.thema }} />
           </div>
           {kopfFilm?.beschreibung && <p className="detail-beschreibung">{kopfFilm.beschreibung}</p>}
           <p className="detail-info">

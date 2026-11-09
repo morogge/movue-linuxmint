@@ -49,4 +49,12 @@ Die **Art** ergibt sich daraus: Serien mit Staffeln und Folgen sind **Serien**, 
 
 Dazu kommen Ausschlüsse: Sport, Nachrichten und Dokus über echte Verbrechen stehen nie unter **Krimi & Thriller**, Krimis nie unter **Reisen & Länder**. Trailer und Extras erscheinen in keiner Kategorie, sondern auf der Seite ihrer Sendung; Livestreams stehen unter **Live & demnächst**.
 
-Liegt Movue bei einer Sendung daneben? Gib gern Bescheid – die Regeln werden laufend verbessert.
+## Falsch einsortiert?
+
+Auf der Detailseite einer Sendung und auf der Seite einer Serie steht die **Art** als erstes Schild vor den Genres. Liegt Movue daneben, klick dahinter auf **Falsch einsortiert?**:
+
+- Dein Browser öffnet einen neuen Fehlerbericht auf GitHub, schon ausgefüllt mit Titel, Sender, Art, Genres und der Adresse beim Sender.
+- Ergänze, was richtig wäre – etwa „Ist eine Doku, kein Krimi“ – und schick ihn ab. Für GitHub brauchst du ein Konto.
+- Movue selbst schickt nichts. Erst wenn du den Bericht abschickst, sieht ihn jemand – öffentlich, wie alle Fehlerberichte von Movue.
+
+Mit den Meldungen werden die Regeln laufend verbessert.

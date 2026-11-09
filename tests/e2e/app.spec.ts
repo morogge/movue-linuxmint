@@ -218,6 +218,9 @@ test('Trailer & Extras auf der Detailseite, Vorschauen in den Einstellungen', as
   await expect(win.getByRole('heading', { name: 'Terra X: Die Ostsee', level: 1 })).toBeVisible();
   await expect(win.getByRole('button', { name: 'Trailer', exact: true })).toBeVisible();
   await expect(win.getByRole('heading', { name: 'Trailer & Extras' })).toBeVisible();
+  // Art als erstes Schild, dahinter „Falsch einsortiert?“ (nicht anklicken – öffnet den Browser)
+  await expect(win.locator('.art-tag')).toHaveText('Dokus');
+  await expect(win.getByRole('button', { name: 'Falsch einsortiert?' })).toBeVisible();
   await win.getByRole('button', { name: 'Einstellungen', exact: true }).click();
   await expect(win.getByRole('heading', { name: 'Einstellungen', level: 1 })).toBeVisible();
   const schalter = win.getByRole('switch', { name: /Vorschauen automatisch abspielen/ });

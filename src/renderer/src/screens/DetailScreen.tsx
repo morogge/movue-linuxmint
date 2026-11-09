@@ -9,7 +9,8 @@ import { herkunft, type TitelInfo } from '@shared/titelinfo';
 import { GRUPPEN } from '@shared/sender';
 import { SENDER_FARBE } from '../senderFarben';
 import { FilmBild, SenderMarke, istVorab } from '../components/Kachel';
-import { terminText } from '@shared/live';
+import { istKommendLive, terminText } from '@shared/live';
+import { Countdown } from '../components/Countdown';
 import { Icon } from '../components/Icon';
 import { Besetzung } from '../components/Besetzung';
 import { KopfTrailer } from '../components/KopfTrailer';
@@ -44,6 +45,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
   const [fassungen, setFassungen] = useState<{ film: Film; name: string | null }[]>([]);
   const [info, setInfo] = useState<TitelInfo | null>(null);
   const [extras, setExtras] = useState<Film[]>([]);
+  const [erinnert, setErinnert] = useState(false);
 
   useEffect(() => {
     let aktiv = true;
@@ -62,6 +64,8 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
       setExtras([]);
       if (!f) return;
       void window.movue.index.extras(f.id).then((x) => aktiv && setExtras(x));
+      setErinnert(false);
+      if (f.live) void window.movue.live.erinnerungen().then((e) => aktiv && setErinnert(e.includes(f.url)));
       void window.movue.index.fassungen(f.id).then((x) => aktiv && setFassungen(x));
       void window.movue.index.auchBei(f.id).then((a) => aktiv && setAuchBei(a));
       void window.movue.index.titelInfo(f.id).then((i) => aktiv && setInfo(i));
@@ -152,7 +156,15 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
           </div>
           {film.beschreibung && <p className="detail-beschreibung">{film.beschreibung}</p>}
           <p className="detail-info">
-            {istVorab(film) ? <span className="vorab-termin">Vorab online · im TV {terminText(film.datum)}</span> : formatDatum(film.datum)}
+            {istKommendLive(film) ? (
+              <>
+                Live ab {terminText(film.datum)} · <Countdown datum={film.datum} />
+              </>
+            ) : istVorab(film) ? (
+              <span className="vorab-termin">Vorab online · im TV {terminText(film.datum)}</span>
+            ) : (
+              formatDatum(film.datum)
+            )}
             {film.dauer > 0 && ` · ${formatDauer(film.dauer)}`}
             {ablaufText && (
               <span className={laeuftBaldAb(ablauf) || ablauf?.weg ? 'ablauf bald' : 'ablauf'}>
@@ -194,6 +206,16 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
             {trailer && (
               <button type="button" className="secondary" onClick={() => onAbspielen(trailer)}>
                 <Icon name="film" size={16} /> Trailer
+              </button>
+            )}
+            {istKommendLive(film) && (
+              <button
+                type="button"
+                className={erinnert ? 'secondary an' : 'secondary'}
+                aria-pressed={erinnert}
+                onClick={() => void window.movue.live.erinnern(film.id, !erinnert).then(setErinnert)}
+              >
+                <Icon name="glocke" size={16} /> {erinnert ? 'Erinnert' : 'Erinnern'}
               </button>
             )}
             <button type="button" className={gemerkt ? 'secondary an' : 'secondary'} aria-pressed={gemerkt} onClick={() => void merkenUmschalten()}>

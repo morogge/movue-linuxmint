@@ -96,6 +96,22 @@ export function Sidebar({
   update: UpdateZustand;
 }) {
   const [version, setVersion] = useState<string>('');
+  // Senderliste ein- und ausklappen; Movue merkt sich die Wahl
+  const [senderZu, setSenderZuState] = useState(() => {
+    try {
+      return window.localStorage.getItem('movue.senderZu') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const setSenderZu = (zu: boolean) => {
+    setSenderZuState(zu);
+    try {
+      window.localStorage.setItem('movue.senderZu', zu ? '1' : '0');
+    } catch {
+      // ohne Speicher gilt die Wahl bis zum Neustart
+    }
+  };
 
   useEffect(() => {
     window.movue
@@ -146,8 +162,19 @@ export function Sidebar({
         </ul>
       ))}
       <div className="nav-gruppe">
-        <span className="nav-ueberschrift">Sender</span>
-        <ul className="nav">
+        <button
+          type="button"
+          className="nav-ueberschrift sender-schalter"
+          aria-expanded={!senderZu}
+          aria-controls="sender-liste"
+          aria-label={senderZu ? 'Sender ausklappen' : 'Sender einklappen'}
+          title={senderZu ? 'Sender ausklappen' : 'Sender einklappen'}
+          onClick={() => setSenderZu(!senderZu)}
+        >
+          <span className="nav-text">Sender</span>
+          <Icon name={senderZu ? 'rechts' : 'runter'} size={14} />
+        </button>
+        <ul className="nav" id="sender-liste" hidden={senderZu}>
           {GRUPPEN.map((g) => {
             const aktiv = ansicht.screen === 'sender' && ansicht.gruppe === g.id;
             return (

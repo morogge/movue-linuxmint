@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Film } from '@shared/film';
-import { adresseFuer, formatZeit, QUALITAET_NAME, qualitaeten, type Qualitaet } from '@shared/player';
+import { adresseFuer, bevorzugteSpur, formatZeit, QUALITAET_NAME, qualitaeten, spurName, type Qualitaet } from '@shared/player';
 import { matchShortcut } from '@shared/shortcuts';
 import { Icon } from './Icon';
 
@@ -8,6 +8,8 @@ import { Icon } from './Icon';
 export const EINSTELLUNG = {
   qualitaet: 'movue.qualitaet',
   untertitel: 'movue.untertitel',
+  tonsprache: 'movue.tonsprache',
+  utsprache: 'movue.utsprache',
   autoplay: 'movue.autoplay',
   lautstaerke: 'movue.lautstaerke'
 } as const;
@@ -65,6 +67,12 @@ export function VideoPlayer({ film, start = 0, kompakt = false, naechste, onNaec
   const [stumm, setStumm] = useState(false);
   const [lautstaerke, setLautstaerke] = useState(() => Number(lies(EINSTELLUNG.lautstaerke, '1')) || 1);
   const [utAn, setUtAn] = useState(() => lies(EINSTELLUNG.untertitel, 'aus') === 'an');
+  // Ton- und Untertitelspuren im Stream (HLS): nur bei mehr als einer Tonspur bzw. überhaupt Untertiteln eine Auswahl
+  const hlsRef = useRef<{ audioTrack: number; subtitleTrack: number; subtitleDisplay: boolean } | null>(null);
+  const [tonspuren, setTonspuren] = useState<{ name: string; lang?: string }[]>([]);
+  const [tonspur, setTonspur] = useState(0);
+  const [utSpuren, setUtSpuren] = useState<{ name: string; lang?: string }[]>([]);
+  const [utSpur, setUtSpur] = useState(-1);
   const [utQuelle, setUtQuelle] = useState<string | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
   const [steuerung, setSteuerung] = useState(true);
@@ -89,6 +97,22 @@ export function VideoPlayer({ film, start = 0, kompakt = false, naechste, onNaec
         const h = new Hls();
         h.loadSource(quelle.url);
         h.attachMedia(v);
+        hlsRef.current = h;
+        h.on(Hls.Events.AUDIO_TRACKS_UPDATED, (_e, d) => {
+          const spuren = d.audioTracks.map((t, i) => ({ name: spurName(t, i), lang: t.lang }));
+          setTonspuren(spuren);
+          const i = bevorzugteSpur(d.audioTracks, lies(EINSTELLUNG.tonsprache, ''), h.audioTrack);
+          if (i !== h.audioTrack && i >= 0) h.audioTrack = i;
+          setTonspur(Math.max(i, 0));
+        });
+        h.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, (_e, d) => {
+          setUtSpuren(d.subtitleTracks.map((t, i) => ({ name: spurName(t, i), lang: t.lang })));
+          const gemerkt = lies(EINSTELLUNG.utsprache, '');
+          const i = gemerkt ? bevorzugteSpur(d.subtitleTracks, gemerkt, -1) : -1;
+          h.subtitleDisplay = i >= 0;
+          h.subtitleTrack = i;
+          setUtSpur(i);
+        });
         h.on(Hls.Events.ERROR, (_e, d) => {
           if (d.fatal) setFehler('Der Stream konnte nicht geladen werden.');
         });
@@ -99,6 +123,9 @@ export function VideoPlayer({ film, start = 0, kompakt = false, naechste, onNaec
     }
     return () => {
       aktiv = false;
+      hlsRef.current = null;
+      setTonspuren([]);
+      setUtSpuren([]);
       hls?.destroy();
       v.removeAttribute('src');
       v.load();
@@ -387,6 +414,52 @@ export function VideoPlayer({ film, start = 0, kompakt = false, naechste, onNaec
             </div>
           )}
           <span className="player-luecke" />
+          {!kompakt && tonspuren.length > 1 && (
+            <label className="player-qualitaet">
+              <span className="sr-only">Sprache</span>
+              <select
+                aria-label="Sprache"
+                value={tonspur}
+                onChange={(e) => {
+                  const i = Number(e.target.value);
+                  if (hlsRef.current) hlsRef.current.audioTrack = i;
+                  setTonspur(i);
+                  merke(EINSTELLUNG.tonsprache, tonspuren[i]?.lang ?? '');
+                }}
+              >
+                {tonspuren.map((t, i) => (
+                  <option key={i} value={i}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {!kompakt && utSpuren.length > 0 && (
+            <label className="player-qualitaet">
+              <span className="sr-only">Untertitel im Stream</span>
+              <select
+                aria-label="Untertitel im Stream"
+                value={utSpur}
+                onChange={(e) => {
+                  const i = Number(e.target.value);
+                  if (hlsRef.current) {
+                    hlsRef.current.subtitleDisplay = i >= 0;
+                    hlsRef.current.subtitleTrack = i;
+                  }
+                  setUtSpur(i);
+                  merke(EINSTELLUNG.utsprache, i >= 0 ? (utSpuren[i]?.lang ?? '') : '');
+                }}
+              >
+                <option value={-1}>Untertitel aus</option>
+                {utSpuren.map((t, i) => (
+                  <option key={i} value={i}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           {!kompakt && utQuelle && (
             <button type="button" className={utAn ? 'player-knopf an' : 'player-knopf'} aria-label="Untertitel" aria-pressed={utAn} title="Untertitel (C)" onClick={utUmschalten}>
               <Icon name="untertitel" />

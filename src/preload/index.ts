@@ -127,6 +127,9 @@ const api = {
   bild: {
     /** Vorschaubild zur Sendungsseite (null = keins gefunden) */
     url: (website: string): Promise<string | null> => ipcRenderer.invoke('bild:url', website, 'folge'),
+    /** Bild zu einer Sendung aus dem Verzeichnis – mit Ersatz aus anderen Folgen oder dem Titelbild der Serie */
+    film: (film: { id: number; url: string; website: string }): Promise<string | null> =>
+      ipcRenderer.invoke('bild:film', film.id, film.url, film.website),
     /** Titelbild der Serie (16:9) bzw. breites Banner (16:7) – bisher nur ARD, sonst null */
     serie: (website: string, art: 'serie' | 'banner'): Promise<string | null> => ipcRenderer.invoke('bild:url', website, art),
     /** Trailer der Reihe bei der ARD zu einer Folgenseite; andere Sender und ohne Trailer: null */

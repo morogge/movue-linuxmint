@@ -3,7 +3,8 @@ import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
 import { artName, serienUmfang, type Serie, type SerieRef } from '@shared/serie';
 import { useBild, useSerienBild } from '../hooks/useBild';
-import { terminText } from '@shared/live';
+import { istKommendLive, terminText } from '@shared/live';
+import { Countdown } from './Countdown';
 import { SENDER_FARBE } from '../senderFarben';
 
 /**
@@ -109,7 +110,13 @@ export function Kachel({
       <span className="kachel-titel">{film.titel}</span>
       <span className="kachel-meta">
         {film.thema && film.thema !== film.titel ? `${film.thema} · ` : ''}
-        {istVorab(film) ? <span className="vorab-termin">Vorab · im TV {terminText(film.datum)}</span> : formatDatum(film.datum)}
+        {istKommendLive(film) ? (
+          <Countdown datum={film.datum} />
+        ) : istVorab(film) ? (
+          <span className="vorab-termin">Vorab · im TV {terminText(film.datum)}</span>
+        ) : (
+          formatDatum(film.datum)
+        )}
       </span>
     </button>
   );

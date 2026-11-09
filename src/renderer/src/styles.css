@@ -2650,3 +2650,8 @@ button.live-karte:hover {
   font-size: 13px;
   font-weight: 500;
 }
+
+/* „hidden“ muss gegen display: flex gewinnen (eingeklappte Senderliste) */
+.nav[hidden] {
+  display: none;
+}

@@ -17,6 +17,13 @@ const ZUSATZ = /\((?:[^)]*?\b)?(audiodeskription|gebärdensprache|originalversio
 const ENDE = /\s[-–]\s(audiodeskription|gebärdensprache|hörfassung|originalfassung|originalversion)\s*$/i;
 /** Sprachkürzel am Titelende wie „(swe)“ – klein geschrieben, damit „(ZDF)“ oder „(2/3)“ nicht zählen */
 const SPRACHE = /\(([a-zäöü]{2,4})\)\s*$/;
+/** Ausgeschriebene Sprache als Zusatz: „(Englisch)“, „(Französisch)“, „(englische Fassung)“ */
+const SPRACHE_LANG =
+  /\((englisch|english|französisch|italienisch|spanisch|polnisch|türkisch|ukrainisch|russisch|arabisch|niederländisch|dänisch|schwedisch|norwegisch|finnisch|isländisch|portugiesisch|griechisch|japanisch|koreanisch|tschechisch|ungarisch|hebräisch)e?(?:\s+(?:fassung|version))?\)/i;
+/** Vorangestellt: „[English OV] Roberta Metsola im Interview“ */
+const PRAEFIX = /^\[(?:english|englisch)\s+ov\]\s*/i;
+/** Kurz: „(DGS)“ = Gebärdensprache, „(AD)“ = Audiodeskription – nur in eigener Klammer */
+const KURZ = /\((dgs|ad)\)/i;
 
 /** Name der Fassung, null für die Standardfassung */
 export function fassungName(titel: string): string | null {
@@ -32,9 +39,30 @@ export function fassungName(titel: string): string | null {
     if (/original|\bov\b/.test(t)) return 'Originalfassung';
     return 'Mit Untertiteln';
   }
+  const k = KURZ.exec(titel);
+  if (k) return k[1]!.toLowerCase() === 'dgs' ? 'Gebärdensprache' : 'Audiodeskription';
+  const l = SPRACHE_LANG.exec(titel);
+  if (l) {
+    const name = l[1]!.toLowerCase() === 'english' ? 'Englisch' : l[1]!.charAt(0).toUpperCase() + l[1]!.slice(1).toLowerCase();
+    return `Original (${name})`;
+  }
+  if (PRAEFIX.test(titel)) return 'Original (Englisch)';
   const s = SPRACHE.exec(titel);
   if (s && SPRACHEN[s[1]]) return `Original (${SPRACHEN[s[1]]})`;
   return null;
+}
+
+/** Titel ohne den Zusatz der Fassung – damit Folgennummer und Jahr („(1)“, „(2024)“) wieder am Ende stehen */
+export function ohneFassung(titel: string): string {
+  return titel
+    .replace(PRAEFIX, '')
+    .replace(new RegExp(ZUSATZ.source, 'gi'), '')
+    .replace(new RegExp(KURZ.source, 'gi'), '')
+    .replace(new RegExp(SPRACHE_LANG.source, 'gi'), '')
+    .replace(ENDE, '')
+    .replace(SPRACHE, (m, k: string) => (SPRACHEN[k] ? '' : m))
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 export function istFassung(titel: string): boolean {
@@ -43,5 +71,5 @@ export function istFassung(titel: string): boolean {
 
 /** Schlüssel, unter dem alle Fassungen einer Sendung zusammenfallen */
 export function fassungKern(titel: string): string {
-  return titelKern(titel.replace(ENDE, '').replace(SPRACHE, ''));
+  return titelKern(ohneFassung(titel));
 }

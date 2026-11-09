@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { fassungKern, fassungName } from '@shared/fassung';
+import { fassungKern, fassungName, ohneFassung } from '@shared/fassung';
 import { baueFassungen, fassungen, filmNachId, oeffneDb, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
 import type { FilmEintrag } from '../../src/main/filmliste/eintrag';
 
@@ -17,6 +17,20 @@ describe('Fassungen erkennen', () => {
     expect(fassungName('Folge 1102: Alte Freunde (S28/E02)')).toBeNull();
     expect(fassungName('Rückkehr (ZDF)')).toBeNull();
     expect(fassungName('Preis der Freiheit (3/3)')).toBeNull();
+    // Ausgeschriebene Sprachen, Kürzel und vorangestellte Hinweise (echte Titel, November 2026)
+    expect(fassungName('Rätselhafte Bilder (S01/E02) (Englisch)')).toBe('Original (Englisch)');
+    expect(fassungName('Eiskalt (S01E01) (Französisch)')).toBe('Original (Französisch)');
+    expect(fassungName('[English OV] Roberta Metsola (EU) im Interview')).toBe('Original (Englisch)');
+    expect(fassungName('Weihnachtsansprache 2021 (DGS)')).toBe('Gebärdensprache');
+    expect(fassungName('Zu Gast bei Irmgard Feuerbach im Hunsrück (AD) (6/7)')).toBe('Audiodeskription');
+    expect(fassungName('Gruber · Stille Nacht (Deutsch)')).toBeNull();
+  });
+
+  it('lässt Folgennummer und Jahr hinter dem Zusatz stehen', () => {
+    expect(ohneFassung('Die Revolution der Erneuerbaren (1) (Gebärdensprache)')).toBe('Die Revolution der Erneuerbaren (1)');
+    expect(ohneFassung('Siebte Etage (2024) (klare Sprache)')).toBe('Siebte Etage (2024)');
+    expect(ohneFassung('Rätselhafte Bilder (S01/E02) (Englisch)')).toBe('Rätselhafte Bilder (S01/E02)');
+    expect(ohneFassung('Preis der Freiheit (3/3)')).toBe('Preis der Freiheit (3/3)');
   });
 
   it('führt alle Fassungen auf denselben Kern zurück', () => {
@@ -60,6 +74,13 @@ describe('Fassungen im Index', () => {
     schreibe(eintrag({ titel: 'Inferno (S09/E03) (Audiodeskription)' }));
     // Nur als Fassung vorhanden: bleibt sichtbar
     schreibe(eintrag({ titel: 'Die Brücke (S09/E04) (Audiodeskription)' }));
+    // Folge mit Nummer am Ende: Gebärdensprache und Englisch fallen auf die Standardfassung zurück
+    schreibe(eintrag({ thema: 'Auf Spurensuche', titel: 'Die Revolution der Erneuerbaren (1)' }));
+    schreibe(eintrag({ thema: 'Auf Spurensuche', titel: 'Die Revolution der Erneuerbaren (1) (Gebärdensprache)' }));
+    schreibe(eintrag({ thema: 'Auf Spurensuche', titel: 'Die Revolution der Erneuerbaren (1) (Englisch)' }));
+    // Fassung unter eigenem Thema: „tagesschau (mit Gebärdensprache)“ gehört zu „tagesschau“
+    schreibe(eintrag({ sender: 'ARD', gruppe: 'ARD', thema: 'tagesschau', titel: 'tagesschau 20:00 Uhr, 13.09.2024' }));
+    schreibe(eintrag({ sender: 'ARD', gruppe: 'ARD', thema: 'tagesschau (mit Gebärdensprache)', titel: 'tagesschau 20:00 Uhr, 13.09.2024 (Gebärdensprache)' }));
     baueFassungen(aufbau);
     schliesseAufbau(aufbau);
     aufbau.close();
@@ -73,8 +94,13 @@ describe('Fassungen im Index', () => {
 
   it('zeigt im Listing nur die Standardfassung', () => {
     const titel = suche(db, { text: '' }).treffer.map((f) => f.titel).sort();
-    expect(titel).toEqual(['Die Brücke (S09/E04) (Audiodeskription)', 'Inferno (S09/E03)']);
+    expect(titel).toEqual(['Die Brücke (S09/E04) (Audiodeskription)', 'Die Revolution der Erneuerbaren (1)', 'Inferno (S09/E03)', 'tagesschau 20:00 Uhr, 13.09.2024']);
     expect(suche(db, { text: 'inferno' }).gesamt).toBe(1);
+  });
+
+  it('findet Fassungen auch unter eigenem Thema', () => {
+    const standard = suche(db, { text: 'tagesschau' }).treffer.find((f) => f.thema === 'tagesschau')!;
+    expect(fassungen(db, filmNachId(db, standard.id)!).map((x) => x.name)).toEqual([null, 'Gebärdensprache']);
   });
 
   it('bietet die anderen Fassungen auf der Seite der Sendung an', () => {

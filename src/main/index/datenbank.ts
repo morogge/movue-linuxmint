@@ -6,12 +6,12 @@ import type { FilmEintrag } from '../filmliste/eintrag';
 import { folgenInfo, serieAusTitel } from '@shared/serie';
 import { titelKern } from '@shared/titelinfo';
 import { liveGruppe, senderName, sortiereSender, type LiveAngebot, type LiveSender } from '@shared/live';
-import { fassungKern, fassungName, istFassung } from '@shared/fassung';
+import { fassungKern, fassungName, istFassung, ohneFassung } from '@shared/fassung';
 
 export type Db = Database.Database;
 
 /** Erhöhen, wenn sich Tabellen oder abgeleitete Daten (z. B. Genre-Regeln) ändern – erzwingt einen Neuaufbau. */
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS film (
@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS film (
   -- 1 = der Titel kennzeichnet eine besondere Fassung; kern = Titel ohne solche Zusätze
   fassung INTEGER NOT NULL DEFAULT 0,
   kern TEXT NOT NULL DEFAULT '',
+  -- Thema ohne Fassungszusatz, klein: „tagesschau (mit Gebärdensprache)“ → „tagesschau“
+  thema_kern TEXT NOT NULL DEFAULT '',
   -- aus dem Titel gelesen (shared/serie.ts)
   staffel INTEGER,
   folge INTEGER,
@@ -103,6 +105,7 @@ const NEUE_SPALTEN: [string, string][] = [
   ['serie_id', 'INTEGER'],
   ['fassung', 'INTEGER NOT NULL DEFAULT 0'],
   ['kern', "TEXT NOT NULL DEFAULT ''"],
+  ['thema_kern', "TEXT NOT NULL DEFAULT ''"],
   ['reihe_titel', 'TEXT'],
   ['buendel', 'TEXT']
 ];
@@ -111,7 +114,8 @@ function ergaenzeSpalten(db: Database.Database): void {
   const vorhanden = new Set((db.pragma('table_info(film)') as { name: string }[]).map((c) => c.name));
   for (const [name, typ] of NEUE_SPALTEN) if (!vorhanden.has(name)) db.exec(`ALTER TABLE film ADD COLUMN ${name} ${typ}`);
   db.exec('CREATE INDEX IF NOT EXISTS film_serie ON film(serie_id, datum DESC)');
-  db.exec('CREATE INDEX IF NOT EXISTS film_fassung ON film(gruppe, thema, kern)');
+  db.exec('DROP INDEX IF EXISTS film_fassung');
+  db.exec('CREATE INDEX IF NOT EXISTS film_fassung_kern ON film(gruppe, thema_kern, kern)');
   db.exec('CREATE INDEX IF NOT EXISTS film_buendel ON film(gruppe, buendel, datum DESC)');
 }
 
@@ -160,6 +164,11 @@ export function schliesseAufbau(db: Db): void {
 /** Fassungen derselben Sendung, die beim Stöbern nicht doppelt erscheinen sollen */
 const VARIANTE = /\((?:[^)]*\b)?(audiodeskription|gebärdensprache|originalversion|originalfassung|klare sprache|hörfassung|mit untertitel)\b[^)]*\)/i;
 
+/** Thema ohne Fassungszusatz: Fassungen unter „tagesschau (mit Gebärdensprache)“ gehören zu „tagesschau“ */
+export function themaKern(thema: string): string {
+  return ohneFassung(thema).toLowerCase();
+}
+
 export function istVariante(titel: string): boolean {
   return VARIANTE.test(titel) || istFassung(titel);
 }
@@ -184,25 +193,27 @@ export function gelistet(jetzt = Date.now(), alias = 'f', mitVorab = false): str
 export function schreiber(db: Db): (e: FilmEintrag) => void {
   const stmt = db.prepare(`
     INSERT INTO film (url, sender, gruppe, thema, titel, datum, dauer, beschreibung, website,
-                      url_klein, url_hd, url_untertitel, geo, neu, variante, staffel, folge, extra, live, fassung, kern, reihe_titel)
+                      url_klein, url_hd, url_untertitel, geo, neu, variante, staffel, folge, extra, live, fassung, kern, thema_kern, reihe_titel)
     VALUES (@url, @sender, @gruppe, @thema, @titel, @datum, @dauer, @beschreibung, @website,
-            @urlKlein, @urlHd, @urlUntertitel, @geo, @neu, @variante, @staffel, @folge, @extra, @live, @fassung, @kern, @reiheTitel)
+            @urlKlein, @urlHd, @urlUntertitel, @geo, @neu, @variante, @staffel, @folge, @extra, @live, @fassung, @kern, @themaKern, @reiheTitel)
     ON CONFLICT(url) DO UPDATE SET
       sender = excluded.sender, gruppe = excluded.gruppe, thema = excluded.thema, titel = excluded.titel,
       datum = excluded.datum, dauer = excluded.dauer, beschreibung = excluded.beschreibung,
       website = excluded.website, url_klein = excluded.url_klein, url_hd = excluded.url_hd,
       url_untertitel = excluded.url_untertitel, geo = excluded.geo, neu = excluded.neu,
       variante = excluded.variante, staffel = excluded.staffel, folge = excluded.folge, extra = excluded.extra, live = excluded.live,
-      fassung = excluded.fassung, kern = excluded.kern, reihe_titel = excluded.reihe_titel
+      fassung = excluded.fassung, kern = excluded.kern, thema_kern = excluded.thema_kern, reihe_titel = excluded.reihe_titel
     RETURNING id
   `);
   const loescheGenres = db.prepare('DELETE FROM film_genre WHERE film_id = ?');
   const genre = db.prepare('INSERT OR IGNORE INTO film_genre (genre, film_id, datum) VALUES (?, ?, ?)');
   return (e) => {
     const { genres, ...felder } = e;
-    const info = folgenInfo(e.titel, e.dauer);
+    // Ohne den Zusatz der Fassung („(Gebärdensprache)“, „(Englisch)“), sonst verdeckt er die Folgennummer am Titelende
+    const basis = ohneFassung(e.titel);
+    const info = folgenInfo(basis, e.dauer);
     // Bei Rubrik-Themen (Arte, „Fernsehfilm der Woche“) steht der Serienname im Titel
-    const ausTitel = serieAusTitel(e.titel);
+    const ausTitel = serieAusTitel(basis);
     if (ausTitel && info.folge === null) {
       info.folge = ausTitel.folge;
       info.staffel ??= ausTitel.staffel;
@@ -215,6 +226,7 @@ export function schreiber(db: Db): (e: FilmEintrag) => void {
       variante: fassung,
       fassung,
       kern: fassungKern(e.titel),
+      themaKern: themaKern(e.thema),
       reiheTitel: ausTitel?.name ?? null,
       staffel: info.staffel,
       folge: info.folge,
@@ -564,7 +576,7 @@ export function auchBei(db: Db, film: Film): Film[] {
 export function baueFassungen(db: Db): void {
   db.exec(`
     UPDATE film SET variante = CASE WHEN fassung = 1 AND EXISTS (
-        SELECT 1 FROM film s WHERE s.gruppe = film.gruppe AND s.thema = film.thema AND s.kern = film.kern
+        SELECT 1 FROM film s WHERE s.gruppe = film.gruppe AND s.thema_kern = film.thema_kern AND s.kern = film.kern
           AND s.fassung = 0 AND s.staffel IS film.staffel AND s.folge IS film.folge)
       THEN 1 ELSE 0 END
     WHERE fassung = 1 OR variante = 1;
@@ -581,10 +593,10 @@ export interface Fassung {
 export function fassungen(db: Db, film: Film): Fassung[] {
   const zeilen = db
     .prepare(
-      `SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.kern = ? AND f.staffel IS ? AND f.folge IS ?
+      `SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema_kern = ? AND f.kern = ? AND f.staffel IS ? AND f.folge IS ?
        ORDER BY f.fassung, f.datum DESC LIMIT 12`
     )
-    .all(film.gruppe, film.thema, fassungKern(film.titel), film.staffel, film.folge) as FilmZeile[];
+    .all(film.gruppe, themaKern(film.thema), fassungKern(film.titel), film.staffel, film.folge) as FilmZeile[];
   const genres = genresFuer(
     db,
     zeilen.map((z) => z.id)
@@ -644,25 +656,45 @@ export function liveAngebot(db: Db, jetzt = Date.now(), vorabLimit = 120): LiveA
  * („Trailer: How to Dad“ unter dem Thema „How to Dad“). Neueste zuerst.
  */
 export function extrasZu(db: Db, filmId: number, limit = 12): Film[] {
-  const f = db.prepare('SELECT id, gruppe, thema, serie_id FROM film WHERE id = ?').get(filmId) as
-    | { id: number; gruppe: string; thema: string; serie_id: number | null }
+  const f = db.prepare('SELECT id, gruppe, thema, titel, serie_id FROM film WHERE id = ?').get(filmId) as
+    | { id: number; gruppe: string; thema: string; titel: string; serie_id: number | null }
     | undefined;
   if (!f) return [];
-  const zeilen = (
-    f.serie_id !== null
-      ? db
-          .prepare(`SELECT ${SPALTEN} FROM film f WHERE f.serie_id = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 ORDER BY f.datum DESC LIMIT ?`)
-          .all(f.serie_id, limit)
-      : db
-          .prepare(
-            `SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 AND f.id != ?
-             ORDER BY f.datum DESC LIMIT ?`
-          )
-          .all(f.gruppe, f.thema, f.id, limit)
-  ) as FilmZeile[];
+  let zeilen: FilmZeile[];
+  if (f.serie_id !== null) {
+    zeilen = db
+      .prepare(`SELECT ${SPALTEN} FROM film f WHERE f.serie_id = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 ORDER BY f.datum DESC LIMIT ?`)
+      .all(f.serie_id, limit) as FilmZeile[];
+  } else {
+    const kandidaten = db
+      .prepare(
+        `SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 AND f.id != ?
+         ORDER BY f.datum DESC LIMIT 200`
+      )
+      .all(f.gruppe, f.thema, f.id) as FilmZeile[];
+    // Sammelthemen („Filme“ beim ZDF): dort gehört ein Trailer nur zur Sendung, deren Haupttitel er nennt
+    const sendungen = (
+      db
+        .prepare('SELECT COUNT(*) AS n FROM film WHERE gruppe = ? AND thema = ? AND extra = 0 AND variante = 0 AND live = 0')
+        .get(f.gruppe, f.thema) as { n: number }
+    ).n;
+    const eigenesThema = sendungen <= 3 && istReihenThema(f.thema);
+    const stamm = titelStamm(f.titel);
+    zeilen = kandidaten.filter((z) => eigenesThema || (stamm !== null && z.titel.toLowerCase().includes(stamm))).slice(0, limit);
+  }
   const genres = genresFuer(
     db,
     zeilen.map((z) => z.id)
   );
   return zeilen.map((z) => zuFilm(z, genres));
+}
+
+/** Haupttitel vor „ - “ oder „:“, klein geschrieben: „Ponyherz - Wild und frei“ → „ponyherz“; zu kurz → null */
+export function titelStamm(titel: string): string | null {
+  const stamm = ohneFassung(titel)
+    .split(/\s[-–:]\s|:\s/)[0]!
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .trim()
+    .toLowerCase();
+  return stamm.length >= 4 ? stamm : null;
 }

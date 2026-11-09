@@ -4,6 +4,17 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.18.0 – 2026-11-09
+
+### Neu
+
+- **Sprache und Untertitel im Player**: Bietet ein Stream mehrere Tonspuren oder Untertitel an, wählst du sie im Player aus; Movue merkt sich die Sprache
+
+### Behoben
+
+- Sprach- und Barrierefreiheitsfassungen (Englisch, Französisch, Originalfassung, Gebärdensprache, Audiodeskription, klare Sprache) stehen wieder nur auf der Detailseite der Sendung, nicht mehr einzeln in den Übersichten. Movue lädt dafür das Sendungsverzeichnis einmal neu
+- Ein Trailer erscheint nicht mehr bei allen Filmen derselben Rubrik („Ponyherz – Hero-Trailer“ bei allen ZDF-Filmen), sondern nur bei seiner Sendung
+
 ## 0.17.0 – 2026-11-09
 
 ### Neu

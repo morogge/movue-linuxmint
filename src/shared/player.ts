@@ -52,3 +52,26 @@ export function formatZeit(sekunden: number): string {
   const rest = String(s % 60).padStart(2, '0');
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${rest}` : `${m}:${rest}`;
 }
+
+const SPRACHE: Record<string, string> = {
+  de: 'Deutsch', deu: 'Deutsch', ger: 'Deutsch', en: 'Englisch', eng: 'Englisch', fr: 'Französisch', fra: 'Französisch', fre: 'Französisch',
+  it: 'Italienisch', ita: 'Italienisch', es: 'Spanisch', spa: 'Spanisch', nl: 'Niederländisch', nld: 'Niederländisch', pl: 'Polnisch',
+  pol: 'Polnisch', sv: 'Schwedisch', swe: 'Schwedisch', da: 'Dänisch', dan: 'Dänisch', no: 'Norwegisch', nor: 'Norwegisch',
+  tr: 'Türkisch', tur: 'Türkisch', uk: 'Ukrainisch', ukr: 'Ukrainisch', ru: 'Russisch', rus: 'Russisch', ar: 'Arabisch', ara: 'Arabisch',
+  mis: 'Originalton', qaa: 'Originalton', und: 'Unbekannt'
+};
+
+/** Name einer Ton- oder Untertitelspur: der Name aus dem Stream, sonst die Sprache, sonst „Spur n“ */
+export function spurName(spur: { name?: string; lang?: string }, nummer: number): string {
+  const name = spur.name?.trim();
+  if (name && !/^(audio|subs?|subtitles?|track)[\s_-]*\d*$/i.test(name)) return name;
+  const sprache = spur.lang ? SPRACHE[spur.lang.toLowerCase().split('-')[0]!] : undefined;
+  return sprache ?? `Spur ${nummer + 1}`;
+}
+
+/** Index der Spur in der gemerkten Sprache, sonst die vom Stream vorgegebene */
+export function bevorzugteSpur(spuren: { lang?: string }[], sprache: string | null, vorgabe: number): number {
+  if (!sprache) return vorgabe;
+  const i = spuren.findIndex((s) => (s.lang ?? '').toLowerCase() === sprache.toLowerCase());
+  return i >= 0 ? i : vorgabe;
+}

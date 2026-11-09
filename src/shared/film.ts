@@ -29,6 +29,8 @@ export interface Film {
   buendel: string | null;
   /** Art der Sendung (Serie, Film, Doku …); fehlt bei Sendungen, die nicht aus dem Index kommen */
   format?: Format | null;
+  /** Livestream oder Live-Übertragung (Beginn = datum) */
+  live?: boolean;
   /** Bei Reihen und Stöbern mitgeliefert: das Bündel, als Kachel statt der Folge */
   serie?: Serie;
 }

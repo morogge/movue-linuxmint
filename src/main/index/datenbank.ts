@@ -303,6 +303,7 @@ export interface FilmZeile {
   serie_id: number | null;
   buendel: string | null;
   format: string | null;
+  live: number;
 }
 
 export function zuFilm(z: FilmZeile, genres: Map<number, GenreId[]>): Film {
@@ -327,12 +328,13 @@ export function zuFilm(z: FilmZeile, genres: Map<number, GenreId[]>): Film {
     extra: z.extra === 1,
     serieId: z.serie_id,
     buendel: z.buendel || null,
-    format: istFormat(z.format) ? z.format : null
+    format: istFormat(z.format) ? z.format : null,
+    live: z.live === 1
   };
 }
 
 export const SPALTEN = `f.id, f.sender, f.gruppe, f.thema, f.titel, f.datum, f.dauer, f.beschreibung, f.website,
-  f.url, f.url_klein, f.url_hd, f.url_untertitel, f.geo, f.staffel, f.folge, f.extra, f.serie_id, f.buendel, f.format`;
+  f.url, f.url_klein, f.url_hd, f.url_untertitel, f.geo, f.staffel, f.folge, f.extra, f.serie_id, f.buendel, f.format, f.live`;
 
 export function suche(db: Db, anfrage: SuchAnfrage): SuchErgebnis {
   const limit = Math.min(Math.max(anfrage.limit ?? 50, 1), 200);

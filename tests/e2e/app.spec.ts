@@ -202,6 +202,8 @@ test('Live & demnächst: Sender, Übertragung mit Erinnerung, Vorab', async () =
   await expect(win.getByRole('button', { name: 'ZDF live ansehen' })).toBeVisible();
   await expect(win.getByLabel('Die Dritten')).toHaveValue('WDR');
   await expect(win.getByText('Basketball live: Gladiators Trier gegen Testgegner')).toBeVisible();
+  // Countdown bis zum Beginn (Termin liegt Monate in der Zukunft)
+  await expect(win.locator('.termin .countdown')).toContainText(/^in \d+ Tag/);
   const erinnern = win.getByRole('button', { name: 'Erinnern' });
   await erinnern.click();
   await expect(win.getByRole('button', { name: 'Erinnert' })).toHaveAttribute('aria-pressed', 'true');
@@ -209,6 +211,11 @@ test('Live & demnächst: Sender, Übertragung mit Erinnerung, Vorab', async () =
   await win.screenshot({ path: 'test-results/screens/live.png' });
   await win.getByRole('button', { name: 'Erinnert' }).click();
   await expect(win.getByRole('button', { name: 'Erinnern' })).toHaveAttribute('aria-pressed', 'false');
+  // Detailseite: Countdown und Erinnern auch dort
+  await win.getByRole('button', { name: /Basketball live: Gladiators Trier/ }).click();
+  await expect(win.locator('.detail-info .countdown')).toContainText(/^Beginnt in \d+ Tag/);
+  await expect(win.getByRole('button', { name: 'Erinnern' })).toBeVisible();
+  await win.keyboard.press('Alt+ArrowLeft');
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 

@@ -6,6 +6,8 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ### Neu
 
+- **Countdown** bis zum Start kommender Live-Übertragungen – unter „Live & demnächst“, in Kacheln und auf der Detailseite, in der letzten Stunde sekundengenau
+- **Erinnern** auch auf der Detailseite einer kommenden Live-Übertragung
 - Die **Senderliste** in der Seitenleiste lässt sich mit einem Klick auf die Überschrift ein- und ausklappen
 
 ## 0.16.0 – 2026-11-09

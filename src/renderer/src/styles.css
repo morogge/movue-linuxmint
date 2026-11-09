@@ -2632,3 +2632,21 @@ button.live-karte:hover {
 .sidebar.eingeklappt .sender-schalter .nav-text {
   display: none;
 }
+
+/* Countdown bis zum Beginn einer Live-Übertragung */
+.countdown {
+  color: #ff8a80;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.countdown.jetzt {
+  color: var(--text);
+}
+
+.termin-zeit .countdown {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 500;
+}

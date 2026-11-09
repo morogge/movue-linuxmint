@@ -87,3 +87,24 @@ export function terminText(datum: number, jetzt = Date.now()): string {
 
 /** So lange vor Beginn meldet sich eine Erinnerung */
 export const ERINNERN_VORHER = 5 * 60_000;
+
+/**
+ * Zeit bis zum Beginn: „in 3 Tagen, 4 Std.“, „in 2 Std. 14 Min.“, unter einer Stunde sekundengenau „in 14:05 Min.“;
+ * null, wenn es schon begonnen hat. `datum` in s, `jetzt` in ms.
+ */
+export function countdownText(datum: number, jetzt = Date.now()): string | null {
+  const rest = Math.floor((datum * 1000 - jetzt) / 1000);
+  if (rest <= 0) return null;
+  const tage = Math.floor(rest / 86_400);
+  const std = Math.floor((rest % 86_400) / 3600);
+  const min = Math.floor((rest % 3600) / 60);
+  const sek = rest % 60;
+  if (tage >= 1) return `in ${tage} ${tage === 1 ? 'Tag' : 'Tagen'}${std ? `, ${std} Std.` : ''}`;
+  if (std >= 1) return `in ${std} Std. ${min} Min.`;
+  return `in ${min}:${String(sek).padStart(2, '0')} Min.`;
+}
+
+/** Kommt diese Live-Übertragung erst noch? */
+export function istKommendLive(f: { live?: boolean; datum: number }, jetzt = Date.now()): boolean {
+  return !!f.live && f.datum * 1000 > jetzt;
+}

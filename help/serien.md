@@ -45,7 +45,7 @@ Ein Klick auf eine Serienkachel öffnet die Serienseite:
 
 ## Trailer im Kopf
 
-Hat eine Serie einen Trailer, eine Vorschau oder einen Teaser (bis fünf Minuten lang), läuft er nach kurzer Zeit oben im Titelbild ab – **ohne Ton** und nur einmal. Unten rechts hältst du ihn an oder schaltest den Ton ein. Das gilt genauso für die Detailseite einer einzelnen Sendung, wenn der Sender unter demselben Thema einen Trailer hat. Steht bei einer ARD-Serie kein Trailer in der Filmliste, fragt Movue die Seite der Reihe in der ARD-Mediathek, ob es dort einen gibt – höchstens einmal am Tag je Serie und nur, solange die Vorschauen eingeschaltet sind. Gefragt wird nur die ARD selbst. Abschalten kannst du das unter **Einstellungen**.
+Hat eine Serie einen Trailer, eine Vorschau oder einen Teaser (bis fünf Minuten lang), läuft er nach kurzer Zeit oben im Titelbild ab – **ohne Ton** und nur einmal. Unten rechts hältst du ihn an oder schaltest den Ton ein. Das gilt genauso für die Detailseite einer einzelnen Sendung, wenn der Sender unter demselben Thema einen Trailer hat. Steht bei einer Serie der ARD oder des ZDF kein Trailer in der Filmliste, schaut Movue auf der Seite der Reihe in der jeweiligen Mediathek nach, ob es dort einen gibt – höchstens einmal am Tag je Serie und nur, solange die Vorschauen eingeschaltet sind. Gefragt wird nur der Sender selbst. Bei 3sat und Arte gibt es das nicht: Arte nennt für seine Sendungen keine Trailer, und 3sat hat kaum welche. Abschalten kannst du das unter **Einstellungen**.
 
 Auf der Detailseite einer einzelnen Sendung stehen Trailer, Making-of und andere Extras unter **Trailer & Extras**; bei Serien findest du sie im Reiter **Extras**.
 

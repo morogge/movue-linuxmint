@@ -8,6 +8,7 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 - **Falsch einsortiert?** auf Detail- und Serienseiten: öffnet einen vorausgefüllten Fehlerbericht im Browser – Movue schickt nichts selbst
 - Die **Art** (Serie, Film, Doku …) steht jetzt als erstes Schild vor den Genres
+- **Trailer für ZDF-Serien**: Wie bei der ARD holt Movue den Trailer von der Seite der Reihe, wenn er in der Filmliste fehlt – etwa bei „Under Salt Marsh“
 - **Vorab-Sendungen in der Suche**: Was schon vor dem Fernsehtermin online steht, findest du jetzt auch über die Suche – gekennzeichnet mit **Vorab · im TV** und dem Termin
 
 ### Verbessert

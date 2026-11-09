@@ -11,7 +11,7 @@ Hat eine Serie oder Sendung einen Trailer, läuft er oben auf ihrer Seite (siehe
 - Läuft gerade der **Mini-Player**, startet kein Trailer.
 - Wünscht dein System **weniger Bewegung**, laufen Vorschauen nie von selbst.
 
-Der Schalter ist am Anfang an. Ausgeschaltet laufen keine Vorschauen mehr, und Movue fragt bei der ARD auch nicht nach Trailern von Serien; über den Knopf **Trailer** auf der Seite siehst du ihn trotzdem jederzeit im Player.
+Der Schalter ist am Anfang an. Ausgeschaltet laufen keine Vorschauen mehr, und Movue fragt bei ARD und ZDF auch nicht nach Trailern von Serien; über den Knopf **Trailer** auf der Seite siehst du ihn trotzdem jederzeit im Player.
 
 ## Im Player
 

@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import type { Film } from '@shared/film';
 import { findeReihenTrailer, type ReihenTrailer } from './ardtrailer';
 import { findeZdfTrailer } from './zdftrailer';
 
@@ -162,6 +163,35 @@ export async function findeSenderTrailer(website: string): Promise<ReihenTrailer
   return reihe ? findeZdfTrailer(reihe) : null;
 }
 
+/**
+ * Bild zu einer Sendung mit Ersatzwegen. Viele ältere Einträge stehen noch in der Filmliste, ihre Seite beim Sender
+ * gibt es aber nicht mehr (404/410). Dann: Bild einer anderen Folge derselben Serie (neueste zuerst, höchstens vier),
+ * sonst Titelbild der Serie (ARD, ZDF, 3sat), sonst ein Standbild aus dem Video – das ist meist noch abrufbar.
+ */
+export async function bildMitErsatz(
+  film: Pick<Film, 'id' | 'website' | 'buendel' | 'gruppe' | 'url'>,
+  folgen: () => Pick<Film, 'id' | 'website'>[],
+  url: (website: string, art?: BildArt) => Promise<string | null>,
+  standbild: (video: string) => Promise<string | null> = async () => null
+): Promise<string | null> {
+  const eigenes = film.website ? await url(film.website) : null;
+  if (eigenes) return eigenes;
+  if (film.buendel) {
+    const andere = folgen()
+      .filter((f) => f.id !== film.id && f.website && f.website !== film.website)
+      .slice(0, 4);
+    for (const f of andere) {
+      const bild = await url(f.website);
+      if (bild) return bild;
+    }
+    const quelle = andere[0]?.website ?? film.website;
+    const serie = quelle && film.gruppe !== 'Arte' ? await url(quelle, 'serie') : null;
+    if (serie) return serie;
+  }
+  // Zuletzt: ein Standbild aus dem Video selbst
+  return film.url ? standbild(film.url) : null;
+}
+
 export class BildDienst {
   private db: Database.Database;
   private laufend = new Map<string, Promise<string | null>>();
@@ -172,7 +202,8 @@ export class BildDienst {
     pfad: string,
     private readonly finde: (website: string) => Promise<string | null> = findeBild,
     private readonly findeSerie: (website: string, art: 'serie' | 'banner') => Promise<string | null> = findeSerienBild,
-    private readonly findeTrailer: (website: string) => Promise<ReihenTrailer | null> = findeSenderTrailer
+    private readonly findeTrailer: (website: string) => Promise<ReihenTrailer | null> = findeSenderTrailer,
+    private readonly erzeugeStandbild: (video: string) => Promise<string | null> = async () => null
   ) {
     this.db = new Database(pfad);
     this.db.pragma('journal_mode = WAL');
@@ -234,6 +265,43 @@ export class BildDienst {
       .prepare('INSERT INTO bild (website, url, zeit) VALUES (?, ?, ?) ON CONFLICT(website) DO UPDATE SET url = excluded.url, zeit = excluded.zeit')
       .run(schluessel, trailer ? JSON.stringify(trailer) : null, Date.now());
     return trailer;
+  }
+
+  /** Standbild aus dem Video – einmal erzeugt, dauerhaft gespeichert (auch „keins“ für ein paar Tage) */
+  async standbild(video: string): Promise<string | null> {
+    const schluessel = `standbild|${video}`;
+    const gespeichert = this.db.prepare('SELECT url, zeit FROM bild WHERE website = ?').get(schluessel) as
+      | { url: string | null; zeit: number }
+      | undefined;
+    if (gespeichert && (gespeichert.url || Date.now() - gespeichert.zeit < NEGATIV_GUELTIG)) return gespeichert.url;
+    let p = this.laufend.get(schluessel);
+    if (!p) {
+      p = this.einzeln(() => this.erzeugeStandbild(video))
+        .catch(() => null)
+        .then((url) => {
+          this.db
+            .prepare('INSERT INTO bild (website, url, zeit) VALUES (?, ?, ?) ON CONFLICT(website) DO UPDATE SET url = excluded.url, zeit = excluded.zeit')
+            .run(schluessel, url, Date.now());
+          this.laufend.delete(schluessel);
+          return url;
+        });
+      this.laufend.set(schluessel, p);
+    }
+    return p;
+  }
+
+  /** Standbilder brauchen je ein unsichtbares Fenster: höchstens zwei gleichzeitig */
+  private standbilder = 0;
+  private standbildWarten: (() => void)[] = [];
+  private async einzeln<T>(aufgabe: () => Promise<T>): Promise<T> {
+    if (this.standbilder >= 2) await new Promise<void>((weiter) => this.standbildWarten.push(weiter));
+    this.standbilder++;
+    try {
+      return await aufgabe();
+    } finally {
+      this.standbilder--;
+      this.standbildWarten.shift()?.();
+    }
   }
 
   /** Höchstens GLEICHZEITIG Abrufe parallel – die Seiten der Sender sollen nicht überrannt werden */

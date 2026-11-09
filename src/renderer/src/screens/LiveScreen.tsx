@@ -3,6 +3,7 @@ import type { Film, IndexZustand } from '@shared/film';
 import { formatDauer } from '@shared/format';
 import { laeuftJetzt, terminText, type LiveAngebot, type LiveSender } from '@shared/live';
 import { Icon } from '../components/Icon';
+import { Countdown } from '../components/Countdown';
 import { Kachel } from '../components/Kachel';
 import { SENDER_FARBE } from '../senderFarben';
 
@@ -116,7 +117,16 @@ export function LiveScreen({ zustand, onAbspielen, onOeffne }: Props) {
                 const an = erinnert.has(f.url);
                 return (
                   <li key={f.id} className="termin">
-                    <span className={laeuft ? 'termin-zeit jetzt' : 'termin-zeit'}>{laeuft ? <span className="live-marke">LIVE</span> : terminText(f.datum, jetzt)}</span>
+                    <span className={laeuft ? 'termin-zeit jetzt' : 'termin-zeit'}>
+                      {laeuft ? (
+                        <span className="live-marke">LIVE</span>
+                      ) : (
+                        <>
+                          {terminText(f.datum, jetzt)}
+                          <Countdown datum={f.datum} kurz />
+                        </>
+                      )}
+                    </span>
                     <button type="button" className="termin-text" onClick={() => onOeffne(f)}>
                       <span className="termin-titel">{f.titel}</span>
                       <span className="termin-meta">

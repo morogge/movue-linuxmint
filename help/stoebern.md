@@ -10,7 +10,7 @@ Die Seitenleiste links ist in drei Gruppen geteilt:
 - die Arten **Serien**, **Filme**, **Dokus**, **Shows & Talk**, **Nachrichten**, **Sport** und **Kinder**, darunter etwas kleiner **Alle Kategorien** (siehe **Kategorien und Genres**)
 - **Live & demnächst** (siehe **Live & demnächst**), **Merkliste** und **Suche**
 
-Darunter stehen die **Sender**. Die Leiste bleibt beim Scrollen stehen. Mit dem Pfeil oben neben dem Namen – oder **Strg + B** – klappst du sie auf die Symbole ein und wieder aus; Movue merkt sich die Wahl. Ganz unten siehst du, wie aktuell das Sendungsverzeichnis ist und welche Version von Movue läuft.
+Darunter stehen die **Sender**. Ein Klick auf die Überschrift **Sender** klappt die Liste ein und wieder aus; Movue merkt sich die Wahl. Die Leiste bleibt beim Scrollen stehen. Mit dem Pfeil oben neben dem Namen – oder **Strg + B** – klappst du sie auf die Symbole ein und wieder aus; Movue merkt sich die Wahl. Ganz unten siehst du, wie aktuell das Sendungsverzeichnis ist und welche Version von Movue läuft.
 
 **Läuft bald ab** findest du unter **Alle Kategorien → Merkmale**.
 
@@ -54,4 +54,10 @@ Ein Klick auf eine Kachel oder einen Titel in der Suche öffnet die Detailseite:
 
 ## Vorschaubilder
 
-Die Bilder holt Movue von den Seiten der Sender und merkt sie sich, damit sie beim nächsten Mal sofort da sind. Hat der Sender die Seite einer Sendung entfernt, zeigt Movue stattdessen den Namen der Reihe.
+Die Bilder holt Movue von den Seiten der Sender und merkt sie sich, damit sie beim nächsten Mal sofort da sind. Bei älteren Sendungen gibt es die Seite beim Sender oft nicht mehr, obwohl das Video noch abrufbar ist. Dann nimmt Movue der Reihe nach:
+
+1. das Bild einer anderen Folge derselben Serie,
+2. das Titelbild der Serie (ARD, ZDF, 3sat),
+3. ein Standbild aus dem Video selbst – etwa zehn Prozent nach dem Anfang, höchstens anderthalb Minuten hinein. Dafür lädt Movue den Anfang des Videos vom Server des Senders.
+
+Erst wenn nichts davon klappt, steht der Name der Reihe auf der Kachel.

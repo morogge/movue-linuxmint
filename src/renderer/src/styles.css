@@ -2598,3 +2598,60 @@ button.live-karte:hover {
 .melden .text-button:hover {
   color: var(--text);
 }
+
+/* Senderliste ein- und ausklappen */
+.sender-schalter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sender-schalter:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.sender-schalter:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Eingeklappte Seitenleiste: nur der Pfeil bleibt sichtbar */
+.sidebar.eingeklappt .sender-schalter {
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar.eingeklappt .sender-schalter .nav-text {
+  display: none;
+}
+
+/* Countdown bis zum Beginn einer Live-Übertragung */
+.countdown {
+  color: #ff8a80;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.countdown.jetzt {
+  color: var(--text);
+}
+
+.termin-zeit .countdown {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* „hidden“ muss gegen display: flex gewinnen (eingeklappte Senderliste) */
+.nav[hidden] {
+  display: none;
+}

@@ -202,6 +202,8 @@ test('Live & demnächst: Sender, Übertragung mit Erinnerung, Vorab', async () =
   await expect(win.getByRole('button', { name: 'ZDF live ansehen' })).toBeVisible();
   await expect(win.getByLabel('Die Dritten')).toHaveValue('WDR');
   await expect(win.getByText('Basketball live: Gladiators Trier gegen Testgegner')).toBeVisible();
+  // Countdown bis zum Beginn (Termin liegt Monate in der Zukunft)
+  await expect(win.locator('.termin .countdown')).toContainText(/^in \d+ Tag/);
   const erinnern = win.getByRole('button', { name: 'Erinnern' });
   await erinnern.click();
   await expect(win.getByRole('button', { name: 'Erinnert' })).toHaveAttribute('aria-pressed', 'true');
@@ -209,6 +211,11 @@ test('Live & demnächst: Sender, Übertragung mit Erinnerung, Vorab', async () =
   await win.screenshot({ path: 'test-results/screens/live.png' });
   await win.getByRole('button', { name: 'Erinnert' }).click();
   await expect(win.getByRole('button', { name: 'Erinnern' })).toHaveAttribute('aria-pressed', 'false');
+  // Detailseite: Countdown und Erinnern auch dort
+  await win.getByRole('button', { name: /Basketball live: Gladiators Trier/ }).click();
+  await expect(win.locator('.detail-info .countdown')).toContainText(/^Beginnt in \d+ Tag/);
+  await expect(win.getByRole('button', { name: 'Erinnern' })).toBeVisible();
+  await win.keyboard.press('Alt+ArrowLeft');
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 
@@ -232,6 +239,33 @@ test('Trailer & Extras auf der Detailseite, Vorschauen in den Einstellungen', as
   await expect(schalter).toBeChecked();
   await win.getByLabel('Suche in allen Mediatheken').fill('');
   await win.getByRole('button', { name: 'Start', exact: true }).click();
+});
+
+test('Senderliste in der Seitenleiste ein- und ausklappen', async () => {
+  const zdf = win.getByRole('button', { name: 'ZDF Mediathek' });
+  await expect(zdf).toBeVisible();
+  await win.getByRole('button', { name: 'Sender einklappen' }).click();
+  await expect(zdf).toBeHidden();
+  await expect(win.getByRole('button', { name: 'Sender ausklappen' })).toHaveAttribute('aria-expanded', 'false');
+  await win.getByRole('button', { name: 'Sender ausklappen' }).click();
+  await expect(zdf).toBeVisible();
+});
+
+test('Standbild aus einem Video, wenn die Seite beim Sender fehlt', async () => {
+  // Echter Trailer der ARD (MP4) – braucht Netz; im unsichtbaren Fenster wird ein Bild daraus gezeichnet
+  const video = 'https://mdr-progressive.ard-mcdn.de/mdr/video/weltweit/2026/08/03/mdrde-32fb77ca-aee1-4a5a-a8fe-6c7f02a54a0b.avc720.mp4';
+  const bild = await app.evaluate(
+    async (_electron, url) => (globalThis as { movueStandbild?: (u: string) => Promise<string | null> }).movueStandbild?.(url) ?? null,
+    video
+  );
+  expect(bild).toMatch(/^data:image\/jpeg;base64,/);
+  expect((bild ?? '').length).toBeGreaterThan(5000);
+  // Ungeeignete Adressen (HLS, kein https) gar nicht erst laden
+  const hls = await app.evaluate(
+    async (_electron, url) => (globalThis as { movueStandbild?: (u: string) => Promise<string | null> }).movueStandbild?.(url) ?? null,
+    'https://example.org/x/master.m3u8'
+  );
+  expect(hls).toBeNull();
 });
 
 test('Hinweis auf eine heruntergeladene neue Version', async () => {

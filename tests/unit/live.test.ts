@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { istSenderStream, laeuftJetzt, liveGruppe, senderName, sortiereSender, terminText, type LiveSender } from '@shared/live';
+import { countdownText, istKommendLive, istSenderStream, laeuftJetzt, liveGruppe, senderName, sortiereSender, terminText, type LiveSender } from '@shared/live';
 import type { Film } from '@shared/film';
 
 describe('Livestreams der Sender', () => {
@@ -51,5 +51,26 @@ describe('Termine', () => {
     expect(laeuftJetzt({ datum: beginn, dauer: 7200 }, jetzt)).toBe(true);
     expect(laeuftJetzt({ datum: beginn, dauer: 600 }, jetzt)).toBe(false);
     expect(laeuftJetzt({ datum: beginn + 3600, dauer: 7200 }, jetzt)).toBe(false);
+  });
+});
+
+describe('Countdown bis zum Beginn', () => {
+  const jetzt = Date.UTC(2026, 10, 9, 18, 0, 0);
+  const s = jetzt / 1000;
+  it('zählt Tage, Stunden und unter einer Stunde sekundengenau', () => {
+    expect(countdownText(s + 3 * 86_400 + 4 * 3600 + 120, jetzt)).toBe('in 3 Tagen, 4 Std.');
+    expect(countdownText(s + 86_400 + 30, jetzt)).toBe('in 1 Tag');
+    expect(countdownText(s + 2 * 3600 + 14 * 60 + 59, jetzt)).toBe('in 2 Std. 14 Min.');
+    expect(countdownText(s + 14 * 60 + 5, jetzt)).toBe('in 14:05 Min.');
+    expect(countdownText(s + 9, jetzt)).toBe('in 0:09 Min.');
+    expect(countdownText(s, jetzt)).toBeNull();
+    expect(countdownText(s - 60, jetzt)).toBeNull();
+  });
+
+  it('gilt nur für kommende Live-Übertragungen', () => {
+    expect(istKommendLive({ live: true, datum: s + 60 }, jetzt)).toBe(true);
+    expect(istKommendLive({ live: true, datum: s - 60 }, jetzt)).toBe(false);
+    expect(istKommendLive({ live: false, datum: s + 60 }, jetzt)).toBe(false);
+    expect(istKommendLive({ datum: s + 60 }, jetzt)).toBe(false);
   });
 });

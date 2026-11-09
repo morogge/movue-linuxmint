@@ -4,6 +4,15 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.17.0 – 2026-11-09
+
+### Neu
+
+- **Weniger Kacheln ohne Bild**: Gibt es die Seite einer älteren Sendung beim Sender nicht mehr, nimmt Movue das Bild einer anderen Folge, das Titelbild der Serie oder ein Standbild aus dem Video
+- **Countdown** bis zum Start kommender Live-Übertragungen – unter „Live & demnächst“, in Kacheln und auf der Detailseite, in der letzten Stunde sekundengenau
+- **Erinnern** auch auf der Detailseite einer kommenden Live-Übertragung
+- Die **Senderliste** in der Seitenleiste lässt sich mit einem Klick auf die Überschrift ein- und ausklappen
+
 ## 0.16.0 – 2026-11-09
 
 ### Neu

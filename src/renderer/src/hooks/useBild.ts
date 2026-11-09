@@ -4,26 +4,36 @@ import type { Film } from '@shared/film';
 /** Bilder einmal je Sendungsseite anfragen – auch wenn dieselbe Sendung mehrfach auf dem Schirm ist */
 const cache = new Map<string, Promise<string | null>>();
 
-function lade(website: string): Promise<string | null> {
-  let p = cache.get(website);
+function lade(film: Pick<Film, 'id' | 'url' | 'website'>): Promise<string | null> {
+  // Sendungen aus dem Verzeichnis (id > 0) mit Ersatzwegen, sonst nur über die Seite
+  const schluessel = film.id > 0 ? `id|${film.id}|${film.url}` : film.website;
+  let p = cache.get(schluessel);
   if (!p) {
-    p = window.movue?.bild ? window.movue.bild.url(website) : Promise.resolve(null);
-    cache.set(website, p);
+    p = !window.movue?.bild
+      ? Promise.resolve(null)
+      : film.id > 0 && window.movue.bild.film
+        ? window.movue.bild.film(film)
+        : window.movue.bild.url(film.website);
+    cache.set(schluessel, p);
   }
   return p;
 }
 
-/** Vorschaubild einer Sendung (aus der Sendungsseite des Senders), null solange unbekannt oder ohne Bild */
-export function useBild(film: Pick<Film, 'website'> | null): string | null {
+/** Vorschaubild einer Sendung (Seite des Senders, sonst Ersatz aus der Serie), null solange unbekannt oder ohne Bild */
+export function useBild(film: Pick<Film, 'id' | 'url' | 'website'> | null): string | null {
   const [url, setUrl] = useState<string | null>(null);
+  const id = film?.id ?? 0;
+  const website = film?.website ?? '';
+  const videoUrl = film?.url ?? '';
   useEffect(() => {
-    if (!film?.website) return;
+    setUrl(null);
+    if (!website && id <= 0) return;
     let aktiv = true;
-    void lade(film.website).then((u) => aktiv && setUrl(u));
+    void lade({ id, url: videoUrl, website }).then((u) => aktiv && setUrl(u));
     return () => {
       aktiv = false;
     };
-  }, [film?.website]);
+  }, [id, videoUrl, website]);
   return url;
 }
 

@@ -16,8 +16,8 @@ Ein Klick auf eine Karte startet den Livestream im Player. Statt der Zeitleiste 
 Einzelne Übertragungen mit festem Beginn – Fußball, Basketball, Wintersport, Sondersendungen. Sie stehen nach Beginn sortiert, mit Tag, Uhrzeit, Sender und Länge.
 
 - Läuft eine Übertragung gerade, steht **LIVE** davor und **Ansehen** startet sie.
-- Kommt sie erst noch, schaltest du mit **Erinnern** eine Erinnerung ein (der Knopf heißt dann **Erinnert**; ein zweiter Klick schaltet sie wieder aus). Fünf Minuten vor Beginn meldet sich Movue mit einer Benachrichtigung des Systems und einem Hinweis oben im Fenster – mit **Ansehen** geht es direkt los. Das klappt nur, solange Movue läuft.
-- Ein Klick auf den Titel öffnet die Detailseite.
+- Kommt sie erst noch, zählt unter dem Termin ein **Countdown** bis zum Beginn herunter – „in 3 Tagen, 4 Std.“, „in 2 Std. 14 Min.“, in der letzten Stunde sekundengenau. Mit **Erinnern** schaltest du eine Erinnerung ein (der Knopf heißt dann **Erinnert**; ein zweiter Klick schaltet sie wieder aus). Fünf Minuten vor Beginn meldet sich Movue mit einer Benachrichtigung des Systems und einem Hinweis oben im Fenster – mit **Ansehen** geht es direkt los. Das klappt nur, solange Movue läuft.
+- Ein Klick auf den Titel öffnet die Detailseite. Auch dort stehen Termin, Countdown und **Erinnern**.
 
 Übertragungen stehen nicht in den Listen der Startseite, der Arten und Genres und auch nicht in der Suche.
 

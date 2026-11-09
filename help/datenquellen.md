@@ -20,7 +20,7 @@ Unten in der Seitenleiste siehst du, wie viele Sendungen das Verzeichnis enthäl
 - Movue braucht kein Konto und sendet keine Nutzungsdaten.
 - Das Sendungsverzeichnis liegt im Ordner `~/.config/Movue` und belegt einige hundert MB.
 - Merkliste, Abos und Abspielfortschritt liegen ebenfalls nur dort (`nutzer.db`).
-- Bilder, Besetzung und Ablaufdaten holt Movue bei den Sendern selbst – von denselben Seiten, die du im Browser sähest. Die Ergebnisse liegen in `bilder.db` und `infos.db`.
+- Bilder, Besetzung und Ablaufdaten holt Movue bei den Sendern selbst – von denselben Seiten, die du im Browser sähest. Fehlt die Seite, entsteht das Bild aus dem Video, ebenfalls direkt vom Server des Senders. Die Ergebnisse liegen in `bilder.db` und `infos.db`.
 - Film-Datenbanken fragt Movue nie direkt. Zusatzangaben aus Wikidata kommen aus einem fertigen Paket (siehe unten); so erfährt niemand außer dem Sender, was du dir ansiehst.
 - Für gemerkte und angefangene Sendungen fragt Movue bei den Sendern nach, bis wann sie abrufbar sind. Dabei geht nur die Adresse der Sendungsseite an den Sender, wie beim Öffnen im Browser.
 

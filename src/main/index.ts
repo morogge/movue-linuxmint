@@ -4,7 +4,8 @@ import type { IndexZustand, SuchAnfrage } from '@shared/film';
 import type { UpdateZustand } from '@shared/update';
 import { IndexDienst } from './index/dienst';
 import { UpdateDienst } from './update';
-import { BildDienst, serienSeite } from './bilder';
+import { BildDienst, bildMitErsatz, serienSeite } from './bilder';
+import { standbild } from './standbild';
 import { NutzerDb } from './nutzer';
 import { AblaufDienst } from './ablauf';
 import { TitelInfoDienst } from './titelinfo';
@@ -71,6 +72,8 @@ function sendeZustand(z: IndexZustand): void {
   // Nach jedem neu geladenen Verzeichnis: neue Folgen in den Abos melden
   if (z.phase === 'bereit' && z.fortschritt === undefined && z.stand !== aboStand) {
     aboStand = z.stand;
+    // Neues Verzeichnis, neue Kennungen
+    filmBilder.clear();
     pruefeAbos();
   }
 }
@@ -265,6 +268,38 @@ ipcMain.handle('serie:info', (_event, r: { thema?: unknown }) => {
 
 ipcMain.handle('index:folgen', (_event, id: unknown) => (index && typeof id === 'number' ? index.folgen(id) : []));
 
+/**
+ * Bild zu einer Sendung mit Ersatzwegen: Viele ältere Einträge stehen noch in der Filmliste, ihre Seite beim Sender
+ * gibt es aber nicht mehr. Dann: Bild einer anderen Folge derselben Serie (neueste zuerst), sonst Titelbild der Serie.
+ */
+// Zwischenspeicher je Sendung; wird beim Neuaufbau des Verzeichnisses geleert (neue Kennungen)
+const filmBilder = new Map<number, Promise<string | null>>();
+async function bildFuerFilm(id: number, url: string, website: string): Promise<string | null> {
+  if (!index || !bilder) return null;
+  const film = index.film(id);
+  const dienst = bilder;
+  // Kennungen ändern sich bei jedem Neuaufbau (Merkliste, Verlauf): nur die Seite fragen, wenn es nicht dieselbe Sendung ist
+  if (!film || film.url !== url) return website ? dienst.url(website) : null;
+  return bildMitErsatz(
+    film,
+    () => index?.folgen(id) ?? [],
+    (w, art) => dienst.url(w, art),
+    (video) => dienst.standbild(video)
+  );
+}
+
+ipcMain.handle('bild:film', (_event, id: unknown, url: unknown, website: unknown) => {
+  if (typeof id !== 'number' || typeof url !== 'string' || typeof website !== 'string') return null;
+  let p = filmBilder.get(id);
+  if (!p) {
+    p = bildFuerFilm(id, url, website).catch(() => null);
+    filmBilder.set(id, p);
+    // Der Speicher bleibt klein: nur die zuletzt gezeigten Sendungen
+    if (filmBilder.size > 5000) filmBilder.delete(filmBilder.keys().next().value!);
+  }
+  return p;
+});
+
 ipcMain.handle('bild:url', (_event, website: unknown, art: unknown) =>
   bilder && typeof website === 'string' ? bilder.url(website, art === 'serie' || art === 'banner' ? art : 'folge') : null
 );
@@ -402,8 +437,11 @@ app.whenReady().then(() => {
     join(app.getPath('userData'), 'bilder.db'),
     process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined,
     process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined,
-    process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined
+    process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined,
+    process.env['MOVUE_BILDER_AUS'] ? async () => null : (video) => standbild(video)
   );
+  // Für die Oberflächentests: Standbild direkt aus dem Hauptprozess prüfbar (Bilder sind dort sonst aus)
+  if (process.env['MOVUE_BILDER_AUS']) (globalThis as { movueStandbild?: typeof standbild }).movueStandbild = standbild;
   createWindow();
   index.start();
   update.start();

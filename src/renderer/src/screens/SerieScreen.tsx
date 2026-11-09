@@ -13,6 +13,7 @@ import {
   startFolge,
   waehleTrailer,
   type FolgenStand,
+  type ReihenTrailer,
   type SerieDetail,
   type SerieRef
 } from '@shared/serie';
@@ -23,6 +24,7 @@ import { Besetzung } from '../components/Besetzung';
 import type { TitelInfo } from '@shared/titelinfo';
 import { useSerienBild } from '../hooks/useBild';
 import { KopfTrailer } from '../components/KopfTrailer';
+import { useVorschauen } from '../einstellungen';
 
 interface Props {
   serie: SerieRef;
@@ -69,7 +71,21 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne, mini
   const start = useMemo(() => (detail ? startFolge(detail, staende) : null), [detail, staende]);
   // Anfangs den Reiter der Folge zeigen, mit der es weitergeht
   const aktiverReiter = reiter ?? (start && detail ? gruppeVon(start.film, detail.serie.art) : (gruppen[0] ?? null));
-  const trailer = useMemo(() => (detail ? waehleTrailer(detail.folgen.filter((f) => f.extra)) : null), [detail]);
+  const listenTrailer = useMemo(() => (detail ? waehleTrailer(detail.folgen.filter((f) => f.extra)) : null), [detail]);
+  // Kein Trailer in der Filmliste: bei ARD-Serien nennt die Seite der Reihe oft einen – nur fragen, wenn Vorschauen an sind
+  const [vorschauen] = useVorschauen();
+  const [ardTrailer, setArdTrailer] = useState<ReihenTrailer | null>(null);
+  const ardWebsite = detail && !listenTrailer && detail.serie.gruppe === 'ARD' ? (detail.serie.bild ?? detail.folgen[0])?.website : undefined;
+  useEffect(() => {
+    setArdTrailer(null);
+    if (!ardWebsite || !vorschauen) return;
+    let aktiv = true;
+    void window.movue.bild.reihenTrailer(ardWebsite).then((t) => aktiv && setArdTrailer(t));
+    return () => {
+      aktiv = false;
+    };
+  }, [ardWebsite, vorschauen]);
+  const kopfTrailer = listenTrailer ?? ardTrailer;
   // Staffeln als Karten mit dem Bild ihrer ersten Folge – bei der ARD oft ein eigenes Staffelbild („mittendrin Staffel 1“)
   const erstesJe = useMemo(() => {
     const m = new Map<string, Film>();
@@ -116,7 +132,7 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne, mini
       </button>
 
       {banner && !bannerFehler && (
-        <KopfTrailer trailer={trailer} aus={miniLaeuft}>
+        <KopfTrailer trailer={kopfTrailer} aus={miniLaeuft}>
           <div className="serie-banner">
             <img src={banner} alt="" referrerPolicy="no-referrer" onError={() => setBannerFehler(true)} />
           </div>
@@ -150,8 +166,8 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne, mini
                 <Icon name="play" size={16} /> {startText}
               </button>
             )}
-            {trailer && (
-              <button type="button" className="secondary" onClick={() => onAbspielen(trailer)}>
+            {listenTrailer && (
+              <button type="button" className="secondary" onClick={() => onAbspielen(listenTrailer)}>
                 <Icon name="film" size={16} /> Trailer
               </button>
             )}
@@ -177,7 +193,7 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne, mini
           )}
         </div>
         {kopfFilm && !(banner && !bannerFehler) && (
-          <KopfTrailer trailer={trailer} aus={miniLaeuft}>
+          <KopfTrailer trailer={kopfTrailer} aus={miniLaeuft}>
             <FilmBild film={kopfFilm} gross titelbild="serie" />
           </KopfTrailer>
         )}

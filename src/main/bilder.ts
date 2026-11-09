@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import { findeReihenTrailer, type ReihenTrailer } from './ardtrailer';
 
 /**
  * Vorschaubilder für Sendungen. Die Filmliste hat keine Bilder; die Sendungsseiten der Sender
@@ -13,6 +14,8 @@ const GLEICHZEITIG = 6;
 const TAG = 86_400_000;
 /** Ohne Bild erneut versuchen nach … */
 const NEGATIV_GUELTIG = 3 * TAG;
+/** Trailer der Reihen wechseln (oft „Trailer zur nächsten Folge“): nach einem Tag neu fragen */
+const TRAILER_GUELTIG = TAG;
 
 /** og:image aus HTML (auch mit vertauschter Attribut-Reihenfolge) */
 export function extrahiereOgImage(html: string): string | null {
@@ -159,7 +162,8 @@ export class BildDienst {
   constructor(
     pfad: string,
     private readonly finde: (website: string) => Promise<string | null> = findeBild,
-    private readonly findeSerie: (website: string, art: 'serie' | 'banner') => Promise<string | null> = findeSerienBild
+    private readonly findeSerie: (website: string, art: 'serie' | 'banner') => Promise<string | null> = findeSerienBild,
+    private readonly findeTrailer: (folgenId: string) => Promise<ReihenTrailer | null> = findeReihenTrailer
   ) {
     this.db = new Database(pfad);
     this.db.pragma('journal_mode = WAL');
@@ -194,6 +198,31 @@ export class BildDienst {
       this.laufend.set(schluessel, p);
     }
     return p;
+  }
+
+  /**
+   * Trailer der Reihe bei der ARD zu einer Folgenseite – einen Tag zwischengespeichert, auch „keiner“.
+   * Andere Sender: immer null.
+   */
+  async reihenTrailer(website: string): Promise<ReihenTrailer | null> {
+    const id = ardId(website);
+    if (!id) return null;
+    const schluessel = `trailer|${id}`;
+    const gespeichert = this.db.prepare('SELECT url, zeit FROM bild WHERE website = ?').get(schluessel) as
+      | { url: string | null; zeit: number }
+      | undefined;
+    if (gespeichert && Date.now() - gespeichert.zeit < TRAILER_GUELTIG) {
+      try {
+        return gespeichert.url ? (JSON.parse(gespeichert.url) as ReihenTrailer) : null;
+      } catch {
+        return null;
+      }
+    }
+    const trailer = await this.begrenzt(() => this.findeTrailer(id)).catch(() => null);
+    this.db
+      .prepare('INSERT INTO bild (website, url, zeit) VALUES (?, ?, ?) ON CONFLICT(website) DO UPDATE SET url = excluded.url, zeit = excluded.zeit')
+      .run(schluessel, trailer ? JSON.stringify(trailer) : null, Date.now());
+    return trailer;
   }
 
   /** Höchstens GLEICHZEITIG Abrufe parallel – die Seiten der Sender sollen nicht überrannt werden */

@@ -4,7 +4,8 @@ import { useVorschauen, useWenigBewegung } from '../einstellungen';
 import { Icon } from './Icon';
 
 interface Props {
-  trailer: Film | null;
+  /** Nur die Videoadresse zählt – aus der Filmliste oder von der Seite der Reihe */
+  trailer: Pick<Film, 'url'> | null;
   /** Gerade nicht abspielen (z. B. weil der Mini-Player läuft) */
   aus: boolean;
   /** Standbild, über dem der Trailer läuft und das nach dem Ende wieder erscheint */

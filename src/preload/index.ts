@@ -4,7 +4,7 @@ import type { UpdateZustand } from '../shared/update';
 import type { Format, GenreAnzahl, GenreId } from '../shared/genres';
 import type { SenderGruppe } from '../shared/sender';
 import type { Abo, Ablauf, MerkEintrag } from '../shared/nutzer';
-import type { Serie, SerieDetail } from '../shared/serie';
+import type { ReihenTrailer, Serie, SerieDetail } from '../shared/serie';
 import type { LiveAngebot } from '../shared/live';
 import type { TitelInfo } from '../shared/titelinfo';
 
@@ -123,7 +123,9 @@ const api = {
     /** Vorschaubild zur Sendungsseite (null = keins gefunden) */
     url: (website: string): Promise<string | null> => ipcRenderer.invoke('bild:url', website, 'folge'),
     /** Titelbild der Serie (16:9) bzw. breites Banner (16:7) – bisher nur ARD, sonst null */
-    serie: (website: string, art: 'serie' | 'banner'): Promise<string | null> => ipcRenderer.invoke('bild:url', website, art)
+    serie: (website: string, art: 'serie' | 'banner'): Promise<string | null> => ipcRenderer.invoke('bild:url', website, art),
+    /** Trailer der Reihe bei der ARD zu einer Folgenseite; andere Sender und ohne Trailer: null */
+    reihenTrailer: (website: string): Promise<ReihenTrailer | null> => ipcRenderer.invoke('bild:reihen-trailer', website)
   },
   update: {
     zustand: (): Promise<UpdateZustand> => ipcRenderer.invoke('update:zustand'),

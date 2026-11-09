@@ -245,6 +245,9 @@ ipcMain.handle('bild:url', (_event, website: unknown, art: unknown) =>
   bilder && typeof website === 'string' ? bilder.url(website, art === 'serie' || art === 'banner' ? art : 'folge') : null
 );
 
+/** Trailer der Reihe bei der ARD (Seite der Reihe nennt ihn, die Filmliste nicht) */
+ipcMain.handle('bild:reihen-trailer', (_event, website: unknown) => (bilder && typeof website === 'string' ? bilder.reihenTrailer(website) : null));
+
 ipcMain.handle('untertitel:laden', async (_event, url: unknown) => {
   if (typeof url !== 'string') return null;
   try {
@@ -373,6 +376,7 @@ app.whenReady().then(() => {
   // Für Tests: keine Abrufe bei den Sendern
   bilder = new BildDienst(
     join(app.getPath('userData'), 'bilder.db'),
+    process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined,
     process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined,
     process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined
   );

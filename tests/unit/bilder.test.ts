@@ -53,4 +53,28 @@ describe('BildDienst', () => {
     expect(await dienst.url('kaputt')).toBeNull();
     dienst.schliessen();
   });
+
+  it('fragt den Trailer einer ARD-Reihe einmal und merkt sich auch „keiner“', async () => {
+    ordner = mkdtempSync(join(tmpdir(), 'movue-bilder-'));
+    const gefragt: string[] = [];
+    const dienst = new BildDienst(
+      join(ordner, 'b.db'),
+      async () => null,
+      async () => null,
+      async (id) => {
+        gefragt.push(id);
+        return id === 'Y3JpZDovL21pdC10cmFpbGVy' ? { titel: 'Trailer', url: 'https://ard.de/t.mp4', dauer: 38 } : null;
+      }
+    );
+    const mit = 'https://www.ardmediathek.de/video/Y3JpZDovL21pdC10cmFpbGVy';
+    const ohne = 'https://www.ardmediathek.de/video/Y3JpZDovL29obmUtdHJhaWxlcg';
+    expect(await dienst.reihenTrailer(mit)).toEqual({ titel: 'Trailer', url: 'https://ard.de/t.mp4', dauer: 38 });
+    expect(await dienst.reihenTrailer(mit)).toEqual({ titel: 'Trailer', url: 'https://ard.de/t.mp4', dauer: 38 });
+    expect(await dienst.reihenTrailer(ohne)).toBeNull();
+    expect(await dienst.reihenTrailer(ohne)).toBeNull();
+    // ZDF und Co.: gar nicht fragen
+    expect(await dienst.reihenTrailer('https://www.zdf.de/video/serien/x-100/y-100')).toBeNull();
+    expect(gefragt).toEqual(['Y3JpZDovL21pdC10cmFpbGVy', 'Y3JpZDovL29obmUtdHJhaWxlcg']);
+    dienst.schliessen();
+  });
 });

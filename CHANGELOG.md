@@ -4,6 +4,12 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.15.0 – 2026-11-09
+
+### Neu
+
+- **Trailer für mehr ARD-Serien**: Steht kein Trailer in der Filmliste, holt Movue den Trailer von der Seite der Reihe in der ARD-Mediathek – einmal am Tag je Serie, nur bei eingeschalteten Vorschauen
+
 ## 0.14.0 – 2026-11-08
 
 ### Neu

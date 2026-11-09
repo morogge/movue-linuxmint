@@ -220,3 +220,10 @@ export function waehleTrailer<T extends Pick<Film, 'titel' | 'dauer' | 'datum' |
   const nachDatum = [...kurz].sort((a, b) => b.datum - a.datum);
   return nachDatum.find((f) => TRAILER.test(f.titel)) ?? null;
 }
+
+/** Trailer einer Reihe, den die ARD auf der Seite der Reihe nennt (nicht in der Filmliste) */
+export interface ReihenTrailer {
+  titel: string;
+  url: string;
+  dauer: number;
+}

@@ -127,9 +127,10 @@ describe('Bündel im Index', () => {
     ]);
     expect(live.uebertragungen.map((f) => f.titel)).toEqual(['Basketball live: Gladiators Trier gegen Testgegner']);
     expect(live.vorab.map((f) => f.titel)).toContain('Planet e.: Vorab im Netz');
-    // Nichts davon in Suche und Listen
+    // Übertragungen nie in der Suche; Vorab-Sendungen mit Suchbegriff ja, in den neuesten Sendungen nicht
     expect(suche(db, { text: 'Gladiators' }).treffer).toHaveLength(0);
-    expect(suche(db, { text: 'Vorab im Netz' }).treffer).toHaveLength(0);
+    expect(suche(db, { text: 'Vorab im Netz' }).treffer.map((f) => f.titel)).toEqual(['Planet e.: Vorab im Netz']);
+    expect(suche(db, { text: '', limit: 200 }).treffer.map((f) => f.titel)).not.toContain('Planet e.: Vorab im Netz');
     // Vorbei ist vorbei
     expect(liveAngebot(db, Date.parse('2028-01-01T00:00:00Z')).uebertragungen).toHaveLength(0);
   });

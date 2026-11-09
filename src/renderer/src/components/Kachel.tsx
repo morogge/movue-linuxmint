@@ -3,6 +3,7 @@ import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
 import { artName, serienUmfang, type Serie, type SerieRef } from '@shared/serie';
 import { useBild, useSerienBild } from '../hooks/useBild';
+import { terminText } from '@shared/live';
 import { SENDER_FARBE } from '../senderFarben';
 
 /**
@@ -108,8 +109,13 @@ export function Kachel({
       <span className="kachel-titel">{film.titel}</span>
       <span className="kachel-meta">
         {film.thema && film.thema !== film.titel ? `${film.thema} · ` : ''}
-        {formatDatum(film.datum)}
+        {istVorab(film) ? <span className="vorab-termin">Vorab · im TV {terminText(film.datum)}</span> : formatDatum(film.datum)}
       </span>
     </button>
   );
+}
+
+/** Schon online, im Fernsehen erst später */
+export function istVorab(film: Pick<Film, 'datum'>, jetzt = Date.now()): boolean {
+  return film.datum * 1000 > jetzt;
 }

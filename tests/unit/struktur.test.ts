@@ -210,14 +210,16 @@ describe('Bündel im Index', () => {
     expect(reihe(db, { genre: 'krimi', gruppe: '3sat', minDauer: 0, jetzt: 1_793_100_000_000 })).toEqual([]);
   });
 
-  it('zeigt Trailer, Livestreams und Angekündigtes nicht in Listen', () => {
+  it('zeigt Trailer, Livestreams und Angekündigtes nicht in Listen, Angekündigtes aber in der Suche', () => {
     const titel = suche(db, { text: 'sport' }).treffer.map((f) => f.titel);
     expect(titel).toContain('Sport am Sonntag 1');
     expect(titel).not.toContain('Trailer: Sport am Sonntag');
     expect(titel.some((t) => t.startsWith('Basketball live'))).toBe(false);
-    expect(titel).not.toContain('Vorab: Sport am Montag');
+    // Vorab-Sendungen: mit Suchbegriff ja, in Listen und den neuesten Sendungen nicht
+    expect(titel).toContain('Vorab: Sport am Montag');
+    expect(suche(db, { text: '', limit: 200 }).treffer.map((f) => f.titel)).not.toContain('Vorab: Sport am Montag');
     const einzeln = stoebern(db, { genre: 'sport' }).eintraege.map((x) => (x.typ === 'film' ? x.film.titel : x.serie.thema));
-    expect(einzeln.some((t) => t.startsWith('Basketball live') || t.startsWith('Trailer'))).toBe(false);
+    expect(einzeln.some((t) => t.startsWith('Basketball live') || t.startsWith('Trailer') || t.startsWith('Vorab'))).toBe(false);
     // Der Trailer steht auf der Seite seiner Reihe unter „Extras“, das Bündel endet mit der neuesten sichtbaren Folge
     const detail = serieDetail(db, 'ARD', 'SWR Sport');
     expect(detail?.folgen.find((f) => f.titel.startsWith('Trailer'))?.extra).toBe(true);

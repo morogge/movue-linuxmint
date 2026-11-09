@@ -17,6 +17,7 @@ import { seitenZiel } from './links';
 import { istGruppe } from '@shared/sender';
 import { istFormat, istGenre } from '@shared/genres';
 import { ERINNERN_VORHER, terminText } from '@shared/live';
+import { meldeAdresse, type MeldeInfo } from '@shared/melden';
 
 // Für Tests: eigenes Datenverzeichnis statt ~/.config/Movue
 if (process.env['MOVUE_DATEN']) app.setPath('userData', process.env['MOVUE_DATEN']);
@@ -185,6 +186,29 @@ ipcMain.handle('index:stoebern', (_event, a: { genre?: unknown; format?: unknown
 });
 
 ipcMain.handle('index:extras', (_event, id: unknown) => (typeof id === 'number' && index ? index.extras(id) : []));
+
+/**
+ * „Falsch einsortiert?“: Fehlerbericht im Browser öffnen, vorausgefüllt aus dem Verzeichnis.
+ * Das Fenster nennt nur die Sendung bzw. Serie – die Adresse baut Movue selbst.
+ */
+ipcMain.handle('melden:einsortierung', async (_event, ziel: unknown) => {
+  if (!index || !ziel || typeof ziel !== 'object') return false;
+  const z = ziel as { filmId?: unknown; gruppe?: unknown; thema?: unknown };
+  let info: MeldeInfo | null = null;
+  if (typeof z.filmId === 'number') {
+    const f = index.film(z.filmId);
+    if (f) info = { was: 'Sendung', titel: f.titel, thema: f.thema, sender: f.sender, format: f.format ?? null, genres: f.genres, website: f.website, datum: f.datum };
+  } else if (typeof z.gruppe === 'string' && typeof z.thema === 'string') {
+    const d = index.serie(z.gruppe, z.thema);
+    if (d) {
+      const s = d.serie;
+      info = { was: 'Serie', titel: s.thema, thema: s.thema, sender: s.gruppe, format: s.format, genres: s.genres, website: (s.bild ?? d.folgen[0])?.website ?? '' };
+    }
+  }
+  if (!info) return false;
+  await shell.openExternal(meldeAdresse(info, app.getVersion()));
+  return true;
+});
 
 ipcMain.handle('live:angebot', () => index?.live() ?? { sender: [], uebertragungen: [], vorab: [] });
 

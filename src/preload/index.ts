@@ -94,6 +94,11 @@ const api = {
       return () => ipcRenderer.removeListener('abo:neu', listener);
     }
   },
+  melden: {
+    /** „Falsch einsortiert?“ – öffnet einen vorausgefüllten Fehlerbericht im Browser; Movue schickt nichts selbst */
+    einsortierung: (ziel: { filmId: number } | { gruppe: string; thema: string }): Promise<boolean> =>
+      ipcRenderer.invoke('melden:einsortierung', ziel)
+  },
   live: {
     /** Livestreams der Sender, Live-Übertragungen und Sendungen, die schon vor dem TV-Termin abrufbar sind */
     angebot: (): Promise<LiveAngebot> => ipcRenderer.invoke('live:angebot'),

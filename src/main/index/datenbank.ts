@@ -173,9 +173,12 @@ export function istLive(e: Pick<FilmEintrag, 'url' | 'thema' | 'datum' | 'dauer'
  * Bedingung für alles, was in Listen, Suche und auf Genre-Seiten erscheint: nur Standardfassungen, keine Trailer
  * und Extras (die stehen auf der Seite ihrer Sendung), keine Livestreams und nichts mit Datum in der Zukunft.
  */
-export function gelistet(jetzt = Date.now(), alias = 'f'): string {
+export function gelistet(jetzt = Date.now(), alias = 'f', mitVorab = false): string {
+  const basis = `${alias}.variante = 0 AND ${alias}.extra = 0 AND ${alias}.live = 0`;
+  // Vorab: Sendungen, die schon vor ihrem Fernsehtermin online stehen – in der Suche ja, in Listen nicht
+  if (mitVorab) return basis;
   // „+“ vor dem Datum: SQLite soll dafür keinen Index nehmen – sonst läuft die Volltextsuche über alle Filme nach Datum
-  return `${alias}.variante = 0 AND ${alias}.extra = 0 AND ${alias}.live = 0 AND +${alias}.datum <= ${Math.floor(jetzt / 1000)}`;
+  return `${basis} AND +${alias}.datum <= ${Math.floor(jetzt / 1000)}`;
 }
 
 export function schreiber(db: Db): (e: FilmEintrag) => void {
@@ -370,8 +373,9 @@ export function suche(db: Db, anfrage: SuchAnfrage): SuchErgebnis {
       .all(p) as FilmZeile[];
     gesamt = (db.prepare(`SELECT count(*) AS n FROM film f ${where}`).get(p) as { n: number }).n;
   } else {
+    // Mit Suchbegriff auch Vorab-Sendungen: wer „Tatort“ sucht, soll die Folge vom Samstag schon finden
     const filter = [
-      `AND ${sichtbar}`,
+      `AND ${gelistet(Date.now(), 'f', true)}`,
       formatFilter,
       gruppe ? 'AND f.gruppe = @gruppe' : '',
       genre ? 'AND EXISTS (SELECT 1 FROM film_genre g WHERE g.genre = @genre AND g.film_id = f.id)' : ''

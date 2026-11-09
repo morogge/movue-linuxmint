@@ -149,7 +149,6 @@ export function LiveScreen({ zustand, onAbspielen, onOeffne }: Props) {
             {angebot.vorab.map((f) => (
               <li key={f.id}>
                 <Kachel film={f} onOeffne={onOeffne} />
-                <span className="vorab-termin">Im TV: {terminText(f.datum, jetzt)}</span>
               </li>
             ))}
           </ul>

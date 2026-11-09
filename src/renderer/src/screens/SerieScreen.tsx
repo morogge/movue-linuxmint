@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Film } from '@shared/film';
 import { formatDatum, formatDauer } from '@shared/format';
-import { genreName } from '@shared/genres';
+import { formatName, genreName } from '@shared/genres';
 import { formatZeit } from '@shared/player';
 import {
   artName,
@@ -24,6 +24,7 @@ import { Besetzung } from '../components/Besetzung';
 import type { TitelInfo } from '@shared/titelinfo';
 import { useSerienBild } from '../hooks/useBild';
 import { KopfTrailer } from '../components/KopfTrailer';
+import { MeldenKnopf } from '../components/Melden';
 import { useVorschauen } from '../einstellungen';
 
 interface Props {
@@ -72,20 +73,21 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne, mini
   // Anfangs den Reiter der Folge zeigen, mit der es weitergeht
   const aktiverReiter = reiter ?? (start && detail ? gruppeVon(start.film, detail.serie.art) : (gruppen[0] ?? null));
   const listenTrailer = useMemo(() => (detail ? waehleTrailer(detail.folgen.filter((f) => f.extra)) : null), [detail]);
-  // Kein Trailer in der Filmliste: bei ARD-Serien nennt die Seite der Reihe oft einen – nur fragen, wenn Vorschauen an sind
+  // Kein Trailer in der Filmliste: bei ARD- und ZDF-Serien nennt die Seite der Reihe oft einen – nur fragen, wenn Vorschauen an sind
   const [vorschauen] = useVorschauen();
-  const [ardTrailer, setArdTrailer] = useState<ReihenTrailer | null>(null);
-  const ardWebsite = detail && !listenTrailer && detail.serie.gruppe === 'ARD' ? (detail.serie.bild ?? detail.folgen[0])?.website : undefined;
+  const [senderTrailer, setSenderTrailer] = useState<ReihenTrailer | null>(null);
+  const senderWebsite =
+    detail && !listenTrailer && (detail.serie.gruppe === 'ARD' || detail.serie.gruppe === 'ZDF') ? (detail.serie.bild ?? detail.folgen[0])?.website : undefined;
   useEffect(() => {
-    setArdTrailer(null);
-    if (!ardWebsite || !vorschauen) return;
+    setSenderTrailer(null);
+    if (!senderWebsite || !vorschauen) return;
     let aktiv = true;
-    void window.movue.bild.reihenTrailer(ardWebsite).then((t) => aktiv && setArdTrailer(t));
+    void window.movue.bild.reihenTrailer(senderWebsite).then((t) => aktiv && setSenderTrailer(t));
     return () => {
       aktiv = false;
     };
-  }, [ardWebsite, vorschauen]);
-  const kopfTrailer = listenTrailer ?? ardTrailer;
+  }, [senderWebsite, vorschauen]);
+  const kopfTrailer = listenTrailer ?? senderTrailer;
   // Staffeln als Karten mit dem Bild ihrer ersten Folge – bei der ARD oft ein eigenes Staffelbild („mittendrin Staffel 1“)
   const erstesJe = useMemo(() => {
     const m = new Map<string, Film>();
@@ -147,6 +149,7 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne, mini
           </div>
           <h1 id="serie-titel">{serie.thema}</h1>
           <div className="detail-tags">
+            <span className="tag art-tag">{formatName(serie.format)}</span>
             {serie.genres
               .filter((g) => g !== 'sonstiges')
               .map((g) => (
@@ -154,6 +157,7 @@ export function SerieScreen({ serie: ref, onZurueck, onAbspielen, onOeffne, mini
                   {genreName(g)}
                 </span>
               ))}
+            <MeldenKnopf ziel={{ gruppe: serie.gruppe, thema: serie.thema }} />
           </div>
           {kopfFilm?.beschreibung && <p className="detail-beschreibung">{kopfFilm.beschreibung}</p>}
           <p className="detail-info">

@@ -78,6 +78,9 @@ describe('Fassungen im Index', () => {
     schreibe(eintrag({ thema: 'Auf Spurensuche', titel: 'Die Revolution der Erneuerbaren (1)' }));
     schreibe(eintrag({ thema: 'Auf Spurensuche', titel: 'Die Revolution der Erneuerbaren (1) (Gebärdensprache)' }));
     schreibe(eintrag({ thema: 'Auf Spurensuche', titel: 'Die Revolution der Erneuerbaren (1) (Englisch)' }));
+    // Fassung unter eigenem Thema: „tagesschau (mit Gebärdensprache)“ gehört zu „tagesschau“
+    schreibe(eintrag({ sender: 'ARD', gruppe: 'ARD', thema: 'tagesschau', titel: 'tagesschau 20:00 Uhr, 13.09.2024' }));
+    schreibe(eintrag({ sender: 'ARD', gruppe: 'ARD', thema: 'tagesschau (mit Gebärdensprache)', titel: 'tagesschau 20:00 Uhr, 13.09.2024 (Gebärdensprache)' }));
     baueFassungen(aufbau);
     schliesseAufbau(aufbau);
     aufbau.close();
@@ -91,8 +94,13 @@ describe('Fassungen im Index', () => {
 
   it('zeigt im Listing nur die Standardfassung', () => {
     const titel = suche(db, { text: '' }).treffer.map((f) => f.titel).sort();
-    expect(titel).toEqual(['Die Brücke (S09/E04) (Audiodeskription)', 'Die Revolution der Erneuerbaren (1)', 'Inferno (S09/E03)']);
+    expect(titel).toEqual(['Die Brücke (S09/E04) (Audiodeskription)', 'Die Revolution der Erneuerbaren (1)', 'Inferno (S09/E03)', 'tagesschau 20:00 Uhr, 13.09.2024']);
     expect(suche(db, { text: 'inferno' }).gesamt).toBe(1);
+  });
+
+  it('findet Fassungen auch unter eigenem Thema', () => {
+    const standard = suche(db, { text: 'tagesschau' }).treffer.find((f) => f.thema === 'tagesschau')!;
+    expect(fassungen(db, filmNachId(db, standard.id)!).map((x) => x.name)).toEqual([null, 'Gebärdensprache']);
   });
 
   it('bietet die anderen Fassungen auf der Seite der Sendung an', () => {

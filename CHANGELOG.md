@@ -4,6 +4,8 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.16.0 – 2026-11-09
+
 ### Neu
 
 - **Falsch einsortiert?** auf Detail- und Serienseiten: öffnet einen vorausgefüllten Fehlerbericht im Browser – Movue schickt nichts selbst

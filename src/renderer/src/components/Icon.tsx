@@ -15,6 +15,7 @@ const PATHS = {
   liste: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   links: 'M15 18l-6-6 6-6',
   rechts: 'M9 18l6-6-6-6',
+  runter: 'M6 9l6 6 6-6',
   play: 'M7 4v16l13-8z',
   pause: 'M7 4h3v16H7zM14 4h3v16h-3z',
   zurueck10: 'M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5',

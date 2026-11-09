@@ -234,6 +234,16 @@ test('Trailer & Extras auf der Detailseite, Vorschauen in den Einstellungen', as
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 
+test('Senderliste in der Seitenleiste ein- und ausklappen', async () => {
+  const zdf = win.getByRole('button', { name: 'ZDF Mediathek' });
+  await expect(zdf).toBeVisible();
+  await win.getByRole('button', { name: 'Sender einklappen' }).click();
+  await expect(zdf).toBeHidden();
+  await expect(win.getByRole('button', { name: 'Sender ausklappen' })).toHaveAttribute('aria-expanded', 'false');
+  await win.getByRole('button', { name: 'Sender ausklappen' }).click();
+  await expect(zdf).toBeVisible();
+});
+
 test('Hinweis auf eine heruntergeladene neue Version', async () => {
   const hinweis = win.getByRole('region', { name: 'Neue Version' });
   await expect(hinweis).toContainText('Movue 9.9.9 ist da.');

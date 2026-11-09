@@ -2564,3 +2564,11 @@ button.live-karte:hover {
 .reihe-kopf .staffel-karten {
   flex-basis: 100%;
 }
+
+/* Vorab-Hinweis in Kachel und Detailzeile: im Fluss des Textes */
+.kachel-meta .vorab-termin,
+.detail-info .vorab-termin {
+  display: inline;
+  margin: 0;
+  font-size: inherit;
+}

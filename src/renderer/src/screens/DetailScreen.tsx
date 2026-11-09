@@ -8,7 +8,8 @@ import { folgenKennung, waehleTrailer, type SerieRef } from '@shared/serie';
 import { herkunft, type TitelInfo } from '@shared/titelinfo';
 import { GRUPPEN } from '@shared/sender';
 import { SENDER_FARBE } from '../senderFarben';
-import { FilmBild, SenderMarke } from '../components/Kachel';
+import { FilmBild, SenderMarke, istVorab } from '../components/Kachel';
+import { terminText } from '@shared/live';
 import { Icon } from '../components/Icon';
 import { Besetzung } from '../components/Besetzung';
 import { KopfTrailer } from '../components/KopfTrailer';
@@ -148,7 +149,7 @@ export function DetailScreen({ filmId, onOeffne, onZurueck, onAbspielen, onSerie
           </div>
           {film.beschreibung && <p className="detail-beschreibung">{film.beschreibung}</p>}
           <p className="detail-info">
-            {formatDatum(film.datum)}
+            {istVorab(film) ? <span className="vorab-termin">Vorab online · im TV {terminText(film.datum)}</span> : formatDatum(film.datum)}
             {film.dauer > 0 && ` · ${formatDauer(film.dauer)}`}
             {ablaufText && (
               <span className={laeuftBaldAb(ablauf) || ablauf?.weg ? 'ablauf bald' : 'ablauf'}>

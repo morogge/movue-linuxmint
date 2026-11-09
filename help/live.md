@@ -23,4 +23,4 @@ Einzelne Übertragungen mit festem Beginn – Fußball, Basketball, Wintersport,
 
 ## Vorab in der Mediathek
 
-Manche Sendungen stellen die Sender schon vor dem Fernsehtermin online – Krimis am Samstagabend etwa oft schon am Morgen. Sie stehen hier mit ihrem Termin im Fernsehen („Im TV: Heute 20:15“) und lassen sich sofort abspielen. Sobald der Termin vorbei ist, erscheinen sie auch in den Listen und in der Suche.
+Manche Sendungen stellen die Sender schon vor dem Fernsehtermin online – Krimis am Samstagabend etwa oft schon am Morgen. Sie stehen hier mit ihrem Termin im Fernsehen („Vorab · im TV Heute 20:15“) und lassen sich sofort abspielen. In der **Suche** findest du sie schon jetzt; in den Listen der Startseite, Arten und Genres erscheinen sie, sobald der Termin vorbei ist.

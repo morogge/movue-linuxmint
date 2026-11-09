@@ -8,6 +8,8 @@ export const SCREENS = {
   suche: { title: 'Suche', help: 'suchen' },
   art: { title: 'Art', help: 'stoebern' },
   kategorien: { title: 'Alle Kategorien', help: 'kategorien' },
+  live: { title: 'Live & demnächst', help: 'live' },
+  einstellungen: { title: 'Einstellungen', help: 'einstellungen' },
   genre: { title: 'Genre', help: 'kategorien' },
   sender: { title: 'Sender', help: 'stoebern' },
   detail: { title: 'Sendung', help: 'stoebern' },

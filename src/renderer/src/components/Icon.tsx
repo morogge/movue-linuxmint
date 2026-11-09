@@ -24,6 +24,7 @@ const PATHS = {
   untertitel: 'M2 5h20v14H2zM7 13h4M13 13h4M7 16h10',
   autoplay: 'M5 4v16l9-8zM16 5h3v14h-3',
   pip: 'M2 4h20v16H2zM12 12h7v5h-7z',
+  einstellungen: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4',
   film: 'M4 4h16v16H4zM8 4v16M16 4v16M4 8h4M4 12h4M4 16h4M16 8h4M16 12h4M16 16h4',
   doku: 'M3 7h12v10H3zM15 10l6-3v10l-6-3',
   show: 'M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3',

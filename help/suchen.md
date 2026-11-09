@@ -11,6 +11,10 @@ Die Suche durchsucht die Sendungen von ARD, ZDF, 3sat und Arte gleichzeitig – 
 - Groß- und Kleinschreibung spielen keine Rolle, Umlaute und Akzente auch nicht.
 - **Esc** leert das Suchfeld.
 
+## Vorab in der Mediathek
+
+Mit einem Suchbegriff findest du auch Sendungen, die schon vor ihrem Fernsehtermin online stehen – etwa den Krimi vom Samstagabend schon am Morgen. Statt des Datums steht dann **Vorab · im TV** mit Tag und Uhrzeit der Ausstrahlung. Abspielen kannst du sie sofort. Ohne Suchbegriff (neueste Sendungen) erscheinen sie erst nach dem Termin; alle auf einen Blick findest du unter **Live & demnächst**.
+
 ## Serien in der Suche
 
 Passt dein Suchbegriff zum Namen einer Serie oder Sendereihe, steht sie über den Treffern unter **Serien und Sendereihen**. Ein Klick öffnet die Serienseite mit allen Folgen.
@@ -20,7 +24,7 @@ Passt dein Suchbegriff zum Namen einer Serie oder Sendereihe, steht sie über de
 Unter der Überschrift stehen drei Filter, die du beliebig kombinierst:
 
 - **Sender**: nur eine Mediathek – oder **Alle Sender**.
-- **Format**: **Serien** oder **Filme** – oder **Alle Formate**. Das Format sagt, *was* eine Sendung ist; ein Krimi kann eine Serie oder ein Film sein.
+- **Format**: die Art der Sendung – **Serien**, **Filme**, **Dokus**, **Magazine**, **Shows & Talk**, **Nachrichten**, **Sport**, **Konzert & Bühne** oder **Kurzbeiträge** – oder **Alle Formate**. Das Format sagt, *was* eine Sendung ist; ein Krimi kann eine Serie oder ein Film sein.
 - **Genre**: worum es geht, etwa Krimi, Doku oder Kultur.
 
 Unter den Filtern steht, wie viele Treffer es gibt. Ist ein Filter gesetzt, hebt **Filter zurücksetzen** alle auf einmal auf.

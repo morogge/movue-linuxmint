@@ -5,6 +5,7 @@ import { istGruppe, type SenderGruppe } from '@shared/sender';
 import type { FilmEintrag } from '../filmliste/eintrag';
 import { folgenInfo, serieAusTitel } from '@shared/serie';
 import { titelKern } from '@shared/titelinfo';
+import { liveGruppe, senderName, sortiereSender, type LiveAngebot, type LiveSender } from '@shared/live';
 import { fassungKern, fassungName, istFassung } from '@shared/fassung';
 
 export type Db = Database.Database;
@@ -172,9 +173,12 @@ export function istLive(e: Pick<FilmEintrag, 'url' | 'thema' | 'datum' | 'dauer'
  * Bedingung für alles, was in Listen, Suche und auf Genre-Seiten erscheint: nur Standardfassungen, keine Trailer
  * und Extras (die stehen auf der Seite ihrer Sendung), keine Livestreams und nichts mit Datum in der Zukunft.
  */
-export function gelistet(jetzt = Date.now(), alias = 'f'): string {
+export function gelistet(jetzt = Date.now(), alias = 'f', mitVorab = false): string {
+  const basis = `${alias}.variante = 0 AND ${alias}.extra = 0 AND ${alias}.live = 0`;
+  // Vorab: Sendungen, die schon vor ihrem Fernsehtermin online stehen – in der Suche ja, in Listen nicht
+  if (mitVorab) return basis;
   // „+“ vor dem Datum: SQLite soll dafür keinen Index nehmen – sonst läuft die Volltextsuche über alle Filme nach Datum
-  return `${alias}.variante = 0 AND ${alias}.extra = 0 AND ${alias}.live = 0 AND +${alias}.datum <= ${Math.floor(jetzt / 1000)}`;
+  return `${basis} AND +${alias}.datum <= ${Math.floor(jetzt / 1000)}`;
 }
 
 export function schreiber(db: Db): (e: FilmEintrag) => void {
@@ -369,8 +373,9 @@ export function suche(db: Db, anfrage: SuchAnfrage): SuchErgebnis {
       .all(p) as FilmZeile[];
     gesamt = (db.prepare(`SELECT count(*) AS n FROM film f ${where}`).get(p) as { n: number }).n;
   } else {
+    // Mit Suchbegriff auch Vorab-Sendungen: wer „Tatort“ sucht, soll die Folge vom Samstag schon finden
     const filter = [
-      `AND ${sichtbar}`,
+      `AND ${gelistet(Date.now(), 'f', true)}`,
       formatFilter,
       gruppe ? 'AND f.gruppe = @gruppe' : '',
       genre ? 'AND EXISTS (SELECT 1 FROM film_genre g WHERE g.genre = @genre AND g.film_id = f.id)' : ''
@@ -594,4 +599,68 @@ export function fassungen(db: Db, film: Film): Fassung[] {
       gesehen.add(k);
       return true;
     });
+}
+
+/**
+ * „Live & demnächst“: Livestreams der Sender, Live-Übertragungen, die noch laufen oder kommen, und
+ * Sendungen, die schon vor ihrem Fernsehtermin abrufbar sind (Datum in der Zukunft).
+ */
+export function liveAngebot(db: Db, jetzt = Date.now(), vorabLimit = 120): LiveAngebot {
+  const s = Math.floor(jetzt / 1000);
+  const lade = (sql: string, ...p: unknown[]) => {
+    const zeilen = db.prepare(`SELECT ${SPALTEN} FROM film f WHERE ${sql}`).all(...p) as FilmZeile[];
+    const genres = genresFuer(
+      db,
+      zeilen.map((z) => z.id)
+    );
+    return zeilen.map((z) => zuFilm(z, genres));
+  };
+  const streams = lade(`f.live = 1 AND f.variante = 0 AND lower(trim(f.thema)) = 'livestream'`);
+  const gesehen = new Set<string>();
+  const sender: LiveSender[] = [];
+  for (const film of streams) {
+    const name = senderName(film.titel);
+    // Doppelte Einträge (gleicher Sender aus zwei Quellen) nur einmal
+    if (gesehen.has(name)) continue;
+    gesehen.add(name);
+    sender.push({ name, gruppe: liveGruppe(name), film });
+  }
+  const uebertragungen = lade(
+    `f.live = 1 AND f.variante = 0 AND lower(trim(f.thema)) != 'livestream' AND f.dauer > 0 AND f.datum + f.dauer >= ? ORDER BY f.datum LIMIT 100`,
+    s
+  );
+  const vorab = lade(
+    `f.live = 0 AND f.variante = 0 AND f.extra = 0 AND f.datum > ? AND f.format IS NOT 'kurz' ORDER BY f.datum LIMIT ?`,
+    s,
+    vorabLimit
+  );
+  return { sender: sortiereSender(sender), uebertragungen, vorab };
+}
+
+/**
+ * Trailer und andere Extras zu einer Sendung: aus ihrem Bündel, sonst mit gleichem Sender und Thema
+ * („Trailer: How to Dad“ unter dem Thema „How to Dad“). Neueste zuerst.
+ */
+export function extrasZu(db: Db, filmId: number, limit = 12): Film[] {
+  const f = db.prepare('SELECT id, gruppe, thema, serie_id FROM film WHERE id = ?').get(filmId) as
+    | { id: number; gruppe: string; thema: string; serie_id: number | null }
+    | undefined;
+  if (!f) return [];
+  const zeilen = (
+    f.serie_id !== null
+      ? db
+          .prepare(`SELECT ${SPALTEN} FROM film f WHERE f.serie_id = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 ORDER BY f.datum DESC LIMIT ?`)
+          .all(f.serie_id, limit)
+      : db
+          .prepare(
+            `SELECT ${SPALTEN} FROM film f WHERE f.gruppe = ? AND f.thema = ? AND f.extra = 1 AND f.variante = 0 AND f.live = 0 AND f.id != ?
+             ORDER BY f.datum DESC LIMIT ?`
+          )
+          .all(f.gruppe, f.thema, f.id, limit)
+  ) as FilmZeile[];
+  const genres = genresFuer(
+    db,
+    zeilen.map((z) => z.id)
+  );
+  return zeilen.map((z) => zuFilm(z, genres));
 }

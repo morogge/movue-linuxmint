@@ -211,3 +211,19 @@ export function startFolge(detail: SerieDetail, staende: Map<string, FolgenStand
   }
   return { film: folgen[0], art: 'start' };
 }
+
+const TRAILER = /\b(trailer|teaser|vorschau|preview|sneak peek)\b/i;
+
+/** Trailer für den Kopf einer Seite: der neueste kurze (bis 5 Minuten) Trailer, Teaser oder Vorschau – kein Making-of */
+export function waehleTrailer<T extends Pick<Film, 'titel' | 'dauer' | 'datum' | 'url'>>(extras: T[]): T | null {
+  const kurz = extras.filter((f) => f.dauer > 0 && f.dauer <= 300 && f.url);
+  const nachDatum = [...kurz].sort((a, b) => b.datum - a.datum);
+  return nachDatum.find((f) => TRAILER.test(f.titel)) ?? null;
+}
+
+/** Trailer einer Reihe, den die ARD auf der Seite der Reihe nennt (nicht in der Filmliste) */
+export interface ReihenTrailer {
+  titel: string;
+  url: string;
+  dauer: number;
+}

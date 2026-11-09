@@ -4,6 +4,46 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 
 ## Unveröffentlicht
 
+## 0.16.0 – 2026-11-09
+
+### Neu
+
+- **Falsch einsortiert?** auf Detail- und Serienseiten: öffnet einen vorausgefüllten Fehlerbericht im Browser – Movue schickt nichts selbst
+- Die **Art** (Serie, Film, Doku …) steht jetzt als erstes Schild vor den Genres
+- **Trailer für ZDF-Serien**: Wie bei der ARD holt Movue den Trailer von der Seite der Reihe, wenn er in der Filmliste fehlt – etwa bei „Under Salt Marsh“
+- **Vorab-Sendungen in der Suche**: Was schon vor dem Fernsehtermin online steht, findest du jetzt auch über die Suche – gekennzeichnet mit **Vorab · im TV** und dem Termin
+
+### Verbessert
+
+- Die Hilfe zur Suche nennt alle Formate
+
+## 0.15.0 – 2026-11-09
+
+### Neu
+
+- **Trailer für mehr ARD-Serien**: Steht kein Trailer in der Filmliste, holt Movue den Trailer von der Seite der Reihe in der ARD-Mediathek – einmal am Tag je Serie, nur bei eingeschalteten Vorschauen
+
+## 0.14.0 – 2026-11-08
+
+### Neu
+
+- **Live & demnächst**: das laufende Programm von Das Erste, ZDF, 3sat, Arte, den Spartensendern und allen Dritten (Auswahl in der Karte „Die Dritten“) mit einem Klick
+- **Live-Übertragungen** wie Sport oder Sondersendungen mit Tag und Uhrzeit. Mit **Erinnern** meldet sich Movue fünf Minuten vor Beginn
+- **Vorab in der Mediathek**: Sendungen, die schon vor dem Fernsehtermin online stehen, mit ihrem TV-Termin
+- **Trailer im Kopf**: Hat eine Serie oder Sendung einen Trailer, läuft er oben auf ihrer Seite einmal ohne Ton – anhalten und Ton per Knopf, nicht während der Mini-Player läuft und nicht, wenn dein System weniger Bewegung wünscht
+- Knopf **Trailer** auf Serien- und Detailseiten, dazu **Trailer & Extras** auf der Detailseite einzelner Sendungen
+- **Einstellungen** unten in der Seitenleiste – dort schaltest du die Vorschauen ab
+- **Staffelbilder**: Bei Serien mit bis zu zwölf Staffeln zeigen die Reiter das Bild der Staffel und die Zahl der Folgen
+
+### Verbessert
+
+- Livestreams zeigen im Player **LIVE** statt einer Zeitleiste
+- Das Sendungsverzeichnis baut sich schneller auf
+- Der Knopf **Jetzt neu starten** im Update-Hinweis ist wieder gut lesbar
+- Die Knöpfe oben auf Serien- und Detailseiten brechen in eine neue Zeile um, statt sich zu quetschen
+
+## 0.13.0 – 2026-11-07
+
 ### Neu
 
 - **Seitenleiste nach Art**: **Serien**, **Filme**, **Dokus**, **Shows & Talk**, **Nachrichten**, **Sport** und **Kinder** haben jetzt je eine eigene Seite – oben unterteilt nach Genre oder Thema, mit einer Reihe je Genre und Filter nach Sender
@@ -19,6 +59,8 @@ Alle nennenswerten Änderungen an Movue. Die App zeigt diese Datei unter **Hilfe
 - Kurzbeiträge unter fünf Minuten stehen nur noch in der Suche und auf der Seite ihres Senders
 - Serien und Sendereihen erkennst du an einer angedeuteten zweiten Karte über dem Bild
 - **Läuft bald ab** ist von der Seitenleiste nach **Alle Kategorien** umgezogen
+- Satire- und Talkshows wie heute-show, Markus Lanz oder Maischberger stehen unter **Shows & Talk**, nicht mehr unter Nachrichten
+- Krimireihen ohne Staffeln wie Tatort oder Wilsberg stehen unter **Filme**
 
 ## 0.12.0 – 2026-11-04
 

@@ -34,7 +34,7 @@ test.afterAll(async () => {
 
 test('Startseite erscheint und das Sendungsverzeichnis wird geladen', async () => {
   await expect(win.getByText(/Version \d+\.\d+\.\d+/)).toBeVisible();
-  await expect(win.getByRole('status')).toContainText('10 Sendungen', { timeout: 60_000 });
+  await expect(win.getByRole('status')).toContainText('15 Sendungen', { timeout: 60_000 });
   await expect(win.getByRole('status')).toContainText('Stand 01.11.');
   await expect(win.getByRole('heading', { name: 'Neu bei Filmen', level: 2 })).toBeVisible();
   await expect(win.getByRole('heading', { name: 'Neu bei Serien', level: 2 })).toBeVisible();
@@ -61,12 +61,12 @@ test('Serien erscheinen als eine Kachel und öffnen die Serienseite mit Staffeln
   await expect(win.getByRole('heading', { name: 'In aller Freundschaft', level: 1 })).toBeVisible();
   await expect(win.getByText('2 Staffeln · 3 Folgen')).toBeVisible();
   await expect(win.getByRole('button', { name: /Abspielen S27 · F40/ })).toBeVisible();
-  await expect(win.getByRole('tab', { name: 'Staffel 27' })).toHaveAttribute('aria-selected', 'true');
+  await expect(win.getByRole('tab', { name: /^Staffel 27/ })).toHaveAttribute('aria-selected', 'true');
   await expect(win.getByRole('list', { name: 'Darsteller' })).toContainText('Thomas Rühmann');
-  await win.getByRole('tab', { name: 'Staffel 28' }).click();
+  await win.getByRole('tab', { name: /^Staffel 28/ }).click();
   await expect(win.getByRole('button', { name: 'Folge 1102: Alte Freunde (S28/E02) abspielen' })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/serie.png' });
-  await win.getByRole('tab', { name: 'Extras' }).click();
+  await win.getByRole('tab', { name: /^Extras/ }).click();
   await expect(win.getByRole('button', { name: 'Vorschau auf Folge 1103 abspielen' })).toBeVisible();
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
@@ -192,6 +192,45 @@ test('Seite einer Art: Serien als eine Kachel, Filter nach Sender', async () => 
   await expect(win.getByRole('heading', { name: 'Dokus', level: 1 })).toBeVisible();
   await expect(win.getByRole('group', { name: 'Thema' })).toBeVisible();
   await win.screenshot({ path: 'test-results/screens/art-dokus.png' });
+  await win.getByRole('button', { name: 'Start', exact: true }).click();
+});
+
+// Termine in den Testdaten: Oktober 2027 (höchstens ein Jahr nach dem Stand der Liste, sonst setzt der Import das Datum zurück)
+test('Live & demnächst: Sender, Übertragung mit Erinnerung, Vorab', async () => {
+  await win.getByRole('button', { name: 'Live & demnächst', exact: true }).click();
+  await expect(win.getByRole('heading', { name: 'Live & demnächst', level: 1 })).toBeVisible();
+  await expect(win.getByRole('button', { name: 'ZDF live ansehen' })).toBeVisible();
+  await expect(win.getByLabel('Die Dritten')).toHaveValue('WDR');
+  await expect(win.getByText('Basketball live: Gladiators Trier gegen Testgegner')).toBeVisible();
+  const erinnern = win.getByRole('button', { name: 'Erinnern' });
+  await erinnern.click();
+  await expect(win.getByRole('button', { name: 'Erinnert' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(win.getByRole('button', { name: /Planet e.: Vorab im Netz/ })).toBeVisible();
+  await win.screenshot({ path: 'test-results/screens/live.png' });
+  await win.getByRole('button', { name: 'Erinnert' }).click();
+  await expect(win.getByRole('button', { name: 'Erinnern' })).toHaveAttribute('aria-pressed', 'false');
+  await win.getByRole('button', { name: 'Start', exact: true }).click();
+});
+
+test('Trailer & Extras auf der Detailseite, Vorschauen in den Einstellungen', async () => {
+  await win.getByLabel('Suche in allen Mediatheken').fill('Terra X Ostsee');
+  await win.getByRole('button', { name: /Terra X: Die Ostsee/ }).first().click();
+  await expect(win.getByRole('heading', { name: 'Terra X: Die Ostsee', level: 1 })).toBeVisible();
+  await expect(win.getByRole('button', { name: 'Trailer', exact: true })).toBeVisible();
+  await expect(win.getByRole('heading', { name: 'Trailer & Extras' })).toBeVisible();
+  // Art als erstes Schild, dahinter „Falsch einsortiert?“ (nicht anklicken – öffnet den Browser)
+  await expect(win.locator('.art-tag')).toHaveText('Dokus');
+  await expect(win.getByRole('button', { name: 'Falsch einsortiert?' })).toBeVisible();
+  await win.getByRole('button', { name: 'Einstellungen', exact: true }).click();
+  await expect(win.getByRole('heading', { name: 'Einstellungen', level: 1 })).toBeVisible();
+  const schalter = win.getByRole('switch', { name: /Vorschauen automatisch abspielen/ });
+  await expect(schalter).toBeChecked();
+  await schalter.click();
+  await expect(schalter).not.toBeChecked();
+  await win.screenshot({ path: 'test-results/screens/einstellungen.png' });
+  await schalter.click();
+  await expect(schalter).toBeChecked();
+  await win.getByLabel('Suche in allen Mediatheken').fill('');
   await win.getByRole('button', { name: 'Start', exact: true }).click();
 });
 

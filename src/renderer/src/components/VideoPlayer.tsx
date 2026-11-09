@@ -59,6 +59,8 @@ export function VideoPlayer({ film, start = 0, kompakt = false, naechste, onNaec
   const [laeuft, setLaeuft] = useState(false);
   const [zeit, setZeit] = useState(0);
   const [dauer, setDauer] = useState(film.dauer || 0);
+  // Livestreams melden keine Länge (Infinity)
+  const live = dauer === Infinity;
   const [puffer, setPuffer] = useState(0);
   const [stumm, setStumm] = useState(false);
   const [lautstaerke, setLautstaerke] = useState(() => Number(lies(EINSTELLUNG.lautstaerke, '1')) || 1);
@@ -327,28 +329,35 @@ export function VideoPlayer({ film, start = 0, kompakt = false, naechste, onNaec
       )}
 
       <div className="player-steuerung" onClick={(e) => e.stopPropagation()}>
-        <div className="player-zeitleiste">
-          <span className="player-zeit">{formatZeit(zeit)}</span>
-          <div className="player-balken">
-            <div className="player-puffer" style={{ width: dauer ? `${(puffer / dauer) * 100}%` : 0 }} />
-            <input
-              type="range"
-              min={0}
-              max={Math.max(1, Math.floor(dauer))}
-              step={1}
-              value={Math.floor(zeit)}
-              aria-label="Wiedergabeposition"
-              aria-valuetext={`${formatZeit(zeit)} von ${formatZeit(dauer)}`}
-              style={{ '--fortschritt': dauer ? `${(zeit / dauer) * 100}%` : '0%' } as CSSProperties}
-              onChange={(e) => {
-                if (video.current) video.current.currentTime = Number(e.target.value);
-              }}
-            />
+        {/* Livestream: keine Länge, keine Zeitleiste */}
+        {!live ? (
+          <div className="player-zeitleiste">
+            <span className="player-zeit">{formatZeit(zeit)}</span>
+            <div className="player-balken">
+              <div className="player-puffer" style={{ width: dauer ? `${(puffer / dauer) * 100}%` : 0 }} />
+              <input
+                type="range"
+                min={0}
+                max={Math.max(1, Math.floor(dauer))}
+                step={1}
+                value={Math.floor(zeit)}
+                aria-label="Wiedergabeposition"
+                aria-valuetext={`${formatZeit(zeit)} von ${formatZeit(dauer)}`}
+                style={{ '--fortschritt': dauer ? `${(zeit / dauer) * 100}%` : '0%' } as CSSProperties}
+                onChange={(e) => {
+                  if (video.current) video.current.currentTime = Number(e.target.value);
+                }}
+              />
+            </div>
+            <span className="player-zeit">{formatZeit(dauer)}</span>
           </div>
-          <span className="player-zeit">{formatZeit(dauer)}</span>
-        </div>
+        ) : (
+          <div className="player-zeitleiste">
+            <span className="live-marke">LIVE</span>
+          </div>
+        )}
         <div className="player-knoepfe">
-          {!kompakt && (
+          {!kompakt && !live && (
             <button type="button" className="player-knopf" aria-label="10 Sekunden zurück" title="10 Sekunden zurück (←)" onClick={() => springe(-10)}>
               <Icon name="zurueck10" />
             </button>
@@ -356,7 +365,7 @@ export function VideoPlayer({ film, start = 0, kompakt = false, naechste, onNaec
           <button type="button" className="player-knopf gross" aria-label={laeuft ? 'Pause' : 'Abspielen'} title="Abspielen / Pause (Leertaste)" onClick={umschalten}>
             <Icon name={laeuft ? 'pause' : 'play'} size={24} />
           </button>
-          {!kompakt && (
+          {!kompakt && !live && (
             <button type="button" className="player-knopf" aria-label="10 Sekunden vor" title="10 Sekunden vor (→)" onClick={() => springe(10)}>
               <Icon name="vor10" />
             </button>

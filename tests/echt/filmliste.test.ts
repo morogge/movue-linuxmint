@@ -84,6 +84,7 @@ describe('Echte Filmliste', () => {
         'SERIEN ' +
           JSON.stringify({
             aufbauMs: bau.ms,
+            schritte: bau.schritte,
             serien: bau.serien,
             arten,
             mitSerienMs: s1 - s0,

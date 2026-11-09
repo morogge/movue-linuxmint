@@ -99,19 +99,46 @@ function wikidataGenres(db: Db, eintraege: Record<string, MetaEintrag>): void {
   }
 }
 
-export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): { serien: number; rubriken: number; ms: number } {
+export function baueSerien(
+  db: Db,
+  meta?: Record<string, MetaEintrag> | null
+): { serien: number; rubriken: number; ms: number; schritte: Record<string, number> } {
   const t0 = Date.now();
-  db.function('ist_reihe', { deterministic: true }, (thema: unknown) => (typeof thema === 'string' && istReihenThema(thema) ? 1 : 0));
+  // Dauer je Schritt – für die Messung an der echten Filmliste
+  const schritte: Record<string, number> = {};
+  let marke = t0;
+  const stopp = (name: string) => {
+    const jetzt = Date.now();
+    schritte[name] = jetzt - marke;
+    marke = jetzt;
+  };
+  // Für die Dauer des Aufbaus: großer Zwischenspeicher (128 MB statt 2 MB) und Zwischentabellen im Speicher –
+  // sonst schreibt SQLite bei Hunderttausenden geänderten Zeilen ständig Seiten zwischendurch auf die Platte
+  const cache = db.pragma('cache_size', { simple: true }) as number;
+  const temp = db.pragma('temp_store', { simple: true }) as number;
+  db.pragma('cache_size = -131072');
+  db.pragma('temp_store = MEMORY');
   const lauf = db.transaction(() => {
     db.exec(`
       DELETE FROM serie;
       DELETE FROM serie_genre;
       DELETE FROM serie_fts;
-      UPDATE film SET serie_id = NULL, buendel = NULL WHERE serie_id IS NOT NULL OR buendel IS NOT NULL;
+      -- Indizes auf serie_id und buendel: am Ende in einem Rutsch neu bauen statt bei jeder der
+      -- Hunderttausenden Änderungen nachzuführen (spart den größten Teil der Zeit)
+      DROP INDEX IF EXISTS film_serie;
+      DROP INDEX IF EXISTS film_buendel;
       DROP TABLE IF EXISTS temp.rubrik;
       CREATE TEMP TABLE rubrik (gruppe TEXT NOT NULL, thema TEXT NOT NULL, PRIMARY KEY (gruppe, thema));
+      DROP TABLE IF EXISTS temp.reihenthema;
+      CREATE TEMP TABLE reihenthema (thema TEXT PRIMARY KEY) WITHOUT ROWID;
     `);
+    // Welche Themen Reihen sein können: einmal je Thema prüfen statt einmal je Sendung
+    const reihenthema = db.prepare('INSERT INTO temp.reihenthema (thema) VALUES (?)');
+    for (const { thema } of db.prepare('SELECT DISTINCT thema FROM film').all() as { thema: string }[]) {
+      if (istReihenThema(thema)) reihenthema.run(thema);
+    }
 
+    stopp('0 leeren');
     // 1. Rubriken erkennen
     const themen = db
       .prepare(
@@ -121,7 +148,7 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
                 SUM(dauer < 600) AS kurz,
                 SUM(instr(lower(titel), lower(thema)) > 0 OR titel GLOB '*[0-9].[0-9][0-9].[0-9][0-9]*'
                     OR titel GLOB '*[0-9][0-9].[0-9][0-9].*' OR lower(titel) LIKE '% vom %' OR lower(titel) LIKE 'sendung vom%') AS wiederkehrend
-         FROM film WHERE variante = 0 AND live = 0 AND ist_reihe(thema) = 1
+         FROM film WHERE variante = 0 AND live = 0 AND thema IN (SELECT thema FROM temp.reihenthema)
          GROUP BY gruppe, thema HAVING COUNT(*) >= ${MIN_FOLGEN}`
       )
       .all() as { gruppe: string; thema: string; n: number; nummeriert: number; filme: number; kurz: number; wiederkehrend: number }[];
@@ -144,14 +171,16 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
     // Arte: auch kleine Themen sind Rubriken
     db.exec(`INSERT OR IGNORE INTO temp.rubrik (gruppe, thema) SELECT DISTINCT gruppe, thema FROM film WHERE gruppe = 'Arte'`);
 
+    stopp('1 rubriken');
     // 2. Name des Bündels: das Thema – bei Rubriken (und Sammelthemen) der Serienname aus dem Titel
     db.exec(`
-      UPDATE film SET buendel = CASE
+      UPDATE film SET serie_id = NULL, buendel = CASE
         WHEN live = 1 THEN NULL
-        WHEN ist_reihe(thema) = 1 AND NOT EXISTS (SELECT 1 FROM temp.rubrik r WHERE r.gruppe = film.gruppe AND r.thema = film.thema) THEN thema
+        WHEN thema IN (SELECT thema FROM temp.reihenthema) AND NOT EXISTS (SELECT 1 FROM temp.rubrik r WHERE r.gruppe = film.gruppe AND r.thema = film.thema) THEN thema
         ELSE NULLIF(reihe_titel, '') END;
     `);
 
+    stopp('2 buendel');
     // 2b. Was in Rubriken und Sammelthemen noch einzeln steht, aber denselben Titelanfang hat, ist eine Reihe:
     //     „360° Reportage - Mongolei“, „Re: Quallen-Flut“, „Berlin erleben – Der Ku'damm“ (ab drei Sendungen)
     const einzeln = db
@@ -193,9 +222,11 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
       for (const id of ids) setze.run(name, id);
     }
 
+    stopp('2b titelanfaenge');
     // 2c. Genres aus Wikidata, solange die Bündel-Genres noch nicht gezählt sind
     if (meta) wikidataGenres(db, meta);
 
+    stopp('2c wikidata');
     // 3. Bündel zählen: ab drei Folgen; Serien aus Titeln (Mehrteiler, Arte-Serien) ab zwei
     const zeilen = db
       .prepare(
@@ -227,6 +258,7 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
       datiert: number;
     }[];
 
+    stopp('3 zaehlen');
     const neu = db.prepare(
       `INSERT INTO serie (gruppe, thema, art, folgen, extras, staffeln, neueste) VALUES (?, ?, 'reihe', ?, ?, ?, ?) RETURNING id`
     );
@@ -238,8 +270,10 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
       daten.set(id, { nummeriert: z.nummeriert, dauer: z.dauer ?? 0, folgen: z.folgen, filme: z.filme, thema: z.buendel, datiert: z.datiert });
     }
 
+    stopp('3 einfuegen');
     db.exec(`
       UPDATE film SET serie_id = s.id FROM serie s WHERE s.gruppe = film.gruppe AND s.thema = film.buendel;
+      CREATE INDEX IF NOT EXISTS film_serie ON film(serie_id, datum DESC);
       -- Genres des Bündels: was die Mehrheit der Folgen hat – eine Folge mit „ermittelt“ macht keine Krimireihe
       INSERT INTO serie_genre (genre, serie_id, neueste)
         SELECT g.genre, s.id, s.neueste FROM serie s
@@ -262,6 +296,7 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
         ORDER BY f.datum DESC LIMIT 1);
     `);
 
+    stopp('3 genres');
     // 4. Art (Serie, Sendereihe, Filmreihe, Nachrichten) aus Nummerierung, Dauer und Genres
     const genres = new Map<number, GenreId[]>();
     for (const g of db.prepare('SELECT serie_id, genre FROM serie_genre').all() as { serie_id: number; genre: string }[]) {
@@ -278,6 +313,7 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
       art.run(a, buendelFormat({ art: a, genres: g, thema: d.thema, dauer: d.dauer, datiert: d.folgen ? d.datiert / d.folgen : 0 }), id);
     }
 
+    stopp('4 art');
     // 5. Genres der Folgen an ihr Bündel angleichen: Eine Kulturzeit-Ausgabe über einen Krimi macht das
     //    Magazin nicht zum Krimi, eine Sportschau mit Musik nicht zu Kultur. Nur für Bündel mit echten Genres –
     //    „Weitere Sendungen“ überschreibt nie, was eine Folge selbst hat.
@@ -290,6 +326,7 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
         SELECT sg.genre, f.id, f.datum FROM film f JOIN serie_genre sg ON sg.serie_id = f.serie_id WHERE sg.genre != 'sonstiges';
     `);
 
+    stopp('5 angleichen');
     // 6. Format der Sendungen: Folgen erben es von ihrem Bündel; Einzelsendungen aus Länge und Genres.
     //    Kurzbeiträge (unter 5 Minuten, ohne Reihe) erscheinen nur in Suche und auf Sender-Seiten.
     const hat = (g: string) => `EXISTS (SELECT 1 FROM film_genre fg WHERE fg.film_id = film.id AND fg.genre = '${g}')`;
@@ -307,10 +344,20 @@ export function baueSerien(db: Db, meta?: Record<string, MetaEintrag> | null): {
           ELSE 'doku' END
         WHERE serie_id IS NULL;
     `);
+    db.exec('CREATE INDEX IF NOT EXISTS film_buendel ON film(gruppe, buendel, datum DESC)');
+    stopp('6 format');
     return { serien: zeilen.length, rubriken };
   });
-  const { serien, rubriken } = lauf();
-  return { serien, rubriken, ms: Date.now() - t0 };
+  let ergebnis: { serien: number; rubriken: number };
+  try {
+    ergebnis = lauf();
+  } finally {
+    db.pragma(`cache_size = ${cache}`);
+    db.pragma(`temp_store = ${temp}`);
+  }
+  const { serien, rubriken } = ergebnis;
+  stopp('commit');
+  return { serien, rubriken, ms: Date.now() - t0, schritte };
 }
 
 interface SerieZeile {

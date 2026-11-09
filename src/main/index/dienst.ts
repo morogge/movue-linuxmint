@@ -1,6 +1,7 @@
 import { dirname, join } from 'node:path';
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import type { IndexZustand, SuchAnfrage, SuchErgebnis } from '@shared/film';
+import type { LiveAngebot } from '@shared/live';
 import type { ListenArt } from '../filmliste/quelle';
 import {
   anzahl,
@@ -12,6 +13,8 @@ import {
   type Fassung,
   genreAnzahlen,
   leseMeta,
+  extrasZu,
+  liveAngebot,
   oeffneDb,
   reihe,
   reihenStand,
@@ -116,6 +119,16 @@ export class IndexDienst {
 
   film(id: number): Film | null {
     return this.db ? filmNachId(this.db, id) : null;
+  }
+
+  /** Trailer und Extras zu einer Sendung */
+  extras(filmId: number): Film[] {
+    return this.db ? extrasZu(this.db, filmId) : [];
+  }
+
+  /** Livestreams, Live-Übertragungen und Vorab-Sendungen */
+  live(): LiveAngebot {
+    return this.db ? liveAngebot(this.db) : { sender: [], uebertragungen: [], vorab: [] };
   }
 
   filmeNachUrl(urls: string[]): Map<string, Film> {

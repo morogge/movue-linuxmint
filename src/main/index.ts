@@ -16,6 +16,8 @@ import { ladeUntertitel } from './untertitel';
 import { seitenZiel } from './links';
 import { istGruppe } from '@shared/sender';
 import { istFormat, istGenre } from '@shared/genres';
+import { ERINNERN_VORHER, terminText } from '@shared/live';
+import { meldeAdresse, type MeldeInfo } from '@shared/melden';
 
 // Für Tests: eigenes Datenverzeichnis statt ~/.config/Movue
 if (process.env['MOVUE_DATEN']) app.setPath('userData', process.env['MOVUE_DATEN']);
@@ -100,6 +102,20 @@ function pruefeAbos(): void {
   n.show();
 }
 
+/** Meldet Live-Übertragungen kurz vor Beginn, an die der Nutzer erinnert werden möchte */
+function pruefeErinnerungen(): void {
+  if (!nutzer) return;
+  const faellig = nutzer.faelligeErinnerungen(Date.now() + ERINNERN_VORHER);
+  if (faellig.length === 0) return;
+  for (const win of BrowserWindow.getAllWindows()) win.webContents.send('live:erinnerung', faellig);
+  if (process.env['MOVUE_KEINE_MELDUNG'] || !Notification.isSupported()) return;
+  for (const film of faellig) {
+    const n = new Notification({ title: `Gleich live: ${film.titel}`, body: `${terminText(film.datum)} · ${film.sender}` });
+    n.on('click', () => zeigeFenster('live'));
+    n.show();
+  }
+}
+
 function aboListe(): Abo[] {
   if (!nutzer || !index) return [];
   return nutzer.abos().flatMap((a) => {
@@ -169,6 +185,48 @@ ipcMain.handle('index:stoebern', (_event, a: { genre?: unknown; format?: unknown
   });
 });
 
+ipcMain.handle('index:extras', (_event, id: unknown) => (typeof id === 'number' && index ? index.extras(id) : []));
+
+/**
+ * „Falsch einsortiert?“: Fehlerbericht im Browser öffnen, vorausgefüllt aus dem Verzeichnis.
+ * Das Fenster nennt nur die Sendung bzw. Serie – die Adresse baut Movue selbst.
+ */
+ipcMain.handle('melden:einsortierung', async (_event, ziel: unknown) => {
+  if (!index || !ziel || typeof ziel !== 'object') return false;
+  const z = ziel as { filmId?: unknown; gruppe?: unknown; thema?: unknown };
+  let info: MeldeInfo | null = null;
+  if (typeof z.filmId === 'number') {
+    const f = index.film(z.filmId);
+    if (f) info = { was: 'Sendung', titel: f.titel, thema: f.thema, sender: f.sender, format: f.format ?? null, genres: f.genres, website: f.website, datum: f.datum };
+  } else if (typeof z.gruppe === 'string' && typeof z.thema === 'string') {
+    const d = index.serie(z.gruppe, z.thema);
+    if (d) {
+      const s = d.serie;
+      info = { was: 'Serie', titel: s.thema, thema: s.thema, sender: s.gruppe, format: s.format, genres: s.genres, website: (s.bild ?? d.folgen[0])?.website ?? '' };
+    }
+  }
+  if (!info) return false;
+  await shell.openExternal(meldeAdresse(info, app.getVersion()));
+  return true;
+});
+
+ipcMain.handle('live:angebot', () => index?.live() ?? { sender: [], uebertragungen: [], vorab: [] });
+
+ipcMain.handle('live:erinnerungen', () => nutzer?.erinnerungen() ?? []);
+
+/** Erinnern über die id: nur Live-Übertragungen aus dem Verzeichnis */
+ipcMain.handle('live:erinnern', (_event, id: unknown, an: unknown) => {
+  if (!nutzer || !index || typeof id !== 'number') return false;
+  const film = index.film(id);
+  if (!film) return false;
+  if (an === true) {
+    nutzer.erinnern(film);
+    return true;
+  }
+  nutzer.vergissErinnerung(film.url);
+  return false;
+});
+
 ipcMain.handle('index:arten', (_event, a: { genre?: unknown; gruppe?: unknown } | undefined) =>
   index ? index.arten({ genre: istGenre(a?.genre) ? a.genre : null, gruppe: istGruppe(a?.gruppe) ? a.gruppe : null }) : {}
 );
@@ -210,6 +268,9 @@ ipcMain.handle('index:folgen', (_event, id: unknown) => (index && typeof id === 
 ipcMain.handle('bild:url', (_event, website: unknown, art: unknown) =>
   bilder && typeof website === 'string' ? bilder.url(website, art === 'serie' || art === 'banner' ? art : 'folge') : null
 );
+
+/** Trailer der Reihe bei der ARD (Seite der Reihe nennt ihn, die Filmliste nicht) */
+ipcMain.handle('bild:reihen-trailer', (_event, website: unknown) => (bilder && typeof website === 'string' ? bilder.reihenTrailer(website) : null));
 
 ipcMain.handle('untertitel:laden', async (_event, url: unknown) => {
   if (typeof url !== 'string') return null;
@@ -340,11 +401,14 @@ app.whenReady().then(() => {
   bilder = new BildDienst(
     join(app.getPath('userData'), 'bilder.db'),
     process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined,
+    process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined,
     process.env['MOVUE_BILDER_AUS'] ? async () => null : undefined
   );
   createWindow();
   index.start();
   update.start();
+  // Einmal je Minute: steht eine Übertragung an, an die erinnert werden soll?
+  setInterval(pruefeErinnerungen, 60_000).unref();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

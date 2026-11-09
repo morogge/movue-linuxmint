@@ -4,7 +4,8 @@ import type { UpdateZustand } from '../shared/update';
 import type { Format, GenreAnzahl, GenreId } from '../shared/genres';
 import type { SenderGruppe } from '../shared/sender';
 import type { Abo, Ablauf, MerkEintrag } from '../shared/nutzer';
-import type { Serie, SerieDetail } from '../shared/serie';
+import type { ReihenTrailer, Serie, SerieDetail } from '../shared/serie';
+import type { LiveAngebot } from '../shared/live';
 import type { TitelInfo } from '../shared/titelinfo';
 
 export interface AppInfo {
@@ -35,6 +36,8 @@ const api = {
       offset?: number;
     }): Promise<{ eintraege: ({ typ: 'serie'; serie: Serie; datum: number } | { typ: 'film'; film: Film; datum: number })[]; gesamt: number }> =>
       ipcRenderer.invoke('index:stoebern', a),
+    /** Trailer und Extras zu einer Sendung (aus ihrem Bündel oder mit gleichem Thema) */
+    extras: (id: number): Promise<Film[]> => ipcRenderer.invoke('index:extras', id),
     /** Anzahl der Einträge je Art (Serien, Filme, Dokus …), wahlweise nur eines Genres oder Senders */
     arten: (a?: { genre?: GenreId | null; gruppe?: SenderGruppe | null }): Promise<Partial<Record<Format, number>>> =>
       ipcRenderer.invoke('index:arten', a ?? {}),
@@ -91,6 +94,25 @@ const api = {
       return () => ipcRenderer.removeListener('abo:neu', listener);
     }
   },
+  melden: {
+    /** „Falsch einsortiert?“ – öffnet einen vorausgefüllten Fehlerbericht im Browser; Movue schickt nichts selbst */
+    einsortierung: (ziel: { filmId: number } | { gruppe: string; thema: string }): Promise<boolean> =>
+      ipcRenderer.invoke('melden:einsortierung', ziel)
+  },
+  live: {
+    /** Livestreams der Sender, Live-Übertragungen und Sendungen, die schon vor dem TV-Termin abrufbar sind */
+    angebot: (): Promise<LiveAngebot> => ipcRenderer.invoke('live:angebot'),
+    /** Videoadressen der Übertragungen, an die Movue erinnern soll */
+    erinnerungen: (): Promise<string[]> => ipcRenderer.invoke('live:erinnerungen'),
+    /** Erinnerung an- oder abschalten; gibt den neuen Zustand zurück */
+    erinnern: (id: number, an: boolean): Promise<boolean> => ipcRenderer.invoke('live:erinnern', id, an),
+    /** Eine Übertragung, an die erinnert werden soll, beginnt gleich */
+    beiErinnerung: (cb: (filme: Film[]) => void): (() => void) => {
+      const listener = (_e: unknown, filme: Film[]) => cb(filme);
+      ipcRenderer.on('live:erinnerung', listener);
+      return () => ipcRenderer.removeListener('live:erinnerung', listener);
+    }
+  },
   ablauf: {
     /** Wie lange die Sendung noch abrufbar ist – fragt beim Sender nach (null = unbekannt) */
     holen: (id: number): Promise<Ablauf | null> => ipcRenderer.invoke('ablauf:holen', id),
@@ -106,7 +128,9 @@ const api = {
     /** Vorschaubild zur Sendungsseite (null = keins gefunden) */
     url: (website: string): Promise<string | null> => ipcRenderer.invoke('bild:url', website, 'folge'),
     /** Titelbild der Serie (16:9) bzw. breites Banner (16:7) – bisher nur ARD, sonst null */
-    serie: (website: string, art: 'serie' | 'banner'): Promise<string | null> => ipcRenderer.invoke('bild:url', website, art)
+    serie: (website: string, art: 'serie' | 'banner'): Promise<string | null> => ipcRenderer.invoke('bild:url', website, art),
+    /** Trailer der Reihe bei der ARD zu einer Folgenseite; andere Sender und ohne Trailer: null */
+    reihenTrailer: (website: string): Promise<ReihenTrailer | null> => ipcRenderer.invoke('bild:reihen-trailer', website)
   },
   update: {
     zustand: (): Promise<UpdateZustand> => ipcRenderer.invoke('update:zustand'),

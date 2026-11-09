@@ -165,3 +165,22 @@ describe('Ablaufdatum', () => {
     expect(await dienst.hole(film('d.mp4'))).toBeNull();
   });
 });
+
+describe('Erinnerungen an Live-Übertragungen', () => {
+  it('meldet jede Erinnerung einmal, sobald der Beginn naht, und räumt Vergangenes auf', () => {
+    const beginn = 1_900_000_000;
+    db.erinnern({ ...film('live.m3u8', 'Basketball live'), datum: beginn });
+    expect(db.erinnerungen()).toEqual(['live.m3u8']);
+    expect(db.faelligeErinnerungen((beginn - 600) * 1000, (beginn - 600) * 1000)).toHaveLength(0);
+    expect(db.faelligeErinnerungen((beginn + 60) * 1000, beginn * 1000).map((f) => f.titel)).toEqual(['Basketball live']);
+    expect(db.faelligeErinnerungen((beginn + 120) * 1000, beginn * 1000)).toHaveLength(0);
+    db.faelligeErinnerungen(0, (beginn + 2 * 86_400) * 1000);
+    expect(db.erinnerungen()).toEqual([]);
+  });
+
+  it('lässt sich wieder abschalten', () => {
+    db.erinnern(film('x.m3u8'));
+    db.vergissErinnerung('x.m3u8');
+    expect(db.erinnerungen()).toEqual([]);
+  });
+});

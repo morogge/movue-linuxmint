@@ -19,6 +19,8 @@ Bewegst du die Maus über das Video, erscheinen die Bedienelemente; nach drei Se
 - **Bild-in-Bild**: Das Video läuft in einem kleinen eigenen Fenster, das immer im Vordergrund bleibt – auch über anderen Programmen.
 - **Vollbild**: per Knopf, Doppelklick oder **F**.
 
+Bei **Livestreams** (siehe **Live & demnächst**) steht statt der Zeitleiste **LIVE**; die Knöpfe für 10 Sekunden zurück und vor fehlen dort.
+
 Alle Tastenkürzel findest du unter **Tastenkürzel**.
 
 ## Nächste Folge

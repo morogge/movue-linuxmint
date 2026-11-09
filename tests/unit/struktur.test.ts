@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { folgenInfo, gruppeVon, serieAusTitel, serienArt } from '@shared/serie';
+import { folgenInfo, gruppeVon, serieAusTitel, serienArt, waehleTrailer } from '@shared/serie';
 import { genresAusWikidata, serienSchluessel } from '@shared/metadaten';
 import { baueFassungen, istLive, oeffneDb, reihe, schliesseAufbau, schreiber, suche, type Db } from '../../src/main/index/datenbank';
 import { artAnzahlen, baueSerien, istReihenAnfang, istRubrik, serieDetail, serieNachThema, stoebern, titelAnfang } from '../../src/main/index/serien';
@@ -73,6 +73,7 @@ describe('Rubriken und Arten', () => {
     expect(genresAusWikidata(['Dokumentarfilm', 'True Crime', 'Kriminalfilm'])).toEqual(['doku']);
     expect(genresAusWikidata(['Science-Fiction-Serie', 'Liebesfilm', 'Historienfilm'])).toEqual(['fantasy', 'liebe', 'historisch']);
     expect(genresAusWikidata(['Fernsehserie'])).toEqual([]);
+    expect(genresAusWikidata(['Mysteryserie', 'Kriminal-Fernsehserie'])).toEqual(['krimi']);
   });
 
   it('bestimmt die Art eines Bündels', () => {
@@ -86,6 +87,10 @@ describe('Rubriken und Arten', () => {
     expect(b('reihe', ['kultur'], 'Kulturzeit', 0.9)).toBe('magazin');
     expect(b('reihe', ['ratgeber'], 'Garten-Doc')).toBe('magazin');
     expect(b('reihe', ['comedy'], 'heute-show')).toBe('show');
+    // Satire und Talk über Politik sind Shows, keine Nachrichten
+    expect(b('reihe', ['comedy', 'nachrichten', 'unterhaltung'], 'heute-show')).toBe('show');
+    expect(b('reihe', ['nachrichten'], 'Markus Lanz', 0, 75 * 60)).toBe('show');
+    expect(b('reihe', ['nachrichten'], 'maischberger')).toBe('show');
     expect(b('reihe', ['gesellschaft'], 'maischberger')).toBe('show');
     expect(b('reihe', ['kultur'], 'ARTE Concert')).toBe('konzert');
     expect(b('reihe', ['wissen'], 'Terra X')).toBe('doku');
@@ -173,7 +178,7 @@ describe('Bündel im Index', () => {
     w(e({ ...raetsel, titel: 'Burg B (S01/E02)', genres: ['geschichte', 'krimi'] }));
     w(e({ ...raetsel, titel: 'Burg C (S01/E03)' }));
     baueFassungen(aufbau);
-    baueSerien(aufbau, { [serienSchluessel('Twin Peaks')]: { q: 'Q2085', g: ['Mysteryserie', 'Dramaserie', 'Fernsehserie'], t: 0 } });
+    baueSerien(aufbau, { [serienSchluessel('Twin Peaks')]: { q: 'Q2085', g: ['Mysteryserie', 'Fantasyserie', 'Dramaserie', 'Fernsehserie'], t: 0 } });
     schliesseAufbau(aufbau);
     aufbau.close();
     db = oeffneDb(pfad);
@@ -205,14 +210,16 @@ describe('Bündel im Index', () => {
     expect(reihe(db, { genre: 'krimi', gruppe: '3sat', minDauer: 0, jetzt: 1_793_100_000_000 })).toEqual([]);
   });
 
-  it('zeigt Trailer, Livestreams und Angekündigtes nicht in Listen', () => {
+  it('zeigt Trailer, Livestreams und Angekündigtes nicht in Listen, Angekündigtes aber in der Suche', () => {
     const titel = suche(db, { text: 'sport' }).treffer.map((f) => f.titel);
     expect(titel).toContain('Sport am Sonntag 1');
     expect(titel).not.toContain('Trailer: Sport am Sonntag');
     expect(titel.some((t) => t.startsWith('Basketball live'))).toBe(false);
-    expect(titel).not.toContain('Vorab: Sport am Montag');
+    // Vorab-Sendungen: mit Suchbegriff ja, in Listen und den neuesten Sendungen nicht
+    expect(titel).toContain('Vorab: Sport am Montag');
+    expect(suche(db, { text: '', limit: 200 }).treffer.map((f) => f.titel)).not.toContain('Vorab: Sport am Montag');
     const einzeln = stoebern(db, { genre: 'sport' }).eintraege.map((x) => (x.typ === 'film' ? x.film.titel : x.serie.thema));
-    expect(einzeln.some((t) => t.startsWith('Basketball live') || t.startsWith('Trailer'))).toBe(false);
+    expect(einzeln.some((t) => t.startsWith('Basketball live') || t.startsWith('Trailer') || t.startsWith('Vorab'))).toBe(false);
     // Der Trailer steht auf der Seite seiner Reihe unter „Extras“, das Bündel endet mit der neuesten sichtbaren Folge
     const detail = serieDetail(db, 'ARD', 'SWR Sport');
     expect(detail?.folgen.find((f) => f.titel.startsWith('Trailer'))?.extra).toBe(true);
@@ -231,6 +238,9 @@ describe('Bündel im Index', () => {
     expect(titel(stoebern(db, {}))).not.toContain('Kurzmeldung aus Kiel');
     expect(titel(stoebern(db, { gruppe: 'ZDF' }))).toContain('Kurzmeldung aus Kiel');
     expect(titel(stoebern(db, { format: 'magazin' }))).toEqual(['Kulturzeit']);
+    // Nur Filme bzw. nur Kurzbeiträge: liefert die Filme selbst (früher leer)
+    expect(titel(stoebern(db, { format: 'film' }))).toContain('Sommer auf Asphalt');
+    expect(titel(stoebern(db, { format: 'kurz', gruppe: 'ZDF' }))).toContain('Kurzmeldung aus Kiel');
   });
 
   it('zählt je Art so, wie die Seiten sie zeigen', () => {
@@ -250,5 +260,15 @@ describe('Bündel im Index', () => {
   it('führt eine gemischte Rubrik nicht als Serie', () => {
     expect(serieNachThema(db, 'ZDF', 'Das kleine Fernsehspiel')).toBeNull();
     expect(suche(db, { text: 'Film A' }).treffer[0].serieId).toBeNull();
+  });
+});
+
+describe('Trailer für den Kopf', () => {
+  const f = (titel: string, dauer: number, datum = 1) => ({ titel, dauer, datum, url: `${titel}.mp4` });
+  it('nimmt den neuesten kurzen Trailer, nie ein Making-of oder Lange', () => {
+    expect(waehleTrailer([f('Making-of', 120, 5), f('Trailer: Alt', 90, 1), f('Teaser: Neu', 60, 3)])?.titel).toBe('Teaser: Neu');
+    expect(waehleTrailer([f('Making-of', 120)])).toBeNull();
+    expect(waehleTrailer([f('Trailer: Langfassung', 900)])).toBeNull();
+    expect(waehleTrailer([])).toBeNull();
   });
 });

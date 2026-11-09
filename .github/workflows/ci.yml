@@ -13,6 +13,8 @@ jobs:
   checks:
     name: Prüfen, testen, bauen
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,3 +65,14 @@ jobs:
             test-results/
             playwright-report/
           if-no-files-found: ignore
+
+      # Artefakte sind von manchen Arbeitsumgebungen aus nicht erreichbar: Screenshots zusätzlich als Zweig screens/<Zweig>
+      - name: Screenshots in Zweig screens/…
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          [ -d test-results/screens ] || exit 0
+          mkdir -p /tmp/screens && cp test-results/screens/*.png /tmp/screens/ && cd /tmp/screens
+          git init -q -b screens
+          git add .
+          git -c user.name=movue-ci -c user.email=ci@example.invalid commit -qm "Screenshots ${{ github.run_id }} (${{ github.event.pull_request.head.sha }})"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" HEAD:refs/heads/screens/${{ github.head_ref }}

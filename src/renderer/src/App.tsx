@@ -8,13 +8,15 @@ import { matchShortcut } from '@shared/shortcuts';
 import { zeigeWasIstNeu } from '@shared/update';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
-import { UpdateBanner, useUpdateZustand } from './components/UpdateBanner';
+import { ErinnerungBanner, UpdateBanner, useUpdateZustand } from './components/UpdateBanner';
 import { HelpView } from './help/HelpView';
 import { useIndexZustand } from './hooks/useIndexZustand';
 import { DetailScreen } from './screens/DetailScreen';
 import { ArtScreen } from './screens/ArtScreen';
 import { GenreScreen } from './screens/GenreScreen';
 import { KategorienScreen } from './screens/KategorienScreen';
+import { LiveScreen } from './screens/LiveScreen';
+import { EinstellungenScreen } from './screens/EinstellungenScreen';
 import { artSeite, type ArtSeite } from '@shared/arten';
 import { SearchScreen } from './screens/SearchScreen';
 import { StartScreen } from './screens/StartScreen';
@@ -181,6 +183,7 @@ export function App() {
       <Sidebar ansicht={ansicht} onNavigate={gehe} zustand={zustand} update={update} eingeklappt={eingeklappt} onEinklappen={einklappen} />
       <main className="main">
         <UpdateBanner zustand={update} />
+        <ErinnerungBanner onAnsehen={abspielen} />
         <TopBar ref={suchfeld} suchtext={suchtext} onSuche={sucheAendern} onHelp={openHelp} />
         {ansicht.screen === 'start' && (
           <StartScreen zustand={zustand} onOeffne={oeffneFilm} onArt={zeigeArt} onAbspielen={abspielen} onSerie={oeffneSerie} />
@@ -232,10 +235,12 @@ export function App() {
         {ansicht.screen === 'genre' && ansicht.genre && (
           <GenreScreen key={ansicht.genre} genre={ansicht.genre} zustand={zustand} onOeffne={oeffneFilm} onSerie={oeffneSerie} onKategorien={zeigeKategorien} />
         )}
+        {ansicht.screen === 'einstellungen' && <EinstellungenScreen />}
+        {ansicht.screen === 'live' && <LiveScreen zustand={zustand} onAbspielen={abspielen} onOeffne={oeffneFilm} />}
         {ansicht.screen === 'merkliste' && <MerklisteScreen stand={zustand.stand} onOeffne={oeffneFilm} onSerie={oeffneSerie} />}
         {ansicht.screen === 'ablauf' && <AblaufScreen stand={zustand.stand} onOeffne={oeffneFilm} />}
         {ansicht.screen === 'detail' && ansicht.filmId !== undefined && (
-          <DetailScreen filmId={ansicht.filmId} onOeffne={oeffneFilm} onZurueck={zurueck} onAbspielen={abspielen} onSerie={oeffneSerie} />
+          <DetailScreen filmId={ansicht.filmId} onOeffne={oeffneFilm} onZurueck={zurueck} onAbspielen={abspielen} onSerie={oeffneSerie} miniLaeuft={mini && !!wiedergabe} />
         )}
         {ansicht.screen === 'serie' && ansicht.serie && (
           <SerieScreen
@@ -244,6 +249,7 @@ export function App() {
             onZurueck={zurueck}
             onAbspielen={abspielen}
             onOeffne={oeffneFilm}
+            miniLaeuft={mini && !!wiedergabe}
           />
         )}
         {ansicht.screen === 'player' && ansicht.filmId !== undefined && (

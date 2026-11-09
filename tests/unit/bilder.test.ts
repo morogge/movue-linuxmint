@@ -53,4 +53,31 @@ describe('BildDienst', () => {
     expect(await dienst.url('kaputt')).toBeNull();
     dienst.schliessen();
   });
+
+  it('fragt den Trailer einer Reihe bei ARD und ZDF einmal und merkt sich auch „keiner“', async () => {
+    ordner = mkdtempSync(join(tmpdir(), 'movue-bilder-'));
+    const gefragt: string[] = [];
+    const dienst = new BildDienst(
+      join(ordner, 'b.db'),
+      async () => null,
+      async () => null,
+      async (website) => {
+        gefragt.push(website);
+        return website.includes('Y3JpZDovL21pdC10cmFpbGVy') || website.includes('mit-trailer') ? { titel: 'Trailer', url: 'https://ard.de/t.mp4', dauer: 38 } : null;
+      }
+    );
+    const mit = 'https://www.ardmediathek.de/video/Y3JpZDovL21pdC10cmFpbGVy';
+    const ohne = 'https://www.ardmediathek.de/video/Y3JpZDovL29obmUtdHJhaWxlcg';
+    expect(await dienst.reihenTrailer(mit)).toEqual({ titel: 'Trailer', url: 'https://ard.de/t.mp4', dauer: 38 });
+    expect(await dienst.reihenTrailer(mit)).toEqual({ titel: 'Trailer', url: 'https://ard.de/t.mp4', dauer: 38 });
+    expect(await dienst.reihenTrailer(ohne)).toBeNull();
+    expect(await dienst.reihenTrailer(ohne)).toBeNull();
+    // ZDF: über die Seite der Reihe, je Reihe einmal (zwei Folgen derselben Reihe teilen sich den Eintrag)
+    expect(await dienst.reihenTrailer('https://www.zdf.de/video/serien/mit-trailer-100/folge-1-100')).not.toBeNull();
+    expect(await dienst.reihenTrailer('https://www.zdf.de/video/serien/mit-trailer-100/folge-2-100')).not.toBeNull();
+    // Arte und Co.: gar nicht fragen
+    expect(await dienst.reihenTrailer('https://www.arte.tv/de/videos/123456-001-A/x/')).toBeNull();
+    expect(gefragt).toEqual([mit, ohne, 'https://www.zdf.de/video/serien/mit-trailer-100/folge-1-100']);
+    dienst.schliessen();
+  });
 });

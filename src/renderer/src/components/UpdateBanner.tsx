@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import type { Film } from '@shared/film';
+import { terminText } from '@shared/live';
 import type { UpdateZustand } from '@shared/update';
 import { Icon } from './Icon';
 
@@ -46,6 +48,36 @@ export function UpdateBanner({ zustand }: { zustand: UpdateZustand }) {
       )}
       <button type="button" className="text-button" onClick={() => setAusgeblendet(zustand.version)}>
         Später
+      </button>
+    </section>
+  );
+}
+
+/** Hinweis, wenn eine Live-Übertragung gleich beginnt, an die du erinnert werden wolltest */
+export function ErinnerungBanner({ onAnsehen }: { onAnsehen: (f: Film) => void }) {
+  const [filme, setFilme] = useState<Film[]>([]);
+  useEffect(() => window.movue?.live.beiErinnerung((neu) => setFilme((alt) => [...alt, ...neu])), []);
+  const film = filme[0];
+  if (!film) return null;
+  const weg = () => setFilme((alt) => alt.slice(1));
+  return (
+    <section className="update-banner erinnerung" aria-label="Erinnerung" role="status">
+      <Icon name="glocke" />
+      <div className="update-text">
+        <strong>Gleich live: {film.titel}</strong> {terminText(film.datum)} · {film.sender}
+      </div>
+      <button
+        type="button"
+        className="primary klein"
+        onClick={() => {
+          onAnsehen(film);
+          weg();
+        }}
+      >
+        Ansehen
+      </button>
+      <button type="button" className="text-button" onClick={weg}>
+        Schließen
       </button>
     </section>
   );
